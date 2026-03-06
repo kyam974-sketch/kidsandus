@@ -341,11 +341,10 @@ function renderSession(root) {
   const ta = el("textarea", { rows: 4,
     placeholder: "Descrivi la lezione: cosa avete fatto, come si sono comportati, chi si è distinto..." });
   ta.value = state.groupNote;
-  ta.addEventListener("input", e => { state.groupNote = e.target.value; state.generated = false; });
-  const canGenerate = state.groupNote.trim() && state.presentStudents.length > 0 && !state.generating;
+  ta.addEventListener("input", e => { state.groupNote = e.target.value; });
   const genBtn = el("button", {
     class: "generate-btn",
-    disabled: !canGenerate,
+    style: { opacity: state.generating ? "0.6" : "1" },
     onClick: handleGenerate
   }, state.generating ? "⏳ Generando..." : "✨ Genera note individuali");
   noteCard.append(ta, genBtn);
@@ -448,15 +447,19 @@ function doAddStudent(g) {
 }
 
 async function handleGenerate() {
-  if (!state.groupNote.trim() || state.presentStudents.length === 0 || state.generating) return;
+  if (state.generating) return;
+  if (!state.groupNote.trim()) { alert("Scrivi prima la nota di gruppo."); return; }
+  if (state.presentStudents.length === 0) { alert("Segna almeno un allievo come presente."); return; }
   state.generating = true;
   render();
 
   const g = state.selectedGroup;
   const objectives = getCurriculumObjectives(g.char, state.selectedStory, state.selectedDay);
   const objText = objectives.length > 0
-    ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" +
-      objectives.map((o, i) => `${i + 1}. ${o}`).join("\n")
+    ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):
+" +
+      objectives.map((o, i) => `${i + 1}. ${o}`).join("
+")
     : "";
 
   const prompt = `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note individuali per i genitori degli allievi.
