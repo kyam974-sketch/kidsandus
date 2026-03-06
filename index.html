@@ -455,10 +455,8 @@ async function handleGenerate() {
   const g = state.selectedGroup;
   const objectives = getCurriculumObjectives(g.char, state.selectedStory, state.selectedDay);
   const objText = objectives.length > 0
-    ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):
-" +
-      objectives.map((o, i) => `${i + 1}. ${o}`).join("
-")
+    ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" +
+      objectives.map((o, i) => `${i + 1}. ${o}`).join("\n")
     : "";
 
   const prompt = `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note individuali per i genitori degli allievi.
