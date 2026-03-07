@@ -490,11 +490,12 @@ async function handleGenerate() {
       })
     });
     const data = await resp.json();
+    alert("Risposta: " + JSON.stringify(data).substring(0, 300));
     const text = (data.content || []).map(b => b.text || "").join("");
     try { state.individualNotes = JSON.parse(text.trim()); } catch { state.individualNotes = {}; }
     state.generated = true;
   } catch(e) {
-    alert("Errore: " + e.message);
+    alert("Errore catch: " + e.message);
   }
   state.generating = false;
   render();
