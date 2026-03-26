@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -456,17 +455,18 @@ function buildPrompt() {
   const objText = objectives.length > 0
     ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" + objectives.map((o, i) => (i+1) + ". " + o).join("\n")
     : "";
-  return `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note individuali per i genitori degli allievi.
+  return `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note interne di valutazione individuale, ad uso esclusivo dell'insegnante, che serviranno come base per le pagelle.
 Livello del gruppo: ${g.level}.
 ${objText}
 Nota generale della lezione di oggi: "${state.groupNote}"
 Allievi presenti: ${state.presentStudents.join(", ")}.
 
 Per ciascun allievo PRESENTE scrivi una nota in italiano di 2-3 frasi che:
-- Sia personalizzata e specifica
-- Rifletta eventuali menzioni esplicite nella nota di gruppo
-- Se non menzionato, sia positiva e coerente con gli obiettivi della lezione
-- Usi tono professionale ma caldo, adatto ai genitori
+- Sia una valutazione professionale interna, NON rivolta ai genitori
+- Faccia riferimento concreto alle attività e agli obiettivi specifici della lezione (elencati sopra)
+- Rifletta eventuali menzioni esplicite nella nota di gruppo per quell'allievo
+- Se l'allievo non è menzionato esplicitamente, valuta positivamente rispetto agli obiettivi della lezione
+- Usi un tono descrittivo e oggettivo, come un registro di osservazione professionale
 - Non inizi sempre con il nome dell'allievo
 
 Rispondi SOLO con un oggetto JSON valido, senza markdown, senza backtick, nel formato:
@@ -540,6 +540,5 @@ function handleSave() {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 render();
 </script>
-
 </body>
 </html>
