@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -23,7 +24,7 @@ body { min-height: 100vh; background: #f0fdfa; font-family: Georgia, serif; padd
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 select { flex: 1; min-width: 140px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; font-family: Georgia, serif; background: white; }
 .objectives { margin-top: 12px; background: #f0fdfa; border-radius: 8px; padding: 10px; }
-.obj-title { font-weight: bold; color: #0d9488; font-size: 12px; margin-bottom: 4px; }
+.obj-title { font-weight: bold; color: #0d9488; font-size: 12px; margin-bottom: 6px; }
 .obj-item { font-size: 12px; color: #374151; line-height: 1.5; margin-bottom: 2px; }
 .student-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .student-item { display: flex; align-items: center; gap: 4px; }
@@ -54,6 +55,7 @@ textarea { width: 100%; border: 2px solid #e5e7eb; border-radius: 10px; padding:
 .history-present { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
 .history-row { font-size: 13px; color: #374151; padding: 5px 0; border-top: 1px solid #f3f4f6; }
 .no-curriculum { color: #9ca3af; font-size: 13px; padding: 6px 0; }
+.obj-textarea { font-size: 12px; line-height: 1.6; color: #374151; border: none; background: transparent; resize: vertical; width: 100%; outline: none; padding: 0; font-family: Georgia, serif; }
 #app { display: contents; }
 </style>
 </head>
@@ -105,7 +107,7 @@ const STORAGE_KEY = "kidsandus_v2_data";
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = {
-  view: "home",          // home | session | history
+  view: "home",
   selectedGroup: null,
   historyGroup: null,
   allData: loadData(),
@@ -115,6 +117,7 @@ let state = {
   selectedStory: "",
   selectedDay: "",
   groupNote: "",
+  editedObjectives: null,   // ← NEW: null = use curriculum defaults, string = teacher-edited version
   individualNotes: {},
   generating: false,
   generated: false,
@@ -215,6 +218,7 @@ function renderHome(root) {
           state.selectedStory = gd.lastStory || "";
           state.selectedDay = gd.lastDay || "";
           state.groupNote = "";
+          state.editedObjectives = null;
           state.individualNotes = {};
           state.generated = false;
           state.saved = false;
@@ -273,6 +277,7 @@ function renderSession(root) {
     storySelect.addEventListener("change", () => {
       state.selectedStory = storySelect.value;
       state.selectedDay = "";
+      state.editedObjectives = null;   // ← reset on story change
       state.generated = false;
       render();
     });
@@ -288,6 +293,7 @@ function renderSession(root) {
     });
     daySelect.addEventListener("change", () => {
       state.selectedDay = daySelect.value;
+      state.editedObjectives = null;   // ← reset on day change
       state.generated = false;
       render();
     });
@@ -295,13 +301,43 @@ function renderSession(root) {
     const row = el("div", { class: "row" }, storySelect, daySelect);
     lessonCard.appendChild(row);
 
+    // ── EDITABLE OBJECTIVES ────────────────────────────────────────────────
     if (objectives.length > 0) {
-      const objBox = el("div", { class: "objectives" },
-        el("div", { class: "obj-title" }, "Obiettivi lezione:")
-      );
-      objectives.forEach(o => objBox.appendChild(el("div", { class: "obj-item" }, "• " + o)));
+      const defaultObjText = objectives.map(o => "• " + o).join("\n");
+      const currentObjText = state.editedObjectives !== null ? state.editedObjectives : defaultObjText;
+
+      const objBox = el("div", { class: "objectives" });
+
+      // Header row with label + reset button
+      const objHeader = el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" } });
+      objHeader.appendChild(el("div", { class: "obj-title", style: { margin: "0" } }, "✏️ Obiettivi lezione (modificabili)"));
+
+      // Show reset button only when teacher has edited
+      if (state.editedObjectives !== null) {
+        const resetBtn = el("button", {
+          style: {
+            fontSize: "11px", border: "1px solid #0d9488", borderRadius: "5px",
+            padding: "2px 7px", cursor: "pointer", background: "#f0fdfa",
+            color: "#0d9488", fontFamily: "Georgia, serif"
+          },
+          onClick: () => { state.editedObjectives = null; render(); }
+        }, "↺ Ripristina");
+        objHeader.appendChild(resetBtn);
+      }
+
+      objBox.appendChild(objHeader);
+
+      const objTa = document.createElement("textarea");
+      objTa.className = "obj-textarea";
+      objTa.rows = objectives.length + 1;
+      objTa.value = currentObjText;
+      objTa.addEventListener("input", e => {
+        state.editedObjectives = e.target.value;
+      });
+      objBox.appendChild(objTa);
       lessonCard.appendChild(objBox);
     }
+    // ── END EDITABLE OBJECTIVES ────────────────────────────────────────────
   }
   body.appendChild(lessonCard);
 
@@ -452,9 +488,15 @@ function doAddStudent(g) {
 function buildPrompt() {
   const g = state.selectedGroup;
   const objectives = getCurriculumObjectives(g.char, state.selectedStory, state.selectedDay);
-  const objText = objectives.length > 0
-    ? "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" + objectives.map((o, i) => (i+1) + ". " + o).join("\n")
-    : "";
+
+  // ── Use teacher-edited objectives if available, otherwise fall back to curriculum ──
+  let objText = "";
+  if (state.editedObjectives !== null && state.editedObjectives.trim()) {
+    objText = "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" + state.editedObjectives.trim();
+  } else if (objectives.length > 0) {
+    objText = "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" + objectives.map((o, i) => (i+1) + ". " + o).join("\n");
+  }
+
   return `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note interne di valutazione individuale, ad uso esclusivo dell'insegnante, che serviranno come base per le pagelle.
 Livello del gruppo: ${g.level}.
 ${objText}
@@ -540,5 +582,6 @@ function handleSave() {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 render();
 </script>
+
 </body>
 </html>
