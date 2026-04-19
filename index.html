@@ -497,7 +497,7 @@ function buildPrompt() {
     objText = "Obiettivi didattici della lezione odierna (dalla Teacher Guide Kids&Us):\n" + objectives.map((o, i) => (i+1) + ". " + o).join("\n");
   }
 
-  return `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note interne di valutazione individuale, ad uso esclusivo dell'insegnante, che serviranno come base per le pagelle.
+  return `Sei un assistente per insegnanti Kids&Us in Italia. Scrivi note interne di valutazione individuale, ad uso esclusivo dell'insegnante, che serviranno come base per le pagelle. Mantieni un tono caldo e affettuoso trattandosi di bambini molto piccoli .
 Livello del gruppo: ${g.level}.
 ${objText}
 Nota generale della lezione di oggi: "${state.groupNote}"
@@ -512,6 +512,7 @@ Per ciascun allievo PRESENTE scrivi una nota in italiano di 2-3 frasi che:
 - Inizi sempre con il nome dell'allievo
 - Suddivida la valutazione in motivazione, apprendimento e comportamento 
 - Non faccia riferimenti ad azioni da intraprendere
+- Mantenga un tono caldo e affettuoso, non troppo formale
 
 Rispondi SOLO con un oggetto JSON valido, senza markdown, senza backtick, nel formato:
 {"NomeAllievo": "nota individuale", ...}`;
