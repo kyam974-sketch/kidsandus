@@ -355,9 +355,9 @@ function renderSession(root){
   noteCard.appendChild(ta);
 
   const genRow=el("div",{class:"gen-row"});
-  const btnA=el("button",{class:"generate-btn",disabled:state.generating,onClick:()=>handleGenerate("fromNote")});
+  const btnA=el("button",{class:"generate-btn",style:{opacity:state.generating?"0.5":"1"},onClick:()=>handleGenerate("fromNote")});
   btnA.innerHTML=state.generating&&state.generatingMode==="fromNote"?`<span class="spinner"></span>Generando...`:"✨ PDF+Nota → Note+Emoji";
-  const btnB=el("button",{class:"generate-btn secondary",disabled:state.generating,onClick:()=>handleGenerate("fromEmoji")});
+  const btnB=el("button",{class:"generate-btn secondary",style:{opacity:state.generating?"0.5":"1"},onClick:()=>handleGenerate("fromEmoji")});
   btnB.innerHTML=state.generating&&state.generatingMode==="fromEmoji"?`<span class="spinner dark"></span>Generando...`:"😊 Emoji → Note";
   genRow.append(btnA,btnB);
   noteCard.appendChild(genRow);
@@ -400,7 +400,7 @@ function renderSession(root){
     });
 
     if(!state.saved){
-      const sb=el("button",{class:"save-btn",disabled:state.saving,onClick:handleSave});
+      const sb=el("button",{class:"save-btn",style:{opacity:state.saving?"0.5":"1"},onClick:handleSave});
       sb.innerHTML=state.saving?'<span class="spinner"></span>Salvando...':"☁️ Salva su Supabase";
       ec.appendChild(sb);
     } else {
