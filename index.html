@@ -258,7 +258,7 @@ function renderHome(root){
   g2.appendChild(sgDate);
   card.appendChild(g2);
 
-  const canGo=state.sede&&state.corso&&state.giorno&&state.sessionDate;
+  const canGo=state.sede&&state.corso&&state.giorno;
   const goBtn=el("button",{class:"go-btn",disabled:!canGo,onClick:openSession},"▶ Inizia sessione");
   card.appendChild(goBtn);
 
