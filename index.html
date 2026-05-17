@@ -259,7 +259,11 @@ function renderHome(root){
   card.appendChild(g2);
 
   const canGo=state.sede&&state.corso&&state.giorno;
-  const goBtn=el("button",{class:"go-btn",disabled:!canGo,onClick:openSession},"▶ Inizia sessione");
+  const goBtn=el("button",{
+    class:"go-btn",
+    style:{ opacity: canGo?"1":"0.4" },
+    onClick: openSession
+  },"▶ Inizia sessione");
   card.appendChild(goBtn);
 
   body.appendChild(card);
@@ -267,7 +271,10 @@ function renderHome(root){
 }
 
 async function openSession(){
-  if(!state.sede||!state.corso||!state.giorno) return;
+  if(!state.sede||!state.corso||!state.giorno){
+    alert("Seleziona sede, corso e giorno prima di continuare.");
+    return;
+  }
   try {
     const row=await getGroupStudents(state.sede,state.corso,state.giorno);
     state.students=row?(row.students||[]):[];
