@@ -8,519 +8,475 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { min-height: 100vh; background: #f0fdfa; font-family: Georgia, serif; padding-bottom: 60px; }
 .header { background: #0d9488; color: white; padding: 14px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 10; }
-.logo-text { font-weight: bold; font-size: 18px; flex: 1; }
-.btn-header { background: rgba(255,255,255,.2); border: none; color: white; border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 14px; font-family: Georgia, serif; }
-.btn-back-sm { background: white; border: 2px solid #0d9488; color: #0d9488; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 13px; margin-bottom: 12px; display: inline-block; font-family: Georgia, serif; }
-.level-pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+.logo-text { font-weight: bold; font-size: 17px; flex: 1; }
+.btn-header { background: rgba(255,255,255,.2); border: none; color: white; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-family: Georgia, serif; white-space: nowrap; }
 .home-body { padding: 16px; }
 .body { padding: 12px 16px; }
-.level-block { margin-bottom: 18px; }
-.level-label { display: inline-block; padding: 3px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 2px solid; margin-bottom: 8px; }
-.group-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.group-pill { border: none; border-radius: 10px; padding: 9px 16px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.1); font-family: Georgia, serif; }
 .card { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
-.card-title { font-weight: bold; color: #0d9488; font-size: 15px; margin-bottom: 10px; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; }
-select { flex: 1; min-width: 140px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; font-family: Georgia, serif; background: white; }
-.objectives { margin-top: 12px; background: #f0fdfa; border-radius: 8px; padding: 10px; }
-.obj-title { font-weight: bold; color: #0d9488; font-size: 12px; margin-bottom: 6px; }
-.obj-textarea { font-size: 12px; line-height: 1.6; color: #374151; border: none; background: transparent; resize: vertical; width: 100%; outline: none; padding: 0; font-family: Georgia, serif; }
+.card-title { font-weight: bold; color: #0d9488; font-size: 15px; margin-bottom: 12px; }
+.card-subtitle { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
+.selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.sel-group { display: flex; flex-direction: column; gap: 4px; }
+.sel-label { font-size: 11px; font-weight: bold; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+select { width: 100%; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; font-family: Georgia, serif; background: white; color: #111; }
+select:focus { border-color: #0d9488; }
+input[type=text], input[type=date] { width: 100%; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; font-family: Georgia, serif; background: white; }
+input[type=text]:focus, input[type=date]:focus { border-color: #0d9488; }
+.go-btn { width: 100%; margin-top: 10px; background: #0d9488; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; }
+.go-btn:disabled { opacity: 0.4; cursor: default; }
 .student-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .student-item { display: flex; align-items: center; gap: 4px; }
-.pres-btn { border: none; border-radius: 20px; padding: 6px 14px; font-size: 14px; cursor: pointer; font-weight: bold; font-family: Georgia, serif; }
+.pres-btn { border: none; border-radius: 20px; padding: 7px 14px; font-size: 14px; cursor: pointer; font-weight: bold; font-family: Georgia, serif; }
 .pres-btn.present { background: #0d9488; color: white; }
 .pres-btn.absent { background: #e5e7eb; color: #6b7280; }
-.del-btn { background: #fee2e2; border: none; color: #dc2626; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; line-height: 22px; padding: 0; text-align: center; }
+.del-btn { background: #fee2e2; border: none; color: #dc2626; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; line-height: 22px; padding: 0; text-align: center; flex-shrink: 0; }
 .add-row { display: flex; gap: 8px; }
-input[type=text] { flex: 1; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-size: 14px; outline: none; font-family: Georgia, serif; }
-.add-btn { background: #0d9488; color: white; border: none; border-radius: 8px; width: 36px; font-size: 20px; cursor: pointer; }
+.add-btn { background: #0d9488; color: white; border: none; border-radius: 8px; width: 36px; font-size: 20px; cursor: pointer; flex-shrink: 0; }
+.pdf-zone { border: 2px dashed #0d9488; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; background: #f0fdfa; }
+.pdf-zone.loaded { border-style: solid; background: #d1fae5; border-color: #059669; }
+.pdf-label { font-size: 14px; color: #0d9488; font-weight: bold; margin-bottom: 4px; }
+.pdf-sublabel { font-size: 12px; color: #6b7280; }
+input[type=file] { display: none; }
 textarea { width: 100%; border: 2px solid #e5e7eb; border-radius: 10px; padding: 12px; font-size: 14px; resize: vertical; outline: none; font-family: Georgia, serif; line-height: 1.5; }
-
-/* ── GENERATE BUTTONS ── */
+textarea:focus { border-color: #0d9488; }
 .gen-row { display: flex; gap: 8px; margin-top: 12px; }
-.generate-btn { flex: 1; background: #0d9488; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; }
+.generate-btn { flex: 1; background: #0d9488; color: white; border: none; border-radius: 10px; padding: 11px 8px; font-size: 14px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; text-align: center; }
 .generate-btn.secondary { background: #f0fdfa; color: #0d9488; border: 2px solid #0d9488; }
-.generate-btn:disabled { opacity: 0.5; cursor: default; }
-
-/* ── STUDENT ENTRY CARD ── */
+.generate-btn:disabled { opacity: 0.45; cursor: default; }
+.mode-hint { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 6px; font-style: italic; }
 .entry-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .entry-card.has-data { border-color: #0d9488; }
-.entry-name { font-weight: bold; color: #0d9488; font-size: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.entry-name { font-weight: bold; color: #0d9488; font-size: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
 .copy-btn { border: 2px solid #0d9488; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-weight: bold; font-family: Georgia, serif; background: #f0fdfa; color: #0d9488; }
 .copy-btn.copied { background: #0d9488; color: white; }
-
-/* ── EMOJI RATINGS ── */
-.ratings-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.rating-group { flex: 1; min-width: 90px; }
-.rating-label { font-size: 10px; color: #6b7280; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; text-align: center; }
-.emoji-row { display: flex; gap: 3px; justify-content: center; }
-.emoji-btn { border: 2px solid transparent; background: #f3f4f6; border-radius: 8px; padding: 4px 5px; font-size: 18px; cursor: pointer; transition: all .15s; line-height: 1; }
+.ratings-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.rating-group { flex: 1; min-width: 0; }
+.rating-label { font-size: 10px; color: #6b7280; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; text-align: center; }
+.emoji-row { display: flex; gap: 2px; justify-content: center; }
+.emoji-btn { border: 2px solid transparent; background: #f3f4f6; border-radius: 7px; padding: 3px 4px; font-size: 17px; cursor: pointer; transition: all .15s; line-height: 1; }
 .emoji-btn:hover { background: #e5e7eb; }
-.emoji-btn.selected { border-color: #0d9488; background: #f0fdfa; transform: scale(1.15); }
-.note-txt { background: #f9fafb; border: 1px solid #e5e7eb; margin-top: 6px; }
-
-/* ── MODE TOGGLE ── */
-.mode-hint { font-size: 12px; color: #9ca3af; text-align: center; margin-top: 6px; font-style: italic; }
-
-/* ── SAVE / STATUS ── */
-.save-btn { width: 100%; background: #059669; color: white; border: none; border-radius: 10px; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; margin-top: 4px; }
-.saved-msg { text-align: center; color: #059669; font-weight: bold; font-size: 16px; padding: 12px; }
-.sync-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
-.sync-badge.ok { background: #d1fae5; color: #065f46; }
-.sync-badge.err { background: #fee2e2; color: #991b1b; }
-.sync-badge.loading { background: #fef3c7; color: #92400e; }
-
-/* ── HISTORY ── */
-.empty { color: #9ca3af; text-align: center; padding: 20px; }
-.history-title { color: #0d9488; margin-bottom: 14px; font-size: 18px; }
+.emoji-btn.selected { border-color: #0d9488; background: #f0fdfa; transform: scale(1.18); }
+.note-txt { background: #f9fafb !important; border: 1px solid #e5e7eb !important; border-radius: 8px !important; }
+.save-btn { width: 100%; background: #059669; color: white; border: none; border-radius: 10px; padding: 13px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; margin-top: 6px; }
+.save-btn:disabled { opacity: 0.5; cursor: default; }
+.saved-msg { text-align: center; color: #059669; font-weight: bold; font-size: 16px; padding: 14px; }
+.btn-back-sm { background: white; border: 2px solid #0d9488; color: #0d9488; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 13px; margin-bottom: 12px; display: inline-block; font-family: Georgia, serif; }
+.history-title { color: #0d9488; margin-bottom: 14px; font-size: 17px; font-weight: bold; }
 .history-card { background: white; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
-.history-meta { font-weight: bold; color: #6b7280; font-size: 13px; margin-bottom: 5px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.history-meta { font-weight: bold; color: #6b7280; font-size: 13px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .history-tag { background: #f0fdfa; color: #0d9488; border-radius: 6px; padding: 1px 8px; font-size: 12px; }
-.history-group-note { color: #374151; font-size: 14px; margin-bottom: 6px; font-style: italic; }
+.history-group-note { color: #374151; font-size: 13px; margin-bottom: 8px; font-style: italic; }
 .history-present { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
-.history-row { font-size: 13px; color: #374151; padding: 6px 0; border-top: 1px solid #f3f4f6; }
-.history-ratings { font-size: 18px; margin-left: 6px; }
-.no-curriculum { color: #9ca3af; font-size: 13px; padding: 6px 0; }
-#app { display: contents; }
-
-/* ── SPINNER ── */
-.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+.history-row { font-size: 13px; color: #374151; padding: 6px 0; border-top: 1px solid #f3f4f6; line-height: 1.5; }
+.history-ratings { font-size: 16px; margin: 0 4px; }
+.empty { color: #9ca3af; text-align: center; padding: 24px; font-size: 14px; }
+.group-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.group-pill { border: none; border-radius: 10px; padding: 9px 16px; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.1); font-family: Georgia, serif; }
+.info-bar { background: #f0fdfa; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; color: #0d9488; display: flex; justify-content: space-between; align-items: center; }
+.sede-section-label { width: 100%; font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 4px; }
+.spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 5px; }
+.spinner.dark { border-color: rgba(13,148,136,.3); border-top-color: #0d9488; }
 @keyframes spin { to { transform: rotate(360deg); } }
+#app { display: contents; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://zuaalqhbesywmfvuvgho.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1YWFscWhiZXN5d21mdnV2Z2hvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODM1OTksImV4cCI6MjA4OTM1OTU5OX0.9drUMBRWudHc_jh3n0pJaybr2qKZUCQvAezuGzb2pGI";
 
-// ── SUPABASE HELPERS ──────────────────────────────────────────────────────────
-async function sbFetch(path, opts = {}) {
+const SEDI = ["Grosseto","Esterna"];
+const CORSI = ["Mousy","Linda","Sam","Emma","Oliver","Marcia","Pam & Paul","Ben & Brenda"];
+const CORSI_DISABLED = ["Ben & Brenda"];
+const GIORNI = ["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+const EMOJI_SCALE = [
+  {value:1,emoji:"😟",label:"Poor"},
+  {value:2,emoji:"😐",label:"Satisfactory"},
+  {value:3,emoji:"🙂",label:"Good"},
+  {value:4,emoji:"😊",label:"Very good"},
+  {value:5,emoji:"😄",label:"Excellent"},
+];
+const RATING_FIELDS = ["motivation","learning","behaviour"];
+const RATING_LABELS = {motivation:"Motivation",learning:"Learning",behaviour:"Behaviour"};
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function sbFetch(path, opts={}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
       "Content-Type": "application/json",
-      "Prefer": opts.prefer || "return=representation",
-      ...opts.headers
-    },
-    ...opts
+      "Prefer": opts.prefer||"return=representation",
+      ...(opts.headers||{})
+    }, ...opts
   });
   if (!res.ok) throw new Error(await res.text());
   const txt = await res.text();
   return txt ? JSON.parse(txt) : null;
 }
 
-async function loadHistory(groupId) {
-  return await sbFetch(`followup_sessions?group_id=eq.${groupId}&order=session_date.desc&limit=30`);
+async function getGroupStudents(sede,corso,giorno) {
+  const e=encodeURIComponent;
+  const rows = await sbFetch(`group_students?sede=eq.${e(sede)}&corso=eq.${e(corso)}&giorno=eq.${e(giorno)}&limit=1`);
+  return rows&&rows.length>0 ? rows[0] : null;
+}
+
+async function upsertGroupStudents(sede,corso,giorno,students) {
+  const existing = await getGroupStudents(sede,corso,giorno);
+  if (existing) {
+    await sbFetch(`group_students?id=eq.${existing.id}`,{method:"PATCH",prefer:"return=minimal",body:JSON.stringify({students})});
+  } else {
+    await sbFetch("group_students",{method:"POST",prefer:"return=minimal",body:JSON.stringify({sede,corso,giorno,students})});
+  }
 }
 
 async function saveSession(session) {
-  return await sbFetch("followup_sessions", {
-    method: "POST",
-    prefer: "return=representation",
-    body: JSON.stringify(session)
+  return await sbFetch("followup_sessions",{method:"POST",prefer:"return=representation",body:JSON.stringify(session)});
+}
+
+async function loadSessionHistory(sede,corso,giorno) {
+  const e=encodeURIComponent;
+  return await sbFetch(`followup_sessions?sede=eq.${e(sede)}&corso=eq.${e(corso)}&giorno=eq.${e(giorno)}&order=session_date.desc&limit=40`);
+}
+
+async function loadAllGroupsWithHistory() {
+  return await sbFetch(`followup_sessions?select=sede,corso,giorno&order=sede.asc,corso.asc,giorno.asc`);
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result.split(",")[1]);
+    r.onerror=reject;
+    r.readAsDataURL(file);
   });
 }
 
-async function loadStudents(groupId) {
-  // Students still local for speed — Supabase is for sessions only
-  try {
-    const r = localStorage.getItem("ku_students_" + groupId);
-    return r ? JSON.parse(r) : [];
-  } catch { return []; }
-}
-
-function persistStudents(groupId, students) {
-  try { localStorage.setItem("ku_students_" + groupId, JSON.stringify(students)); } catch {}
-}
-
-// ── EMOJI SCALE ───────────────────────────────────────────────────────────────
-const EMOJI_SCALE = [
-  { value: 1, emoji: "😟", label: "Poor" },
-  { value: 2, emoji: "😐", label: "Satisfactory" },
-  { value: 3, emoji: "🙂", label: "Good" },
-  { value: 4, emoji: "😊", label: "Very good" },
-  { value: 5, emoji: "😄", label: "Excellent" },
-];
-const RATING_FIELDS = ["motivation", "learning", "behaviour"];
-const RATING_LABELS = { motivation: "Motivation", learning: "Learning", behaviour: "Behaviour" };
-
-// ── CURRICULUM DATA ───────────────────────────────────────────────────────────
-const CURRICULUM = {"MOUSY":{"Part 1":{"title":"Part 1","lessons":{"Day 1":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise their name when asked."],"Day 2":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise their name when asked."],"Day 3":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise their name when asked."],"Day 4":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 5":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 6":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 7":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures.","To recognise cardinal numbers from 1 to 5 and to count to 5."],"Day 8":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 9":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 10":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."]}},"Part 2":{"title":"Part 2","lessons":{"Day 1":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 2":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 3":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 4":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 5":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 6":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 7":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 8":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 9":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 10":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise their name when asked.","To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures."]}},"Part 3":{"title":"Part 3","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 2":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 3":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 4":["To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 5":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 3 and to count to 3."],"Day 6":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 7":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 8":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 9":["To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To understand and follow simple instructions delivered within the context of the class, if supported by realia, pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 10":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise their name when asked.","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures."]}},"Part 4":{"title":"Part 4","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 2":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 3":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 4":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 5":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 6":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 7":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures."],"Day 8":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To recognise isolated words related to familiar topics, if spoken slowly and clearly and supported by pictures or gestures.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 9":["To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures.","To understand simple evaluation (e.g., \u2018yes/no\u2019, \u2018good/bad\u2019) and respond to request for it with gesture.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 10":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise their name when asked.","To understand and follow simple instructions delivered within the context of the class, if supported by pictures or gestures."]}}},"LINDA":{"Part 1":{"title":"Part 1","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To introduce themselves by answering the question."],"Day 2":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To introduce themselves by answering the question."],"Day 3":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To introduce themselves by answering the question."],"Day 4":["To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 5":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 6":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 7":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 8":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 9":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To introduce themselves by answering the question.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 10":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."]}},"Part 2":{"title":"Part 2","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To introduce themselves by answering the question.","To follow basic and simple instructions, if supported by gestures."],"Day 2":["To understand and use basic informal expressions for greeting and leave-taking (e.g., \u2018Hello\u2019, \u2018Hi\u2019, \u2018Bye\u2019), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 3":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 4":["To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To introduce themselves by answering the question.","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 5":["To introduce themselves by answering the question.","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 6":["To introduce themselves by answering the question.","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 7":["To introduce themselves by answering the question.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 8":["To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 9":["To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 10":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., \u2018Please\u2019, \u2018Thank you\u2019, \u2018Sorry\u2019).","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."]}},"Part 3":{"title":"Part 3","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 2":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 3":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures."],"Day 4":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 5":["To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 6":["To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 7":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 8":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 9":["To say how old they are using basic phrase and/or mimicking with their fingers.","To introduce themselves by answering the question.","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 10":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."]}},"Part 4":{"title":"Part 4","lessons":{"Day 1":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 2":["To understand and use basic informal expressions for greeting and leave-taking (e.g., 'Hello', 'Hi', 'Bye'), if supported by gestures.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."],"Day 3":["To say how old they are using basic phrase and/or mimicking with their fingers.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 10 and to count to 10."],"Day 4":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly."],"Day 5":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 6":["To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 7":["To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 8":["To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly.","To recognise cardinal numbers from 1 to 10 and to count to 10."],"Day 9":["To introduce themselves by answering the question.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly.","To identify everyday objects, people or animals in their immediate surroundings or in pictures from short, basic descriptions (e.g., colour, size), if spoken slowly and clearly.","To repeat single words or short sentences if spoken slowly and clearly."],"Day 10":["To say how old they are using basic phrase and/or mimicking with their fingers.","To understand and say some basic words and phrases to show politeness (e.g., 'Please', 'Thank you', 'Sorry').","To follow basic and simple instructions, if supported by gestures.","To recognise and name few familiar everyday words/structures (e.g., colours, numbers, classroom objects) in sentence, if spoken slowly and clearly."]}}},"SAM":{"Story 1":{"title":"Happy Birthday","lessons":{"Day 1":[],"Day 2":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 3":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 4":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 5":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 6":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 7":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 8":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 9":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 10":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To understand simple spoken commands and take part in games and activities."]}},"Story 2":{"title":"The Park","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 2":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 3":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 4":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 5":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 6":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 7":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 8":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 9":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."],"Day 10":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To identify, name, and describe (by colour, size, or shape) everyday objects."]}},"Story 3":{"title":"The Zoo","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 2":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 3":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 4":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 5":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 6":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 7":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 8":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 9":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 10":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."]}},"Story 4":{"title":"The Picnic","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 2":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 3":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 4":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 5":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 6":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 7":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 8":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 9":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."],"Day 10":["To understand and use basic fixed expressions for greeting and leave-taking.","To understand and answer simple questions about personal information.","To say how they feel.","To describe what the weather is like using basic phrases."]}}},"EMMA":{"Story 1":{"title":"Sweets","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 2":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 3":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 4":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To recognise and use/count cardinal numbers up to 15."],"Day 5":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify, name, and describe items (by colour, size, or shape)."],"Day 6":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 7":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 8":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 9":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."],"Day 10":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To say how they feel.","To understand and answer simple questions about familiar topics and stories."]}},"Story 2":{"title":"Eggs","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 2":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 3":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 4":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 5":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 6":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 7":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 8":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 9":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 10":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."]}},"Story 3":{"title":"Bath","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 2":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 3":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 4":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 5":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 6":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 7":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 8":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 9":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 10":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."]}},"Story 4":{"title":"Tattoo","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 2":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 3":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 4":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 5":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 6":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 7":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 8":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 9":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."],"Day 10":["To understand and use basic fixed expressions for greeting.","To describe what the weather is like using basic phrases.","To understand and answer simple questions about personal information.","To say how they feel."]}}},"MARCIA":{"Story 1":{"title":"The Alien","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To say how they feel and associate actions with moods."],"Day 2":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To say how they feel and associate actions with moods."],"Day 3":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 4":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 5":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 6":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 7":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 8":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 9":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."],"Day 10":["To understand and use basic fixed expressions for greeting and leave-taking and to show politeness.","To understand, ask, and answer simple questions about personal information.","To associate actions with weather conditions.","To understand, state, ask, and answer simple questions about where people or things are."]}},"Story 2":{"title":"Polly goes to School","lessons":{"Day 1":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 2":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 3":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 4":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 5":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 6":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To answer questions about the story."],"Day 7":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To compare people, animals, and objects."],"Day 8":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To compare people, animals, and objects."],"Day 9":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To compare people, animals, and objects."],"Day 10":["To ask and answer what the weather is like using basic phrases.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to animals and habitats.","To compare people, animals, and objects."]}},"Story 3":{"title":"The Ski Trip","lessons":{"Day 1":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 2":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To follow simple instructions."],"Day 3":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 4":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To follow simple instructions."],"Day 5":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 6":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 7":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 8":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."],"Day 9":["To describe the weather conditions and associate them with some clothes.","To explain what somebody is doing, depending on how they feel.","To identify everyday objects and concepts.","To identify some actions."],"Day 10":["To associate clothes with weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to places, activities and clothing.","To identify and name actions."]}},"Story 4":{"title":"The Birthday Cake","lessons":{"Day 1":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 2":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 3":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 4":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 5":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 6":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 7":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 8":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 9":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."],"Day 10":["To describe images related to the weather conditions.","To say how they feel and associate actions with moods.","To identify and name vocabulary related to food, cooking and mealtimes.","To follow simple instructions."]}}},"OLIVER":{"Story 1":{"title":"Wobbly Tooth","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to rooms.","To understand and state where things are, using basic phrases."],"Day 2":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to rooms.","To associate actions with places / parts of the house."],"Day 3":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to rooms.","To associate actions with places / parts of the house."],"Day 4":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms.","To associate actions with places / parts of the house."],"Day 5":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To associate actions with places / parts of the house."],"Day 6":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To associate actions with places / parts of the house."],"Day 7":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To associate actions with places / parts of the house."],"Day 8":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To associate actions with places / parts of the house."],"Day 9":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To understand and state where things are, using basic phrases."],"Day 10":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to rooms and family members.","To understand and state where things are, using basic phrases."]}},"Story 2":{"title":"Flu","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to body parts and illnesses."],"Day 2":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To identify common ailments."],"Day 3":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To say how they feel.","To count to 20.","To recognise some basic colours."],"Day 4":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To count to 20."],"Day 5":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To identify common ailments and associate them with solutions."],"Day 6":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To associate clothes and actions with weather conditions.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses."],"Day 7":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To identify common ailments and associate them with solutions."],"Day 8":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts, illnesses and rooms.","To identify common ailments and associate them with solutions."],"Day 9":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To identify common ailments."],"Day 10":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe what the weather is like using basic phrases.","To explain how they feel.","To identify and name simple vocabulary related to body parts and illnesses.","To identify common ailments and associate them with solutions."]}},"Story 3":{"title":"Baby","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel.","To identify and name simple vocabulary related to actions and family members.","To describe people physically."],"Day 2":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to actions and family members.","To answer questions about the story."],"Day 3":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To answer questions about the story."],"Day 4":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To differentiate some opposite concepts.","To identify and name simple vocabulary related to family members and everyday objects."],"Day 5":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To understand, state and compare what people can or can't do."],"Day 6":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To differentiate some opposite concepts.","To identify and name simple vocabulary related to family members and everyday objects."],"Day 7":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To answer questions about the story."],"Day 8":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To answer questions about the story."],"Day 9":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To answer questions about the story."],"Day 10":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to family members and everyday objects.","To answer questions about the story."]}},"Story 4":{"title":"Washing Machine","lessons":{"Day 1":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 2":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 3":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 4":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 5":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 6":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 7":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 8":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 9":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."],"Day 10":["To understand and use basic fixed expressions for greeting and showing politeness.","To describe the weather using basic phrases.","To say how they feel and associate moods with actions.","To identify and name simple vocabulary related to clothing and weather.","To describe what they are wearing."]}}}};
-
-const CURRICULUM_KEY = { mousy:"MOUSY", linda:"LINDA", sam:"SAM", emma:"EMMA", oliver:"OLIVER", marcia:"MARCIA", pampaul:null };
-
-const GROUPS = [
-  { id:"mousy1",   name:"Mousy 1",    char:"mousy",   level:"Babies",     color:"#fce7f3" },
-  { id:"mousy2",   name:"Mousy 2",    char:"mousy",   level:"Babies",     color:"#fce7f3" },
-  { id:"mousy3",   name:"Mousy 3",    char:"mousy",   level:"Babies",     color:"#fce7f3" },
-  { id:"mousy4",   name:"Mousy 4",    char:"mousy",   level:"Babies",     color:"#fce7f3" },
-  { id:"mousy5",   name:"Mousy 5",    char:"mousy",   level:"Babies",     color:"#fce7f3" },
-  { id:"linda1",   name:"Linda 1",    char:"linda",   level:"Mini",       color:"#dcfce7" },
-  { id:"linda2",   name:"Linda 2",    char:"linda",   level:"Mini",       color:"#dcfce7" },
-  { id:"linda3",   name:"Linda 3",    char:"linda",   level:"Mini",       color:"#dcfce7" },
-  { id:"linda4",   name:"Linda 4",    char:"linda",   level:"Mini",       color:"#dcfce7" },
-  { id:"linda5",   name:"Linda 5",    char:"linda",   level:"Mini",       color:"#dcfce7" },
-  { id:"sam1",     name:"Sam 1",      char:"sam",     level:"Junior",     color:"#ede9fe" },
-  { id:"sam2",     name:"Sam 2",      char:"sam",     level:"Junior",     color:"#ede9fe" },
-  { id:"emma1",    name:"Emma",       char:"emma",    level:"Junior",     color:"#dbeafe" },
-  { id:"oliver1",  name:"Oliver",     char:"oliver",  level:"Oliver",     color:"#fed7aa" },
-  { id:"marcia1",  name:"Marcia",     char:"marcia",  level:"Senior",     color:"#fef3c7" },
-  { id:"pampaul1", name:"Pam & Paul", char:"pampaul", level:"Pam & Paul", color:"#e0e7ff" },
-];
-
-const LEVEL_COLORS = {
-  "Babies":     { bg:"#fce7f3", text:"#9d174d",  border:"#f9a8d4" },
-  "Mini":       { bg:"#dcfce7", text:"#166534",  border:"#86efac" },
-  "Junior":     { bg:"#dbeafe", text:"#1e3a8a",  border:"#93c5fd" },
-  "Oliver":     { bg:"#ffedd5", text:"#9a3412",  border:"#fed7aa" },
-  "Senior":     { bg:"#fef3c7", text:"#92400e",  border:"#fcd34d" },
-  "Pam & Paul": { bg:"#e0e7ff", text:"#3730a3",  border:"#a5b4fc" },
-};
-const LEVELS = ["Babies","Mini","Junior","Oliver","Senior","Pam & Paul"];
-
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = {
-  view: "home",
-  selectedGroup: null,
-  historyGroup: null,
-  historyEntries: [],
-  historyLoading: false,
-  students: [],
-  newStudent: "",
-  presentStudents: [],
-  selectedStory: "",
-  selectedDay: "",
-  groupNote: "",
-  editedObjectives: null,
-  // entries: { [name]: { note, motivation, learning, behaviour } }
-  entries: {},
-  generating: false,
-  generatingMode: null, // "fromNote" | "fromEmoji"
-  generated: false,
-  saved: false,
-  saving: false,
-  copiedKey: null,
+  view:"home",
+  sede:"", corso:"", giorno:"",
+  sessionDate: todayISO(),
+  students:[], newStudent:"", presentStudents:[],
+  groupNote:"",
+  pdfFile:null, pdfBase64:null, pdfName:"",
+  entries:{},
+  generating:false, generatingMode:null,
+  generated:false, saving:false, saved:false, copiedKey:null,
+  historyView:"groups",
+  historyGroups:[], historyGroupsLoading:false,
+  historySelected:null,
+  historySessions:[], historySessionsLoading:false,
 };
 
-function getEntry(name) {
-  return state.entries[name] || { note:"", motivation:null, learning:null, behaviour:null };
-}
-function setEntry(name, patch) {
-  state.entries[name] = { ...getEntry(name), ...patch };
-}
-
-function getCurriculumObjectives(char, story, day) {
-  const key = CURRICULUM_KEY[char];
-  if (!key || !story || !day) return [];
-  return CURRICULUM[key]?.[story]?.lessons?.[day] || [];
-}
-function fmtDate(iso) { const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
-function emojiFor(field, value) { return value ? (EMOJI_SCALE.find(e=>e.value===value)?.emoji || "—") : "—"; }
+function todayISO(){ return new Date().toISOString().split("T")[0]; }
+function getEntry(name){ return state.entries[name]||{note:"",motivation:null,learning:null,behaviour:null}; }
+function setEntry(name,patch){ state.entries[name]={...getEntry(name),...patch}; }
+function fmtDate(iso){ if(!iso)return""; const[y,m,d]=iso.split("-"); return`${d}/${m}/${y}`; }
+function emojiFor(v){ return v?(EMOJI_SCALE.find(e=>e.value===v)?.emoji||""):""; }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
-  if (state.view==="home") renderHome(app);
-  else if (state.view==="session") renderSession(app);
-  else if (state.view==="history") renderHistory(app);
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+  if(state.view==="home") renderHome(app);
+  else if(state.view==="session") renderSession(app);
+  else if(state.view==="history") renderHistory(app);
 }
 
-function el(tag, attrs, ...children) {
-  const e = document.createElement(tag);
-  if (attrs) for (const [k,v] of Object.entries(attrs)) {
-    if (k==="style"&&typeof v==="object") Object.assign(e.style,v);
-    else if (k.startsWith("on")&&typeof v==="function") e.addEventListener(k.slice(2).toLowerCase(),v);
-    else if (k==="class") e.className=v;
-    else if (k==="disabled"&&v) e.disabled=true;
-    else if (k==="rows") e.rows=v;
-    else if (k==="placeholder") e.placeholder=v;
-    else if (k==="value"&&(tag==="textarea"||tag==="input")) e.value=v;
+function el(tag,attrs,...children){
+  const e=document.createElement(tag);
+  if(attrs) for(const[k,v]of Object.entries(attrs)){
+    if(k==="style"&&typeof v==="object") Object.assign(e.style,v);
+    else if(k.startsWith("on")&&typeof v==="function") e.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(k==="class") e.className=v;
+    else if(k==="disabled"&&v) e.disabled=true;
+    else if(k==="rows") e.rows=v;
+    else if(k==="placeholder") e.placeholder=v;
+    else if(k==="value"&&(tag==="textarea"||tag==="input")) e.value=v;
     else e.setAttribute(k,v);
   }
-  for (const c of children) {
-    if (c==null) continue;
-    if (typeof c==="string"||typeof c==="number") e.appendChild(document.createTextNode(c));
-    else if (c instanceof Node) e.appendChild(c);
-    else if (Array.isArray(c)) c.forEach(cc=>{ if(cc instanceof Node) e.appendChild(cc); });
+  for(const c of children){
+    if(c==null) continue;
+    if(typeof c==="string"||typeof c==="number") e.appendChild(document.createTextNode(c));
+    else if(c instanceof Node) e.appendChild(c);
+    else if(Array.isArray(c)) c.forEach(cc=>{ if(cc instanceof Node) e.appendChild(cc); });
   }
   return e;
 }
 
-function renderHome(root) {
-  const header = el("div",{class:"header"},
+// ── HOME ──────────────────────────────────────────────────────────────────────
+function renderHome(root){
+  const header=el("div",{class:"header"},
     el("span",{class:"logo-text"},"🐭 Kids&Us Follow-Up"),
-    el("button",{class:"btn-header",onClick:()=>{ state.view="history"; state.historyGroup=null; state.historyEntries=[]; render(); loadHistoryList(); }},"📋 Storico")
+    el("button",{class:"btn-header",onClick:openHistory},"📋 Storico")
   );
-  const body = el("div",{class:"home-body"});
-  for (const level of LEVELS) {
-    const lc = LEVEL_COLORS[level];
-    const groups = GROUPS.filter(g=>g.level===level);
-    const block = el("div",{class:"level-block"});
-    const label = el("div",{class:"level-label",style:{background:lc.bg,color:lc.text,borderColor:lc.border}},level);
-    const pills = el("div",{class:"group-pills"});
-    groups.forEach(g=>{
-      const btn = el("button",{class:"group-pill",style:{background:g.color},onClick:async()=>{
-        state.selectedGroup=g;
-        state.students=await loadStudents(g.id);
-        state.presentStudents=[...state.students];
-        state.selectedStory=""; state.selectedDay="";
-        state.groupNote=""; state.editedObjectives=null;
-        state.entries={}; state.generated=false; state.saved=false; state.newStudent="";
-        state.view="session"; render();
-      }},g.name);
-      pills.appendChild(btn);
-    });
-    block.append(label,pills);
-    body.appendChild(block);
-  }
+  const body=el("div",{class:"home-body"});
+  const card=el("div",{class:"card"});
+  card.appendChild(el("div",{class:"card-title"},"Seleziona gruppo e data"));
+
+  // Row 1: Sede + Corso
+  const g1=el("div",{class:"selector-grid"});
+
+  const sgSede=el("div",{class:"sel-group"});
+  sgSede.appendChild(el("div",{class:"sel-label"},"Sede"));
+  const sedeEl=el("select",{});
+  sedeEl.innerHTML='<option value="">— Sede —</option>';
+  SEDI.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; if(s===state.sede)o.selected=true; sedeEl.appendChild(o); });
+  sedeEl.addEventListener("change",()=>{ state.sede=sedeEl.value; render(); });
+  sgSede.appendChild(sedeEl);
+  g1.appendChild(sgSede);
+
+  const sgCorso=el("div",{class:"sel-group"});
+  sgCorso.appendChild(el("div",{class:"sel-label"},"Corso"));
+  const corsoEl=el("select",{});
+  corsoEl.innerHTML='<option value="">— Corso —</option>';
+  CORSI.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; if(CORSI_DISABLED.includes(c)){o.disabled=true; o.textContent=c+" (pross. anno)";} if(c===state.corso)o.selected=true; corsoEl.appendChild(o); });
+  corsoEl.addEventListener("change",()=>{ state.corso=corsoEl.value; render(); });
+  sgCorso.appendChild(corsoEl);
+  g1.appendChild(sgCorso);
+  card.appendChild(g1);
+
+  // Row 2: Giorno + Data
+  const g2=el("div",{class:"selector-grid"});
+
+  const sgGiorno=el("div",{class:"sel-group"});
+  sgGiorno.appendChild(el("div",{class:"sel-label"},"Giorno"));
+  const giornoEl=el("select",{});
+  giornoEl.innerHTML='<option value="">— Giorno —</option>';
+  GIORNI.forEach(g=>{ const o=document.createElement("option"); o.value=g; o.textContent=g; if(g===state.giorno)o.selected=true; giornoEl.appendChild(o); });
+  giornoEl.addEventListener("change",()=>{ state.giorno=giornoEl.value; render(); });
+  sgGiorno.appendChild(giornoEl);
+  g2.appendChild(sgGiorno);
+
+  const sgDate=el("div",{class:"sel-group"});
+  sgDate.appendChild(el("div",{class:"sel-label"},"Data lezione"));
+  const dateEl=el("input",{type:"date",value:state.sessionDate});
+  dateEl.addEventListener("change",()=>{ state.sessionDate=dateEl.value; });
+  sgDate.appendChild(dateEl);
+  g2.appendChild(sgDate);
+  card.appendChild(g2);
+
+  const canGo=state.sede&&state.corso&&state.giorno&&state.sessionDate;
+  const goBtn=el("button",{class:"go-btn",disabled:!canGo,onClick:openSession},"▶ Inizia sessione");
+  card.appendChild(goBtn);
+
+  body.appendChild(card);
   root.append(header,body);
 }
 
-function renderSession(root) {
-  const g = state.selectedGroup;
-  const lc = LEVEL_COLORS[g.level];
-  const charKey = CURRICULUM_KEY[g.char];
-  const currStories = charKey ? Object.keys(CURRICULUM[charKey]||{}) : [];
-  const currDays = (charKey&&state.selectedStory)
-    ? Object.keys(CURRICULUM[charKey]?.[state.selectedStory]?.lessons||{})
-        .sort((a,b)=>parseInt(a.split(" ")[1])-parseInt(b.split(" ")[1]))
-    : [];
-  const objectives = getCurriculumObjectives(g.char,state.selectedStory,state.selectedDay);
+async function openSession(){
+  if(!state.sede||!state.corso||!state.giorno) return;
+  try {
+    const row=await getGroupStudents(state.sede,state.corso,state.giorno);
+    state.students=row?(row.students||[]):[];
+  } catch(e){ state.students=[]; }
+  state.presentStudents=[...state.students];
+  state.groupNote=""; state.pdfFile=null; state.pdfBase64=null; state.pdfName="";
+  state.entries={}; state.generating=false; state.generatingMode=null;
+  state.generated=false; state.saving=false; state.saved=false; state.newStudent="";
+  state.view="session"; render();
+}
 
-  const header = el("div",{class:"header"},
+// ── SESSION ───────────────────────────────────────────────────────────────────
+function renderSession(root){
+  const header=el("div",{class:"header"},
     el("button",{class:"btn-header",onClick:()=>{ state.view="home"; render(); }},"← Home"),
-    el("span",{class:"level-pill",style:{background:lc.bg,color:lc.text}},g.level),
-    el("span",{class:"logo-text"},g.name)
+    el("span",{class:"logo-text"},`${state.corso} · ${state.giorno}`)
   );
-  const body = el("div",{class:"body"});
+  const body=el("div",{class:"body"});
 
-  // ── LESSON CARD ──
-  const lessonCard = el("div",{class:"card"},el("div",{class:"card-title"},"📖 Lezione"));
-  if (!charKey) {
-    lessonCard.appendChild(el("div",{class:"no-curriculum"},"📋 Curriculum non ancora disponibile."));
-  } else {
-    const storySelect = el("select",{});
-    storySelect.innerHTML='<option value="">— Storia / Part —</option>';
-    currStories.forEach(s=>{
-      const title=CURRICULUM[charKey][s].title;
-      const opt=document.createElement("option");
-      opt.value=s; opt.textContent=title!==s?`${s} · ${title}`:s;
-      if(s===state.selectedStory) opt.selected=true;
-      storySelect.appendChild(opt);
-    });
-    storySelect.addEventListener("change",()=>{ state.selectedStory=storySelect.value; state.selectedDay=""; state.editedObjectives=null; state.generated=false; render(); });
+  // Info bar
+  const ib=el("div",{class:"info-bar"});
+  ib.appendChild(el("span",{},`📍 ${state.sede}`));
+  ib.appendChild(el("span",{style:{fontWeight:"bold"}},`📅 ${fmtDate(state.sessionDate)}`));
+  body.appendChild(ib);
 
-    const daySelect = el("select",{});
-    daySelect.innerHTML='<option value="">— Day —</option>';
-    if(!state.selectedStory) daySelect.disabled=true;
-    currDays.forEach(d=>{
-      const opt=document.createElement("option");
-      opt.value=d; opt.textContent=d;
-      if(d===state.selectedDay) opt.selected=true;
-      daySelect.appendChild(opt);
-    });
-    daySelect.addEventListener("change",()=>{ state.selectedDay=daySelect.value; state.editedObjectives=null; state.generated=false; render(); });
-    lessonCard.appendChild(el("div",{class:"row"},storySelect,daySelect));
-
-    if (objectives.length>0) {
-      const defaultObjText = objectives.map(o=>"• "+o).join("\n");
-      const currentObjText = state.editedObjectives!==null ? state.editedObjectives : defaultObjText;
-      const objBox = el("div",{class:"objectives"});
-      const objHeader = el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}});
-      objHeader.appendChild(el("div",{class:"obj-title",style:{margin:"0"}},"✏️ Obiettivi lezione (modificabili)"));
-      if (state.editedObjectives!==null) {
-        objHeader.appendChild(el("button",{style:{fontSize:"11px",border:"1px solid #0d9488",borderRadius:"5px",padding:"2px 7px",cursor:"pointer",background:"#f0fdfa",color:"#0d9488",fontFamily:"Georgia, serif"},onClick:()=>{ state.editedObjectives=null; render(); }},"↺ Ripristina"));
-      }
-      objBox.appendChild(objHeader);
-      const objTa = document.createElement("textarea");
-      objTa.className="obj-textarea"; objTa.rows=objectives.length+1; objTa.value=currentObjText;
-      objTa.addEventListener("input",e=>{ state.editedObjectives=e.target.value; });
-      objBox.appendChild(objTa);
-      lessonCard.appendChild(objBox);
-    }
-  }
-  body.appendChild(lessonCard);
-
-  // ── STUDENTS CARD ──
-  const studCard = el("div",{class:"card"},el("div",{class:"card-title"},"👥 Presenze"));
-  const grid = el("div",{class:"student-grid"});
+  // STUDENTI
+  const studCard=el("div",{class:"card"});
+  studCard.appendChild(el("div",{class:"card-title"},"👥 Presenze"));
+  if(state.students.length===0) studCard.appendChild(el("div",{class:"card-subtitle"},"Nessun allievo ancora — aggiungili qui sotto, verranno salvati per questo gruppo."));
+  const grid=el("div",{class:"student-grid"});
   state.students.forEach(name=>{
     const present=state.presentStudents.includes(name);
     const btn=el("button",{class:"pres-btn "+(present?"present":"absent"),onClick:()=>{
       if(present) state.presentStudents=state.presentStudents.filter(s=>s!==name);
       else state.presentStudents=[...state.presentStudents,name];
-      state.generated=false; render();
+      render();
     }},(present?"✓ ":"✗ ")+name);
-    const del=el("button",{class:"del-btn",onClick:()=>{
+    const del=el("button",{class:"del-btn",onClick:async()=>{
       state.students=state.students.filter(s=>s!==name);
       state.presentStudents=state.presentStudents.filter(s=>s!==name);
-      persistStudents(g.id,state.students); render();
+      await upsertGroupStudents(state.sede,state.corso,state.giorno,state.students).catch(()=>{});
+      render();
     }},"×");
     grid.appendChild(el("div",{class:"student-item"},btn,del));
   });
-  const addInput=el("input",{type:"text",placeholder:"Aggiungi allievo...",value:state.newStudent});
+  const addInput=el("input",{type:"text",placeholder:"Nome allievo...",value:state.newStudent});
   addInput.addEventListener("input",e=>{ state.newStudent=e.target.value; });
-  addInput.addEventListener("keydown",e=>{ if(e.key==="Enter") doAddStudent(g); });
-  studCard.append(grid,el("div",{class:"add-row"},addInput,el("button",{class:"add-btn",onClick:()=>doAddStudent(g)},"+"))); 
+  addInput.addEventListener("keydown",e=>{ if(e.key==="Enter") doAddStudent(); });
+  studCard.append(grid,el("div",{class:"add-row"},addInput,el("button",{class:"add-btn",onClick:doAddStudent},"+")));
   body.appendChild(studCard);
 
-  // ── NOTE + GENERATE CARD ──
-  const noteCard = el("div",{class:"card"},el("div",{class:"card-title"},"📝 Nota di gruppo"));
-  const ta = el("textarea",{rows:4,placeholder:"Descrivi la lezione: attività svolte, dinamiche del gruppo, chi si è distinto... (opzionale se usi solo le emoji)"});
+  // PDF
+  const pdfCard=el("div",{class:"card"});
+  pdfCard.appendChild(el("div",{class:"card-title"},"📄 Lezione del giorno"));
+  pdfCard.appendChild(el("div",{class:"card-subtitle"},"Carica il PDF della lezione — l'AI lo leggerà per basare i giudizi sulle attività svolte."));
+  const pdfInput=document.createElement("input");
+  pdfInput.type="file"; pdfInput.accept=".pdf,application/pdf";
+  pdfInput.addEventListener("change",async e=>{
+    const file=e.target.files[0]; if(!file)return;
+    state.pdfFile=file; state.pdfName=file.name;
+    state.pdfBase64=await readFileAsBase64(file).catch(()=>null);
+    render();
+  });
+  const pdfZone=el("div",{class:"pdf-zone"+(state.pdfName?" loaded":""),onClick:()=>pdfInput.click()});
+  pdfZone.appendChild(el("div",{class:"pdf-label"},state.pdfName||"📎 Tocca per caricare il PDF"));
+  pdfZone.appendChild(el("div",{class:"pdf-sublabel"},state.pdfName?"✅ PDF caricato — tocca per cambiarlo":"Formato PDF accettato"));
+  pdfCard.appendChild(pdfZone);
+  pdfCard.appendChild(pdfInput);
+  body.appendChild(pdfCard);
+
+  // NOTA + GENERA
+  const noteCard=el("div",{class:"card"});
+  noteCard.appendChild(el("div",{class:"card-title"},"📝 Nota di gruppo"));
+  noteCard.appendChild(el("div",{class:"card-subtitle"},"Opzionale — dinamiche, episodi particolari, clima della classe."));
+  const ta=el("textarea",{rows:3,placeholder:"Es. lezione molto partecipata, abbiamo lavorato sui colori con le flashcard..."});
   ta.value=state.groupNote;
   ta.addEventListener("input",e=>{ state.groupNote=e.target.value; });
   noteCard.appendChild(ta);
 
-  const genRow = el("div",{class:"gen-row"});
-
-  const spinnerHtml = state.generating ? '<span class="spinner"></span>' : '';
-
-  // Btn A: da nota → genera note+emoji
-  const btnFromNote = el("button",{
-    class:"generate-btn",
-    disabled: state.generating,
-    onClick: ()=>handleGenerate("fromNote")
-  });
-  btnFromNote.innerHTML = state.generating&&state.generatingMode==="fromNote"
-    ? `<span class="spinner"></span>Generando...`
-    : "✨ Nota → Note + Emoji";
-
-  // Btn B: da emoji → genera note
-  const btnFromEmoji = el("button",{
-    class:"generate-btn secondary",
-    disabled: state.generating,
-    onClick: ()=>handleGenerate("fromEmoji")
-  });
-  btnFromEmoji.innerHTML = state.generating&&state.generatingMode==="fromEmoji"
-    ? `<span class="spinner"></span>Generando...`
-    : "😊 Emoji → Note";
-
-  genRow.append(btnFromNote, btnFromEmoji);
+  const genRow=el("div",{class:"gen-row"});
+  const btnA=el("button",{class:"generate-btn",disabled:state.generating,onClick:()=>handleGenerate("fromNote")});
+  btnA.innerHTML=state.generating&&state.generatingMode==="fromNote"?`<span class="spinner"></span>Generando...`:"✨ PDF+Nota → Note+Emoji";
+  const btnB=el("button",{class:"generate-btn secondary",disabled:state.generating,onClick:()=>handleGenerate("fromEmoji")});
+  btnB.innerHTML=state.generating&&state.generatingMode==="fromEmoji"?`<span class="spinner dark"></span>Generando...`:"😊 Emoji → Note";
+  genRow.append(btnA,btnB);
   noteCard.appendChild(genRow);
-  noteCard.appendChild(el("div",{class:"mode-hint"},"Modalità A: scrivi la nota e genera tutto · Modalità B: assegna le emoji e genera i testi"));
+  noteCard.appendChild(el("div",{class:"mode-hint"},"A: carica PDF (+ nota opzionale) → genera tutto · B: assegna emoji → genera i testi"));
   body.appendChild(noteCard);
 
-  // ── ENTRIES CARD (always visible for present students) ──
-  if (state.presentStudents.length>0) {
-    const entriesCard = el("div",{class:"card"},el("div",{class:"card-title"},"👤 Valutazioni individuali"));
-
+  // VALUTAZIONI
+  if(state.presentStudents.length>0){
+    const ec=el("div",{class:"card"});
+    ec.appendChild(el("div",{class:"card-title"},"👤 Valutazioni individuali"));
     state.presentStudents.forEach(name=>{
-      const entry = getEntry(name);
-      const hasData = entry.note || entry.motivation || entry.learning || entry.behaviour;
-      const nc = el("div",{class:"entry-card"+(hasData?" has-data":"")});
-
-      // Header
-      const copied = state.copiedKey===name;
-      const copyBtn = el("button",{class:"copy-btn"+(copied?" copied":""),onClick:()=>{
+      const entry=getEntry(name);
+      const hasData=entry.note||(entry.motivation||entry.learning||entry.behaviour);
+      const nc=el("div",{class:"entry-card"+(hasData?" has-data":"")});
+      const copied=state.copiedKey===name;
+      const copyBtn=el("button",{class:"copy-btn"+(copied?" copied":""),onClick:()=>{
         navigator.clipboard.writeText(entry.note||"").catch(()=>{});
         state.copiedKey=name; render();
         setTimeout(()=>{ state.copiedKey=null; render(); },1500);
-      }},copied?"✓ Copiato":"📋 Copia nota");
+      }},copied?"✓ Copiato":"📋 Copia");
       nc.appendChild(el("div",{class:"entry-name"},el("span",{},name),copyBtn));
-
-      // Emoji ratings
-      const ratingsRow = el("div",{class:"ratings-row"});
+      // Emoji
+      const rr=el("div",{class:"ratings-row"});
       RATING_FIELDS.forEach(field=>{
-        const rg = el("div",{class:"rating-group"});
+        const rg=el("div",{class:"rating-group"});
         rg.appendChild(el("div",{class:"rating-label"},RATING_LABELS[field]));
-        const emojiRow = el("div",{class:"emoji-row"});
+        const er=el("div",{class:"emoji-row"});
         EMOJI_SCALE.forEach(es=>{
-          const btn = el("button",{
-            class:"emoji-btn"+(entry[field]===es.value?" selected":""),
-            title: es.label,
-            onClick:()=>{ setEntry(name,{[field]:entry[field]===es.value?null:es.value}); render(); }
-          },es.emoji);
-          emojiRow.appendChild(btn);
+          const b=el("button",{class:"emoji-btn"+(entry[field]===es.value?" selected":""),title:es.label,onClick:()=>{ setEntry(name,{[field]:entry[field]===es.value?null:es.value}); render(); }},es.emoji);
+          er.appendChild(b);
         });
-        rg.appendChild(emojiRow);
-        ratingsRow.appendChild(rg);
+        rg.appendChild(er); rr.appendChild(rg);
       });
-      nc.appendChild(ratingsRow);
-
-      // Note textarea
-      const noteTa = el("textarea",{class:"note-txt",rows:3,placeholder:"Nota individuale (generata o scritta a mano)..."});
+      nc.appendChild(rr);
+      const noteTa=el("textarea",{class:"note-txt",rows:3,placeholder:"Nota individuale..."});
       noteTa.value=entry.note||"";
       noteTa.addEventListener("input",e=>{ setEntry(name,{note:e.target.value}); });
       nc.appendChild(noteTa);
-
-      entriesCard.appendChild(nc);
+      ec.appendChild(nc);
     });
 
-    // Save button
-    if (!state.saved) {
-      const saveBtn = el("button",{class:"save-btn",disabled:state.saving,onClick:handleSave});
-      saveBtn.innerHTML = state.saving ? '<span class="spinner"></span>Salvando...' : "☁️ Salva su Supabase";
-      entriesCard.appendChild(saveBtn);
+    if(!state.saved){
+      const sb=el("button",{class:"save-btn",disabled:state.saving,onClick:handleSave});
+      sb.innerHTML=state.saving?'<span class="spinner"></span>Salvando...':"☁️ Salva su Supabase";
+      ec.appendChild(sb);
     } else {
-      entriesCard.appendChild(el("div",{class:"saved-msg"},"✅ Lezione salvata su Supabase!"));
+      ec.appendChild(el("div",{class:"saved-msg"},"✅ Lezione salvata!"));
     }
-
-    body.appendChild(entriesCard);
+    body.appendChild(ec);
   }
 
   root.append(header,body);
 }
 
-async function loadHistoryList() {
-  // We'll load all groups that have history - check by loading a few
-  // For now just render the group picker, history loads per-group
-  render();
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+async function openHistory(){
+  state.view="history"; state.historyView="groups";
+  state.historyGroups=[]; state.historyGroupsLoading=true; render();
+  try {
+    const rows=await loadAllGroupsWithHistory()||[];
+    const seen=new Set();
+    state.historyGroups=rows.filter(r=>{
+      const k=`${r.sede}|${r.corso}|${r.giorno}`;
+      if(seen.has(k))return false; seen.add(k); return true;
+    });
+  } catch(e){ state.historyGroups=[]; }
+  state.historyGroupsLoading=false; render();
 }
 
-function renderHistory(root) {
-  const header = el("div",{class:"header"},
-    el("button",{class:"btn-header",onClick:()=>{ state.view="home"; state.historyGroup=null; render(); }},"← Home"),
+function renderHistory(root){
+  const header=el("div",{class:"header"},
+    el("button",{class:"btn-header",onClick:()=>{ state.view="home"; render(); }},"← Home"),
     el("span",{class:"logo-text"},"📋 Storico")
   );
-  const body = el("div",{class:"body"});
+  const body=el("div",{class:"body"});
 
-  if (!state.historyGroup) {
-    body.appendChild(el("div",{class:"card-title",style:{marginBottom:"12px"}},"Seleziona un gruppo per vedere lo storico:"));
-    const pills = el("div",{class:"group-pills"});
-    GROUPS.forEach(g=>{
-      const btn = el("button",{class:"group-pill",style:{background:g.color},onClick:async()=>{
-        state.historyGroup=g; state.historyLoading=true; state.historyEntries=[]; render();
-        try {
-          state.historyEntries = await loadHistory(g.id);
-        } catch(e) {
-          state.historyEntries=[];
-        }
-        state.historyLoading=false; render();
-      }},g.name);
-      pills.appendChild(btn);
-    });
-    body.appendChild(pills);
-  } else {
-    const hg = state.historyGroup;
-    body.appendChild(el("button",{class:"btn-back-sm",onClick:()=>{ state.historyGroup=null; render(); }},"← Gruppi"));
-    body.appendChild(el("h2",{class:"history-title"},hg.name));
-
-    if (state.historyLoading) {
+  if(state.historyView==="groups"){
+    if(state.historyGroupsLoading){
       body.appendChild(el("div",{class:"empty"},"⏳ Caricamento..."));
-    } else if (!state.historyEntries||state.historyEntries.length===0) {
-      body.appendChild(el("div",{class:"empty"},"Nessuno storico trovato per questo gruppo."));
+    } else if(state.historyGroups.length===0){
+      body.appendChild(el("div",{class:"empty"},"Nessuno storico ancora."));
     } else {
-      state.historyEntries.forEach(session=>{
-        const card = el("div",{class:"history-card"});
-        const meta = el("div",{class:"history-meta"},fmtDate(session.session_date));
-        if (session.story) meta.appendChild(el("span",{class:"history-tag"},`${session.story} — ${session.day}`));
-        card.appendChild(meta);
-        if (session.group_note) card.appendChild(el("div",{class:"history-group-note"},"📝 "+session.group_note));
-        const entries = session.entries||[];
-        const presentNames = entries.map(e=>e.name).join(", ");
-        if (presentNames) card.appendChild(el("div",{class:"history-present"},"Presenti: "+presentNames));
+      body.appendChild(el("div",{style:{fontSize:"13px",color:"#6b7280",marginBottom:"12px"}},"Seleziona un gruppo:"));
+      const pills=el("div",{class:"group-pills"});
+      SEDI.forEach(sede=>{
+        const sg=state.historyGroups.filter(g=>g.sede===sede);
+        if(sg.length===0)return;
+        pills.appendChild(el("div",{class:"sede-section-label"},sede));
+        sg.forEach(g=>{
+          const pill=el("button",{
+            class:"group-pill",
+            style:{background:"#f0fdfa",color:"#0d9488",border:"2px solid #0d9488"},
+            onClick:async()=>{
+              state.historySelected={sede:g.sede,corso:g.corso,giorno:g.giorno};
+              state.historyView="sessions"; state.historySessionsLoading=true;
+              state.historySessions=[]; render();
+              try{ state.historySessions=await loadSessionHistory(g.sede,g.corso,g.giorno)||[]; }
+              catch(e){ state.historySessions=[]; }
+              state.historySessionsLoading=false; render();
+            }
+          },`${g.corso} · ${g.giorno}`);
+          pills.appendChild(pill);
+        });
+      });
+      body.appendChild(pills);
+    }
+  } else {
+    const hs=state.historySelected;
+    body.appendChild(el("button",{class:"btn-back-sm",onClick:()=>{ state.historyView="groups"; render(); }},"← Gruppi"));
+    body.appendChild(el("div",{class:"history-title"},`${hs.sede} · ${hs.corso} · ${hs.giorno}`));
+    if(state.historySessionsLoading){
+      body.appendChild(el("div",{class:"empty"},"⏳ Caricamento..."));
+    } else if(state.historySessions.length===0){
+      body.appendChild(el("div",{class:"empty"},"Nessuna sessione trovata."));
+    } else {
+      state.historySessions.forEach(session=>{
+        const card=el("div",{class:"history-card"});
+        card.appendChild(el("div",{class:"history-meta"},fmtDate(session.session_date)));
+        if(session.group_note) card.appendChild(el("div",{class:"history-group-note"},"📝 "+session.group_note));
+        const entries=session.entries||[];
+        const present=entries.map(e=>e.name).join(", ");
+        if(present) card.appendChild(el("div",{class:"history-present"},"Presenti: "+present));
         entries.forEach(entry=>{
-          const row = el("div",{class:"history-row"});
-          const ratings = [
-            entry.motivation ? emojiFor("motivation",entry.motivation) : "",
-            entry.learning   ? emojiFor("learning",entry.learning)     : "",
-            entry.behaviour  ? emojiFor("behaviour",entry.behaviour)   : "",
-          ].filter(Boolean).join(" ");
-          row.innerHTML=`<strong>${entry.name}:</strong>${ratings?' <span class="history-ratings">'+ratings+'</span>':''} ${entry.note||""}`;
+          const row=el("div",{class:"history-row"});
+          const rats=[entry.motivation,entry.learning,entry.behaviour].map(emojiFor).filter(Boolean).join(" ");
+          row.innerHTML=`<strong>${entry.name}:</strong>${rats?` <span class="history-ratings">${rats}</span>`:""} ${entry.note||""}`;
           card.appendChild(row);
         });
         body.appendChild(card);
@@ -531,161 +487,120 @@ function renderHistory(root) {
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
-function doAddStudent(g) {
+async function doAddStudent(){
   const name=state.newStudent.trim();
-  if(!name||state.students.includes(name)) return;
+  if(!name||state.students.includes(name))return;
   state.students=[...state.students,name];
   state.presentStudents=[...state.presentStudents,name];
   state.newStudent="";
-  persistStudents(g.id,state.students); render();
+  await upsertGroupStudents(state.sede,state.corso,state.giorno,state.students).catch(()=>{});
+  render();
 }
 
-function buildObjectivesText() {
-  const g = state.selectedGroup;
-  const objectives = getCurriculumObjectives(g.char,state.selectedStory,state.selectedDay);
-  if (state.editedObjectives!==null&&state.editedObjectives.trim()) {
-    return "Obiettivi didattici della lezione:\n"+state.editedObjectives.trim();
-  } else if (objectives.length>0) {
-    return "Obiettivi didattici della lezione:\n"+objectives.map((o,i)=>(i+1)+". "+o).join("\n");
-  }
-  return "";
-}
+function buildPrompt(mode){
+  const present=state.presentStudents;
+  const pdfCtx=state.pdfBase64?"Il PDF della lezione è allegato — leggilo per capire le attività svolte e gli obiettivi didattici del giorno.":"";
+  const noteCtx=state.groupNote.trim()?`\nNota generale: "${state.groupNote}"`:"";
 
-function buildPromptFromNote() {
-  const g = state.selectedGroup;
-  const objText = buildObjectivesText();
-  const present = state.presentStudents;
-  return `Sei un assistente per insegnanti Kids&Us in Italia. Genera valutazioni interne per uso esclusivo dell'insegnante.
-Livello: ${g.level}.
-${objText}
-Nota generale: "${state.groupNote}"
+  if(mode==="fromNote"){
+    return `Sei un assistente per insegnanti Kids&Us in Italia. Genera valutazioni interne per uso esclusivo dell'insegnante (base per le pagelle).
+Corso: ${state.corso} · Sede: ${state.sede}.
+${pdfCtx}${noteCtx}
 Allievi presenti: ${present.join(", ")}.
 
 Per ciascun allievo presente genera:
-1. Una nota valutativa in italiano di 2-3 frasi (professionale, oggettiva, riferita agli obiettivi)
-2. Un valore numerico da 1 a 5 per ciascuna di queste tre dimensioni (1=Poor, 2=Satisfactory, 3=Good, 4=Very good, 5=Excellent):
-   - motivation: motivazione e partecipazione alle attività
-   - learning: apprendimento e raggiungimento degli obiettivi
-   - behaviour: comportamento e gestione della classe
+1. Nota valutativa in italiano di 2-3 frasi (professionale, oggettiva, basata sulle attività del PDF)
+2. Valore 1-5 per: motivation (partecipazione), learning (apprendimento), behaviour (comportamento)
+   Scala: 1=Poor 2=Satisfactory 3=Good 4=Very good 5=Excellent
 
-Rispondi SOLO con JSON valido, senza markdown, nel formato:
-{"NomeAllievo": {"note": "testo", "motivation": 4, "learning": 3, "behaviour": 5}, ...}`;
-}
+Rispondi SOLO con JSON valido senza markdown:
+{"NomeAllievo": {"note":"testo","motivation":4,"learning":3,"behaviour":5}, ...}`;
+  } else {
+    const ratingsDesc=present.map(name=>{
+      const e=getEntry(name);
+      const parts=[];
+      if(e.motivation) parts.push(`motivation: ${EMOJI_SCALE.find(x=>x.value===e.motivation)?.label}`);
+      if(e.learning)   parts.push(`learning: ${EMOJI_SCALE.find(x=>x.value===e.learning)?.label}`);
+      if(e.behaviour)  parts.push(`behaviour: ${EMOJI_SCALE.find(x=>x.value===e.behaviour)?.label}`);
+      return `${name}: ${parts.length>0?parts.join(", "):"nessuna valutazione"}`;
+    }).join("\n");
+    return `Sei un assistente per insegnanti Kids&Us in Italia. Genera note valutative interne basandoti sulle valutazioni emoji dell'insegnante.
+Corso: ${state.corso} · Sede: ${state.sede}.
+${pdfCtx}${noteCtx}
 
-function buildPromptFromEmoji() {
-  const g = state.selectedGroup;
-  const objText = buildObjectivesText();
-  const present = state.presentStudents;
-  const ratingsDesc = present.map(name=>{
-    const e = getEntry(name);
-    const parts = [];
-    if(e.motivation) parts.push(`motivation: ${EMOJI_SCALE.find(x=>x.value===e.motivation)?.label}`);
-    if(e.learning)   parts.push(`learning: ${EMOJI_SCALE.find(x=>x.value===e.learning)?.label}`);
-    if(e.behaviour)  parts.push(`behaviour: ${EMOJI_SCALE.find(x=>x.value===e.behaviour)?.label}`);
-    return `${name}: ${parts.length>0?parts.join(", "):"nessuna valutazione emoji"}`;
-  }).join("\n");
-
-  const noteContext = state.groupNote.trim()
-    ? `\nContesto lezione: "${state.groupNote}"`
-    : "";
-
-  return `Sei un assistente per insegnanti Kids&Us in Italia. Genera note valutative interne basandoti sulle valutazioni emoji fornite dall'insegnante.
-Livello: ${g.level}.
-${objText}${noteContext}
-
-Valutazioni emoji per ciascun allievo (scala: Poor=1, Satisfactory=2, Good=3, Very good=4, Excellent=5):
+Valutazioni emoji (1=Poor 2=Satisfactory 3=Good 4=Very good 5=Excellent):
 ${ratingsDesc}
 
-Per ciascun allievo scrivi una nota valutativa in italiano di 2-3 frasi coerente con i livelli indicati.
-La nota deve essere professionale, oggettiva, e fare riferimento agli obiettivi della lezione quando disponibili.
+Per ciascun allievo scrivi nota in italiano di 2-3 frasi coerente con i livelli indicati. Professionale e oggettiva.
 
-Rispondi SOLO con JSON valido, senza markdown, nel formato:
+Rispondi SOLO con JSON valido senza markdown:
 {"NomeAllievo": "testo nota", ...}`;
+  }
 }
 
-async function handleGenerate(mode) {
-  if (state.presentStudents.length===0) { alert("Segna almeno un allievo come presente."); return; }
-  if (mode==="fromNote"&&!state.groupNote.trim()) { alert("Scrivi prima la nota di gruppo per usare questa modalità."); return; }
-  if (mode==="fromEmoji") {
-    const hasAnyEmoji = state.presentStudents.some(name=>{
-      const e=getEntry(name); return e.motivation||e.learning||e.behaviour;
-    });
-    if(!hasAnyEmoji) { alert("Assegna almeno un'emoji a qualche allievo prima di generare."); return; }
+async function handleGenerate(mode){
+  if(state.presentStudents.length===0){ alert("Segna almeno un allievo come presente."); return; }
+  if(mode==="fromNote"&&!state.groupNote.trim()&&!state.pdfBase64){ alert("Carica il PDF della lezione o scrivi una nota di gruppo."); return; }
+  if(mode==="fromEmoji"){
+    const hasAny=state.presentStudents.some(n=>{ const e=getEntry(n); return e.motivation||e.learning||e.behaviour; });
+    if(!hasAny){ alert("Assegna almeno un'emoji a qualche allievo."); return; }
   }
-
   state.generating=true; state.generatingMode=mode; render();
 
-  const prompt = mode==="fromNote" ? buildPromptFromNote() : buildPromptFromEmoji();
+  const messages=[];
+  if(state.pdfBase64){
+    messages.push({role:"user",content:[
+      {type:"document",source:{type:"base64",media_type:"application/pdf",data:state.pdfBase64}},
+      {type:"text",text:buildPrompt(mode)}
+    ]});
+  } else {
+    messages.push({role:"user",content:buildPrompt(mode)});
+  }
 
-  try {
-    const resp = await fetch("/api/generate",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1500,
-        messages:[{role:"user",content:prompt}]
-      })
+  try{
+    const resp=await fetch("/api/generate",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages})
     });
-    const data = await resp.json();
-    const text = (data.content||[]).map(b=>b.text||"").join("");
-    const parsed = JSON.parse(text.trim());
+    const data=await resp.json();
+    const text=(data.content||[]).map(b=>b.text||"").join("");
+    const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
 
-    if (mode==="fromNote") {
-      // parsed = { name: { note, motivation, learning, behaviour } }
+    if(mode==="fromNote"){
       state.presentStudents.forEach(name=>{
-        const r = parsed[name];
-        if(r) setEntry(name,{
-          note: r.note||r||"",
-          motivation: r.motivation||null,
-          learning: r.learning||null,
-          behaviour: r.behaviour||null
-        });
+        const r=parsed[name]; if(!r)return;
+        if(typeof r==="object") setEntry(name,{note:r.note||"",motivation:r.motivation||null,learning:r.learning||null,behaviour:r.behaviour||null});
+        else setEntry(name,{note:String(r)});
       });
     } else {
-      // parsed = { name: "note text" }
-      state.presentStudents.forEach(name=>{
-        if(parsed[name]) setEntry(name,{note:parsed[name]});
-      });
+      state.presentStudents.forEach(name=>{ if(parsed[name]) setEntry(name,{note:parsed[name]}); });
     }
     state.generated=true;
-  } catch(e) {
-    alert("Errore durante la generazione: "+e.message);
-  }
+  } catch(e){ alert("Errore: "+e.message); }
   state.generating=false; state.generatingMode=null; render();
 }
 
-async function handleSave() {
+async function handleSave(){
   state.saving=true; render();
-  const g = state.selectedGroup;
-  const today = new Date().toISOString().split("T")[0];
-  const entries = state.presentStudents.map(name=>({ name, ...getEntry(name) }));
-  const session = {
-    group_id: g.id,
-    group_name: g.name,
-    session_date: today,
-    story: state.selectedStory||null,
-    day: state.selectedDay||null,
-    group_note: state.groupNote||null,
-    entries: entries
-  };
-  try {
-    await saveSession(session);
+  const entries=state.presentStudents.map(name=>({name,...getEntry(name)}));
+  try{
+    await saveSession({
+      group_id:`${state.sede}|${state.corso}|${state.giorno}`,
+      group_name:`${state.corso} · ${state.giorno}`,
+      sede:state.sede, corso:state.corso, giorno:state.giorno,
+      session_date:state.sessionDate,
+      story:null, day:null,
+      group_note:state.groupNote||null,
+      entries
+    });
     state.saved=true;
-  } catch(e) {
-    alert("Errore nel salvataggio: "+e.message);
-  }
+  } catch(e){ alert("Errore nel salvataggio: "+e.message); }
   state.saving=false; render();
 }
 
-// Scriptable bridge
-window.receiveNotes=function(jsonStr){
-  try { const p=JSON.parse(jsonStr); Object.keys(p).forEach(name=>setEntry(name,{note:p[name]})); state.generated=true; } catch{}
-  state.generating=false; render();
-};
-window.receiveError=function(msg){ alert("Errore: "+msg); state.generating=false; render(); };
+window.receiveNotes=function(j){ try{ const p=JSON.parse(j); Object.keys(p).forEach(n=>setEntry(n,{note:p[n]})); state.generated=true; }catch{} state.generating=false; render(); };
+window.receiveError=function(m){ alert("Errore: "+m); state.generating=false; render(); };
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 render();
 </script>
 </body>
