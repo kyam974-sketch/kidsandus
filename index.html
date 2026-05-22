@@ -91,52 +91,14 @@ const CORSI = ["Mousy","Linda","Sam","Emma","Oliver","Marcia","Pam & Paul","Ben 
 const CORSI_DISABLED = ["Ben & Brenda"];
 const GIORNI = ["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
 const CORSO_INFO = {
-  "Mousy": `Mousy (fascia indicativa 12-36 mesi, accompagnati da un genitore per tutto il corso).
-IMPORTANTE: i bambini Mousy stanno muovendo i primi passi nel linguaggio — non solo in inglese, ma anche nella lingua madre. Molti NON producono ancora parole all'inizio del corso. La produzione verbale non è attesa né richiesta: è un traguardo eventuale, non un obiettivo minimo.
-La valutazione si basa su: reattività agli stimoli sonori e visivi, attenzione durante le attività, risposta a comandi semplici supportati da gesti o immagini, riconoscimento del proprio nome, partecipazione emotiva (sorrisi, imitazione, coinvolgimento con i materiali sensoriali).
-Comportamento: agitazione, pianto, distrazione e scarsa condivisione dei giocattoli sono FISIOLOGICI a questa età e NON devono essere interpretati come comportamento problematico. Il board del comportamento quasi certamente non viene usato in Mousy.
-Scala di valutazione Kids&Us: Excellent = esegue sempre l'azione con successo; Very good = esegue regolarmente ma con qualche esitazione; Good = esegue a volte ma non sempre; Satisfactory = ha difficoltà più spesso che no; Poor = ha notevoli difficoltà.`,
-
-  "Linda": `Linda (fascia indicativa 2-3 anni, genitori presenti per i primi mesi poi autonomi).
-I bambini Linda stanno scoprendo il linguaggio: iniziano a dire le prime parole e costruire frasi brevi (2-3 parole). Non tutti parlano all'inizio — è normale. L'obiettivo è l'esposizione e la produzione graduale.
-Traguardi attesi: saluti e formule di cortesia, dire la propria età, seguire istruzioni semplici supportate da gesti, riconoscere e nominare oggetti/colori/numeri in frasi dette lentamente, ripetere parole singole o frasi brevi, contare fino a 10.
-La valutazione riguarda: comprensione di input semplice, tentativi di produzione orale (anche parziali), partecipazione alle attività, imitazione e risposta ai materiali.
-Comportamento: egocentrismo e difficoltà a condividere i giochi sono normali a questa età. Il comportamento va valutato con questa consapevolezza.
-Scala Kids&Us: Excellent/Very good/Good/Satisfactory/Poor (come da rubrica ufficiale).`,
-
-  "Sam": `Sam (fascia indicativa 3-4 anni).
-Sam è "un bambino grande" che ha compiuto 3 anni. I bambini iniziano a partecipare attivamente, a rispondere a domande, a descrivere oggetti e a usare strutture fisse in contesto.
-Traguardi attesi: espressioni fisse di saluto e congedo, rispondere a domande su informazioni personali ("I am three"), esprimere stati d'animo ("I'm happy"), identificare e descrivere oggetti per colore/forma/dimensione, partecipare a giochi e attività con comandi semplici.
-La valutazione riguarda: comprensione di strutture semplici, produzione orale in frasi brevi (non solo parole singole), partecipazione e motivazione, risposta ai comandi durante le attività.
-NOTA: il behaviour board in Sam probabilmente non serve, ma può essere usato se ci sono difficoltà specifiche.
-Comportamento: atteso un livello base di attenzione e partecipazione; brevi momenti di irrequietezza sono normali.`,
-
-  "Emma": `Emma (fascia indicativa 4-5 anni).
-Emma è "una bambina grande" di 4 anni. I bambini iniziano a lavorare su strutture più articolate e a parlare in frasi complete. L'obiettivo è sempre la comunicazione in chunks, non parole isolate.
-Traguardi attesi: espressioni fisse di saluto, descrivere il tempo atmosferico, esprimere stati d'animo, rispondere a domande su argomenti familiari e storie, contare fino a 15, identificare e descrivere oggetti per colore/forma/dimensione.
-La valutazione riguarda: comprensione di input più complesso, produzione in frasi (non accettare risposte con una sola parola), partecipazione, uso attivo dell'inglese durante le attività.
-Comportamento: attesa una buona capacità di ascolto e rispetto delle regole della classe; il behaviour board è in uso.`,
-
-  "Oliver": `Oliver (fascia indicativa 5-6 anni, ma può includere bambini più grandi che iniziano il percorso Kids&Us).
-Oliver è un bambino che "sta crescendo in fretta". I bambini lavorano su vocabolario tematico più ampio e strutture più elaborate: stanze della casa, parti del corpo, abbigliamento, azioni quotidiane.
-Traguardi attesi: saluti ed espressioni di cortesia, descrivere il tempo, esprimere stati d'animo e associarli ad azioni, identificare e nominare vocabolario specifico per topic (stanze, famiglia, malattie, vestiti), associare azioni a luoghi e contesti, collocare oggetti nello spazio.
-La valutazione riguarda: comprensione di strutture articolate, produzione in frasi complete, capacità di collegare vocabolario a situazioni reali, partecipazione attiva e uso dell'inglese.
-Comportamento: atteso un buon autocontrollo; il behaviour board è in uso regolare.`,
-
-  "Marcia": `Marcia (fascia indicativa 6-7 anni, ma flessibile: un bambino può essere in Marcia a età diverse in base al percorso individuale).
-Marcia è un corso avanzato con storie ricche e strutture linguistiche più complesse. I bambini lavorano su dialoghi, descrizioni, comparazioni e istruzioni.
-Traguardi attesi: espressioni fisse di saluto e cortesia, descrivere il tempo e associarlo ad abbigliamento/azioni, esprimere stati d'animo, identificare e nominare vocabolario tematico (animali/ambienti, luoghi/attività/vestiti, cibo/cucina), seguire istruzioni complesse, rispondere a domande sulle storie, fare comparazioni.
-La valutazione riguarda: comprensione di input articolato, produzione fluente in frasi complete, accuratezza nell'uso delle strutture, partecipazione attiva, uso spontaneo dell'inglese.
-Comportamento: ci si aspetta piena autonomia, rispetto delle regole e capacità di concentrazione per tutta la lezione. A Marcia i bambini possono andare al bagno da soli senza interrompere la classe.`,
-
-  "Pam & Paul": `Pam & Paul (fascia indicativa 7-8 anni): livello avanzato del percorso Kids&Us.
-I bambini hanno già una solida base linguistica acquisita negli anni precedenti. Lavorano su strutture complesse, narrazione, interazione dialogica e uso più autonomo della lingua.
-La valutazione riguarda: competenza comunicativa attiva, accuratezza grammaticale e lessicale, capacità di esprimersi in modo elaborato, partecipazione propositiva, uso spontaneo e creativo dell'inglese.
-Comportamento: piena autonomia e autoregolazione attese.`,
-
-  "Ben & Brenda": `Ben & Brenda (fascia indicativa 8-9 anni): livello più avanzato del percorso Kids&Us.
-I bambini dimostrano padronanza linguistica consolidata. Lavorano su strutture sofisticate, pensiero critico in lingua, produzione elaborata e interazione complessa.
-La valutazione riguarda: padronanza delle strutture, creatività espressiva, autonomia comunicativa, capacità di argomentazione e problem solving in inglese.`,
+  "Mousy": "Mousy (fascia indicativa 12-36 mesi, accompagnati da un genitore).\nIMPORTANTE: la produzione verbale NON è attesa né richiesta. Molti bambini non producono ancora parole. La valutazione si basa su: reattività agli stimoli sonori e visivi, attenzione durante le attività, risposta a comandi semplici supportati da gesti o immagini, riconoscimento del proprio nome, partecipazione emotiva.\nComportamento: agitazione, pianto, distrazione e scarsa condivisione dei giocattoli sono FISIOLOGICI e NON vanno interpretati come comportamento problematico. Il behaviour board quasi certamente non viene usato in Mousy.\nScala Kids&Us: Excellent=esegue sempre; Very good=esegue regolarmente con qualche esitazione; Good=esegue a volte; Satisfactory=ha difficoltà più spesso che no; Poor=ha notevoli difficoltà.",
+  "Linda": "Linda (fascia indicativa 2-3 anni, genitori presenti per i primi mesi poi autonomi).\nI bambini iniziano a dire le prime parole e costruire frasi brevi (2-3 parole). Non tutti parlano all'inizio.\nTraguardi: saluti e cortesia, dire la propria età, seguire istruzioni semplici con gesti, riconoscere e nominare oggetti/colori/numeri detti lentamente, ripetere parole o frasi brevi, contare fino a 10.\nComportamento: egocentrismo e difficoltà a condividere sono normali a questa età.\nScala Kids&Us: Excellent/Very good/Good/Satisfactory/Poor.",
+  "Sam": "Sam (fascia indicativa 3-4 anni).\nI bambini partecipano attivamente, rispondono a domande, descrivono oggetti, usano strutture fisse in contesto.\nTraguardi: espressioni fisse di saluto, rispondere a domande personali (I am three), esprimere stati d'animo (I'm happy), identificare e descrivere oggetti per colore/forma/dimensione, partecipare a giochi con comandi semplici.\nNOTA: il behaviour board in Sam probabilmente non serve, ma può essere usato se necessario.\nComportamento: brevi momenti di irrequietezza sono normali.",
+  "Emma": "Emma (fascia indicativa 4-5 anni).\nI bambini lavorano su strutture più articolate e parlano in frasi complete. Non accettare risposte con una sola parola.\nTraguardi: saluti, descrivere il tempo atmosferico, esprimere stati d'animo, rispondere a domande su storie e argomenti familiari, contare fino a 15, descrivere oggetti.\nComportamento: attesa buona capacità di ascolto e rispetto delle regole. Il behaviour board è in uso.",
+  "Oliver": "Oliver (fascia indicativa 5-6 anni, ma può includere bambini più grandi che iniziano il percorso Kids&Us).\nVocabolario tematico più ampio: stanze della casa, parti del corpo, abbigliamento, azioni quotidiane.\nTraguardi: saluti e cortesia, descrivere il tempo, esprimere stati d'animo e associarli ad azioni, nominare vocabolario per topic (stanze, famiglia, malattie, vestiti), associare azioni a luoghi, collocare oggetti nello spazio.\nComportamento: atteso buon autocontrollo. Il behaviour board è in uso regolare.",
+  "Marcia": "Marcia (fascia indicativa 6-7 anni, flessibile in base al percorso individuale).\nCurso avanzato con storie ricche e strutture linguistiche complesse. Dialoghi, descrizioni, comparazioni, istruzioni.\nTraguardi: espressioni di saluto e cortesia, tempo e abbigliamento/azioni, stati d'animo, vocabolario tematico (animali/ambienti, luoghi/vestiti, cibo/cucina), seguire istruzioni complesse, rispondere a domande sulle storie, fare comparazioni.\nComportamento: piena autonomia attesa. I bambini vanno al bagno da soli senza interrompere la classe. Ci si aspetta concentrazione per tutta la lezione.",
+  "Pam & Paul": "Pam & Paul (fascia indicativa 7-8 anni): livello avanzato del percorso Kids&Us.\nSolida base linguistica acquisita negli anni precedenti. Strutture complesse, narrazione, interazione dialogica, uso autonomo della lingua.\nLa valutazione riguarda: competenza comunicativa attiva, accuratezza grammaticale e lessicale, espressione elaborata, partecipazione propositiva, uso spontaneo e creativo dell'inglese.\nComportamento: piena autonomia e autoregolazione attese.",
+  "Ben & Brenda": "Ben & Brenda (fascia indicativa 8-9 anni): livello più avanzato del percorso Kids&Us.\nPadronanza linguistica consolidata. Strutture sofisticate, pensiero critico in lingua, produzione elaborata, interazione complessa.\nLa valutazione riguarda: padronanza delle strutture, creatività espressiva, autonomia comunicativa, capacità di argomentazione in inglese.",
 };
   {value:1,emoji:"😟",label:"Poor"},
   {value:2,emoji:"😐",label:"Satisfactory"},
