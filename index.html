@@ -625,7 +625,14 @@ async function handleSave(){
 window.receiveNotes=function(j){ try{ const p=JSON.parse(j); Object.keys(p).forEach(n=>setEntry(n,{note:p[n]})); state.generated=true; }catch{} state.generating=false; render(); };
 window.receiveError=function(m){ alert("Errore: "+m); state.generating=false; render(); };
 
-render();
+try {
+  render();
+} catch(e) {
+  document.getElementById("app").innerHTML = 
+    "<div style='padding:20px;color:red;font-family:monospace;white-space:pre-wrap'>" +
+    "<strong>ERRORE JS:</strong>\n" + e.message + "\n\nStack:\n" + e.stack +
+    "</div>";
+}
 </script>
 </body>
 </html>
