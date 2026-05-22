@@ -492,7 +492,8 @@ function renderHistory(root){
         entries.forEach(entry=>{
           const row=el("div",{class:"history-row"});
           const rats=[entry.motivation,entry.learning,entry.behaviour].map(emojiFor).filter(Boolean).join(" ");
-          row.innerHTML=`<strong>${entry.name}:</strong>${rats?` <span class="history-ratings">${rats}</span>`:""} ${entry.note||""}`;
+          const ratsHtml = rats ? ' <span class="history-ratings">'+rats+'</span>' : '';
+          row.innerHTML='<strong>'+entry.name+':</strong>'+ratsHtml+' '+(entry.note||'');
           card.appendChild(row);
         });
         body.appendChild(card);
