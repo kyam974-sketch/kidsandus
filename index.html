@@ -585,7 +585,7 @@ async function handleGenerate(mode){
   try{
     const resp=await fetch("/api/generate",{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages})
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3000,messages})
     });
     const data=await resp.json();
     const text=(data.content||[]).map(b=>b.text||"").join("");
