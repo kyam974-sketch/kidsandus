@@ -587,17 +587,10 @@ async function handleGenerate(mode){
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:3000,messages})
     });
-    const rawText=await resp.text();
-    alert("Status: "+resp.status+"\nRaw (primi 800):\n"+rawText.substring(0,800));
-    const data=JSON.parse(rawText);
+    const data=await resp.json();
     const text=(data.content||[]).map(b=>b.text||"").join("");
     const clean=text.replace(/```json|```/g,"").trim();
-    let parsed;
-    try { parsed=JSON.parse(clean); }
-    catch(je) {
-      alert("JSON error: "+je.message+"\nAI response (primi 600):\n"+clean.substring(0,600));
-      throw je;
-    }
+    const parsed=JSON.parse(clean);
 
     if(mode==="fromNote"){
       state.presentStudents.forEach(name=>{
