@@ -585,15 +585,17 @@ async function handleGenerate(mode){
   try{
     const resp=await fetch("/api/generate",{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3000,messages})
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:3000,messages})
     });
-    const data=await resp.json();
+    const rawText=await resp.text();
+    alert("Status: "+resp.status+"\nRaw (primi 800):\n"+rawText.substring(0,800));
+    const data=JSON.parse(rawText);
     const text=(data.content||[]).map(b=>b.text||"").join("");
     const clean=text.replace(/```json|```/g,"").trim();
     let parsed;
     try { parsed=JSON.parse(clean); }
     catch(je) {
-      alert("Debug - Risposta AI:\n"+clean.substring(0,600));
+      alert("JSON error: "+je.message+"\nAI response (primi 600):\n"+clean.substring(0,600));
       throw je;
     }
 
