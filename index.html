@@ -589,7 +589,13 @@ async function handleGenerate(mode){
     });
     const data=await resp.json();
     const text=(data.content||[]).map(b=>b.text||"").join("");
-    const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
+    const clean=text.replace(/```json|```/g,"").trim();
+    let parsed;
+    try { parsed=JSON.parse(clean); }
+    catch(je) {
+      alert("Debug - Risposta AI:\n"+clean.substring(0,600));
+      throw je;
+    }
 
     if(mode==="fromNote"){
       state.presentStudents.forEach(name=>{
