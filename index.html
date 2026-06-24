@@ -74,6 +74,15 @@ textarea:focus { border-color: #0d9488; }
 .group-pill { border: none; border-radius: 10px; padding: 9px 16px; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.1); font-family: Georgia, serif; }
 .info-bar { background: #f0fdfa; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; color: #0d9488; display: flex; justify-content: space-between; align-items: center; }
 .sede-section-label { width: 100%; font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 4px; }
+.report-note-block { background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #0d9488; }
+.report-date { font-size: 12px; font-weight: bold; color: #0d9488; margin-bottom: 4px; }
+.report-corso { font-size: 11px; color: #9ca3af; margin-bottom: 6px; }
+.report-note { font-size: 14px; color: #374151; line-height: 1.5; }
+.report-copy-all { width: 100%; background: #059669; color: white; border: none; border-radius: 10px; padding: 13px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; margin-bottom: 14px; }
+.report-copy-all.copied { background: #0d9488; }
+.search-input { width: 100%; border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; font-size: 15px; outline: none; font-family: Georgia, serif; margin-bottom: 10px; }
+.search-input:focus { border-color: #0d9488; }
+.date-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 5px; }
 .spinner.dark { border-color: rgba(13,148,136,.3); border-top-color: #0d9488; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -154,6 +163,20 @@ async function loadAllGroupsWithHistory() {
   return await sbFetch(`followup_sessions?select=sede,corso,giorno&order=sede.asc,corso.asc,giorno.asc`);
 }
 
+async function loadStudentReport(name, dateFrom, dateTo) {
+  const e=encodeURIComponent;
+  let url = `followup_sessions?entries=cs.${e(JSON.stringify([{"name":name}]))}&order=session_date.asc`;
+  if(dateFrom) url += `&session_date=gte.${dateFrom}`;
+  if(dateTo)   url += `&session_date=lte.${dateTo}`;
+  // Use a broader query and filter client-side since jsonb contains is tricky with partial match
+  let allUrl = `followup_sessions?order=session_date.asc&limit=200`;
+  if(dateFrom) allUrl += `&session_date=gte.${dateFrom}`;
+  if(dateTo)   allUrl += `&session_date=lte.${dateTo}`;
+  const sessions = await sbFetch(allUrl) || [];
+  // Filter sessions that contain this student
+  return sessions.filter(s => (s.entries||[]).some(en => en.name && en.name.toLowerCase() === name.toLowerCase()));
+}
+
 function readFileAsBase64(file) {
   return new Promise((resolve,reject)=>{
     const r=new FileReader();
@@ -178,6 +201,9 @@ let state = {
   historyGroups:[], historyGroupsLoading:false,
   historySelected:null,
   historySessions:[], historySessionsLoading:false,
+  reportView:false,
+  reportSearch:"", reportDateFrom:"", reportDateTo:"",
+  reportResults:null, reportLoading:false, reportCopied:false,
 };
 
 function todayISO(){ return new Date().toISOString().split("T")[0]; }
@@ -440,9 +466,98 @@ async function openHistory(){
 function renderHistory(root){
   const header=el("div",{class:"header"},
     el("button",{class:"btn-header",onClick:()=>{ state.view="home"; render(); }},"← Home"),
-    el("span",{class:"logo-text"},"📋 Storico")
+    el("span",{class:"logo-text"},state.reportView?"👤 Report allievo":"📋 Storico"),
+    !state.reportView
+      ? el("button",{class:"btn-header",onClick:()=>{ state.reportView=true; state.reportResults=null; state.reportSearch=""; state.reportDateFrom=""; state.reportDateTo=""; render(); }},"👤 Report")
+      : el("button",{class:"btn-header",onClick:()=>{ state.reportView=false; render(); }},"← Storico")
   );
   const body=el("div",{class:"body"});
+
+  // ── REPORT ALLIEVO ──
+  if(state.reportView){
+    // Search input
+    const searchInp = document.createElement("input");
+    searchInp.type="text"; searchInp.className="search-input";
+    searchInp.placeholder="Nome e cognome allievo...";
+    searchInp.value=state.reportSearch;
+    searchInp.addEventListener("input",e=>{ state.reportSearch=e.target.value; });
+
+    // Date range
+    const dateRow=el("div",{class:"date-range-row"});
+    const fromGroup=el("div",{class:"sel-group"});
+    fromGroup.appendChild(el("div",{class:"sel-label"},"Dal"));
+    const fromInp=document.createElement("input");
+    fromInp.type="date"; fromInp.value=state.reportDateFrom;
+    fromInp.addEventListener("change",e=>{ state.reportDateFrom=e.target.value; });
+    fromGroup.appendChild(fromInp);
+    const toGroup=el("div",{class:"sel-group"});
+    toGroup.appendChild(el("div",{class:"sel-label"},"Al"));
+    const toInp=document.createElement("input");
+    toInp.type="date"; toInp.value=state.reportDateTo;
+    toInp.addEventListener("change",e=>{ state.reportDateTo=e.target.value; });
+    toGroup.appendChild(toInp);
+    dateRow.append(fromGroup,toGroup);
+
+    const searchBtn=el("button",{class:"go-btn",style:{marginTop:"10px"},onClick:async()=>{
+      const name=state.reportSearch.trim();
+      if(!name){ alert("Inserisci il nome dell'allievo."); return; }
+      state.reportLoading=true; state.reportResults=null; render();
+      try { state.reportResults=await loadStudentReport(name,state.reportDateFrom,state.reportDateTo); }
+      catch(e){ state.reportResults=[]; }
+      state.reportLoading=false; render();
+    }},"🔍 Cerca");
+
+    body.appendChild(searchInp);
+    body.appendChild(dateRow);
+    body.appendChild(searchBtn);
+
+    if(state.reportLoading){
+      body.appendChild(el("div",{class:"empty"},"⏳ Caricamento..."));
+    } else if(state.reportResults!==null){
+      const name=state.reportSearch.trim();
+      if(state.reportResults.length===0){
+        body.appendChild(el("div",{class:"empty"},"Nessun follow-up trovato per "+name+" nel periodo selezionato."));
+      } else {
+        // Build formatted text for copy
+        const lines=[];
+        lines.push(name);
+        lines.push("");
+        state.reportResults.forEach(session=>{
+          const entry=(session.entries||[]).find(en=>en.name&&en.name.toLowerCase()===name.toLowerCase());
+          if(!entry||!entry.note) return;
+          lines.push(fmtDate(session.session_date)+" — "+session.corso+" "+session.giorno);
+          lines.push(entry.note);
+          lines.push("");
+        });
+        const fullText=lines.join("\n").trim();
+
+        const copyAllBtn=el("button",{
+          class:"report-copy-all"+(state.reportCopied?" copied":""),
+          onClick:()=>{
+            navigator.clipboard.writeText(fullText).catch(()=>{});
+            state.reportCopied=true; render();
+            setTimeout(()=>{ state.reportCopied=false; render(); },2000);
+          }
+        },state.reportCopied?"✓ Copiato!":"📋 Copia tutto per Term Reports");
+        body.appendChild(copyAllBtn);
+
+        body.appendChild(el("div",{style:{fontSize:"12px",color:"#6b7280",marginBottom:"12px"}},state.reportResults.length+" sessioni trovate"));
+
+        state.reportResults.forEach(session=>{
+          const entry=(session.entries||[]).find(en=>en.name&&en.name.toLowerCase()===name.toLowerCase());
+          if(!entry||!entry.note) return;
+          const block=el("div",{class:"report-note-block"});
+          block.appendChild(el("div",{class:"report-date"},fmtDate(session.session_date)));
+          block.appendChild(el("div",{class:"report-corso"},session.corso+" · "+session.giorno+" · "+session.sede));
+          block.appendChild(el("div",{class:"report-note"},entry.note));
+          body.appendChild(block);
+        });
+      }
+    }
+
+    root.append(header,body);
+    return;
+  }
 
   if(state.historyView==="groups"){
     if(state.historyGroupsLoading){
