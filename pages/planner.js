@@ -53,11 +53,17 @@ function clockToSeconds(clock) {
   return h * 3600 + m * 60;
 }
 
+function fmtCountdown(seconds) {
+  const safe = Math.max(0, seconds || 0);
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
+}
+
 export default function Planner() {
   const [courseId, setCourseId] = useState('sam');
   const [storyNumber, setStoryNumber] = useState(1);
   const [dayNumber, setDayNumber] = useState(1);
   const [activities, setActivities] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState('edit');
@@ -87,6 +93,7 @@ export default function Planner() {
       supabase.from('guide_days').select('materials, bonus_materials').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
     ]);
     setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
+    setHistory([]);
     const map = {};
     (songs || []).forEach((s) => { map[s.track_number] = s; });
     setSongsMap(map);
@@ -97,7 +104,7 @@ export default function Planner() {
 
   useEffect(() => { loadAll(); }, [courseId, storyNumber, dayNumber]);
 
-  async function saveActivities(next) {
+  async function persistActivities(next) {
     setActivities(next);
     setSaving(true);
     const { error } = await supabase.from('lessons').upsert({ key, data: next }, { onConflict: 'key' });
@@ -105,18 +112,30 @@ export default function Planner() {
     if (error) setGenerateError('Save error: ' + error.message);
   }
 
+  async function saveActivities(next, remember = false) {
+    if (remember) setHistory((h) => [...h.slice(-19), activities]);
+    await persistActivities(next);
+  }
+
+  async function undo() {
+    if (!history.length) return;
+    const previous = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    await persistActivities(previous);
+  }
+
   function updateAct(idx, field, value) {
     const next = activities.slice();
     next[idx] = { ...next[idx], [field]: value };
-    saveActivities(next);
+    saveActivities(next, field === 'is_bonus');
   }
-  function addActivity() { saveActivities([...activities, emptyActivity()]); }
-  function deleteAct(idx) { const next = activities.slice(); next.splice(idx, 1); saveActivities(next); }
+  function addActivity() { saveActivities([...activities, emptyActivity()], true); }
+  function deleteAct(idx) { const next = activities.slice(); next.splice(idx, 1); saveActivities(next, true); }
   function moveAct(idx, dir) {
     const next = activities.slice(); const target = idx + dir;
     if (target < 0 || target >= next.length) return;
     [next[idx], next[target]] = [next[target], next[idx]];
-    saveActivities(next);
+    saveActivities(next, true);
   }
 
   async function handleGenerate() {
@@ -143,7 +162,7 @@ export default function Planner() {
       const parsed = JSON.parse((data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim());
       if (!Array.isArray(parsed)) throw new Error('Unexpected response format');
       if (activities.length && !window.confirm(`Replace the ${activities.length} existing activities with ${parsed.length} generated ones?`)) return;
-      await saveActivities(parsed.map((a) => ({ ...a, notes: a.notes || '' })));
+      await saveActivities(parsed.map((a) => ({ ...a, notes: a.notes || '' })), true);
     } catch (e) { setGenerateError('Generation error: ' + e.message); }
     setGenerating(false);
   }
@@ -158,7 +177,7 @@ export default function Planner() {
       const data = await resp.json();
       const parsed = JSON.parse((data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim());
       if (!Array.isArray(parsed)) throw new Error('Unexpected response format');
-      await saveActivities(activities.map((a, i) => ({ ...a, notes: parsed[i] || a.notes || '' })));
+      await saveActivities(activities.map((a, i) => ({ ...a, notes: parsed[i] || a.notes || '' })), true);
     } catch (e) { setGenerateError('Notes generation error: ' + e.message); }
     setGeneratingNotes(false);
   }
@@ -177,7 +196,7 @@ export default function Planner() {
   });
 
   const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  let currentActIdx = timedActs.findIndex((a) => nowSecs >= clockToSeconds(a.startClock) && nowSecs < clockToSeconds(a.endClock));
+  const currentActIdx = timedActs.findIndex((a) => nowSecs >= clockToSeconds(a.startClock) && nowSecs < clockToSeconds(a.endClock));
   const currentAct = currentActIdx >= 0 ? timedActs[currentActIdx] : null;
   let currentProgress = 0;
   let remainingSecs = 0;
@@ -193,6 +212,10 @@ export default function Planner() {
   const autoDisplayIdx = currentActIdx >= 0 ? currentActIdx : 0;
   const displayIdx = manualIdx !== null ? manualIdx : autoDisplayIdx;
   const displayAct = timedActs[displayIdx];
+  const displayIsCurrent = displayIdx === currentActIdx && currentActIdx >= 0;
+  const secondsUntilDisplay = displayAct ? Math.max(0, clockToSeconds(displayAct.startClock) - nowSecs) : 0;
+  const lightCountdown = displayIsCurrent ? remainingSecs : secondsUntilDisplay;
+  const lightCountdownLabel = displayIsCurrent ? 'remaining' : (secondsUntilDisplay > 0 ? 'starts in' : 'finished');
 
   const printActivities = timedActs.map((a) => ({ ...a, noteText: a.notes || '' }));
 
@@ -205,6 +228,11 @@ export default function Planner() {
 
         {mode === 'light' ? (
           <div className="light-stage">
+            <div style={{ position: 'absolute', top: 24, left: 28, right: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, fontSize: 18, fontWeight: 800 }}>
+              <span>🕒 {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{displayAct ? `${displayAct.startClock} – ${displayAct.endClock}` : '—'}</span>
+              <span>{displayAct ? `⏱ ${lightCountdownLabel} ${fmtCountdown(lightCountdown)}` : ''}</span>
+            </div>
             <div className="light-counter">{displayIdx + 1} / {timedActs.length}</div>
             <div className="light-title">{displayAct?.name || '—'}</div>
             {(displayAct?.notes || displayAct?.desc) && <div className="light-note">{renderNotes(displayAct.notes || displayAct.desc)}</div>}
@@ -231,12 +259,13 @@ export default function Planner() {
             {mode === 'edit' && (
               <div className="section-block no-print">
                 <div className="planner-actions">
+                  <button className="btn secondary" disabled={!history.length || saving} onClick={undo}>↩️ Undo</button>
                   <button className="btn" disabled={generating} onClick={handleGenerate}>{generating ? 'Generating…' : '✨ Generate from Teacher Guide'}</button>
                   <button className="btn secondary" disabled={generatingNotes || !activities.length} onClick={handleGenerateNotes}>{generatingNotes ? 'Condensing…' : '📝 Generate short notes'}</button>
                   <button className="btn secondary" onClick={addActivity}>＋ Add activity manually</button>
                 </div>
                 {generateError && <div className="error-text">{generateError}</div>}
-                <p className="planner-help">Only your short teaching notes are shown here. Mandatory Teacher Guide phrases are kept exactly and appear in bold in the formatted preview, Live, Extra Light and print.</p>
+                <p className="planner-help">Undo restores the last structural action (add, delete, move, bonus toggle or AI generation). Text edits keep saving normally.</p>
 
                 {loading ? <p>Loading…</p> : activities.length === 0 ? <p>No activities yet. Generate from the Teacher Guide or add one manually.</p> : activities.map((a, i) => (
                   <div key={i} className={a.is_bonus ? 'act-edit-card bonus' : 'act-edit-card'}>
@@ -263,7 +292,7 @@ export default function Planner() {
                 <div className="live-banner">
                   <span>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   <strong>{currentAct ? `▶ ${currentAct.name}` : '⏳ Waiting for lesson time'}</strong>
-                  <span>{currentAct ? `⏱ ${Math.floor(remainingSecs/60)}:${String(remainingSecs%60).padStart(2,'0')}` : ''}</span>
+                  <span>{currentAct ? `⏱ ${fmtCountdown(remainingSecs)}` : ''}</span>
                 </div>
                 <div className="live-tools"><div className="field compact"><label>Start time</label><input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div><button className="btn secondary" onClick={() => window.print()}>🖨️ Print audit notes</button></div>
 
@@ -273,7 +302,7 @@ export default function Planner() {
                   const isCurrent = i === currentActIdx;
                   const style = isCurrent ? { '--progress': `${currentProgress}%` } : undefined;
                   return <div key={i} className={isCurrent ? 'live-card current progress-card' : 'live-card'} style={style}>
-                    <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration}</span>{isCurrent && <span className="live-timer">⏱ {Math.floor(remainingSecs/60)}:{String(remainingSecs%60).padStart(2,'0')}</span>}</div>
+                    <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration}</span>{isCurrent && <span className="live-timer">⏱ {fmtCountdown(remainingSecs)}</span>}</div>
                     <div className="live-card-name">{isCurrent ? '▶ ' : ''}{a.name}</div>
                     <AudioBadges audioText={a.audio} songsMap={songsMap} big={isCurrent} />
                     {a.materials && <div className="live-materials">🎒 {a.materials}</div>}
