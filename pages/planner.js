@@ -67,7 +67,6 @@ export default function Planner() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState('edit');
-  const [generating, setGenerating] = useState(false);
   const [generatingNotes, setGeneratingNotes] = useState(false);
   const [generateError, setGenerateError] = useState('');
   const [songsMap, setSongsMap] = useState({});
@@ -138,47 +137,47 @@ export default function Planner() {
     saveActivities(next, true);
   }
 
-  async function handleGenerate() {
-    setGenerateError(''); setGenerating(true);
+  async function handleGenerateNotes() {
+    setGenerateError('');
+    setGeneratingNotes(true);
     try {
       const [{ data: day }, { data: story }] = await Promise.all([
         supabase.from('guide_days').select('*').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
         supabase.from('guide_stories').select('*').eq('corso', corsoName).eq('story_number', storyNumber).maybeSingle(),
       ]);
-      if (!day && !story) throw new Error('No Teacher Guide content found for this course/story/day yet.');
-      const parts = [];
-      if (story?.warmup_routines) parts.push('WARM-UP ROUTINES:\n' + story.warmup_routines);
-      if (story?.songs) parts.push('STORY SONGS:\n' + story.songs);
-      if (story?.choosing_rhyme) parts.push('CHOOSING RHYME:\n' + story.choosing_rhyme);
-      if (day?.lesson_goals) parts.push('LESSON GOALS:\n' + day.lesson_goals);
-      if (day?.preparation) parts.push('PREPARATION:\n' + day.preparation);
-      if (day?.materials) parts.push('MATERIALS:\n' + day.materials);
-      if (day?.bonus_materials) parts.push('BONUS MATERIALS:\n' + day.bonus_materials);
-      if (day?.lesson_plan) parts.push('LESSON PLAN:\n' + day.lesson_plan);
 
-      const prompt = `Create a usable Kids&Us lesson plan for ${corsoName}, Story ${storyNumber}, Day ${dayNumber} from the Teacher Guide below.\n\n${parts.join('\n\n')}\n\nEach numbered top-level step in the source must become exactly one activity and keep its own duration. Bonus activities must have is_bonus true. Return ONLY JSON array objects with: name, duration, audio, desc, materials, is_bonus. desc may retain fuller source detail for internal reference, but preserve every mandatory teacher phrase exactly and wrap ONLY those mandatory phrases in **double asterisks**. Do not invent mandatory phrases.`;
-      const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }) });
-      const data = await resp.json();
-      const parsed = JSON.parse((data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim());
-      if (!Array.isArray(parsed)) throw new Error('Unexpected response format');
-      if (activities.length && !window.confirm(`Replace the ${activities.length} existing activities with ${parsed.length} generated ones?`)) return;
-      await saveActivities(parsed.map((a) => ({ ...a, notes: a.notes || '' })), true);
-    } catch (e) { setGenerateError('Generation error: ' + e.message); }
-    setGenerating(false);
-  }
+      if (!day?.lesson_plan) throw new Error('No Teacher Guide lesson plan found for this course/story/day yet.');
 
-  async function handleGenerateNotes() {
-    if (!activities.length) return;
-    setGenerateError(''); setGeneratingNotes(true);
-    try {
-      const source = activities.map((a, i) => `${i}. ${a.name}\n${a.desc || ''}`).join('\n\n');
-      const prompt = `Turn these Kids&Us activities into the teacher's very short class notes.\n\n${source}\n\nRules: telegraphic shorthand, imperative, no filler, only what is useful at a glance in class. A few short lines per activity maximum. Every phrase already wrapped in **double asterisks** is mandatory wording from the Teacher Guide: copy it EXACTLY, keep the ** markers, and never paraphrase it. Everything else can be shortened heavily. Return ONLY a JSON array of strings in the same order.`;
-      const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] }) });
+      const context = [];
+      if (story?.warmup_routines) context.push('WARM-UP ROUTINES:\n' + story.warmup_routines);
+      if (story?.songs) context.push('STORY SONGS:\n' + story.songs);
+      if (story?.choosing_rhyme) context.push('CHOOSING RHYME:\n' + story.choosing_rhyme);
+      if (day?.lesson_goals) context.push('LESSON GOALS:\n' + day.lesson_goals);
+      if (day?.materials) context.push('MATERIALS:\n' + day.materials);
+      if (day?.bonus_materials) context.push('BONUS MATERIALS:\n' + day.bonus_materials);
+      if (day?.preparation) context.push('PREPARATION:\n' + day.preparation);
+      context.push('LESSON PLAN:\n' + day.lesson_plan);
+
+      const prompt = `Convert this Kids&Us Teacher Guide for ${corsoName}, Story ${storyNumber}, Day ${dayNumber} directly into the teacher's usable lesson notes.\n\n${context.join('\n\n')}\n\nReturn ONLY a JSON array. Each numbered top-level lesson-plan step becomes exactly ONE object in the same order. Bonus activities become objects with is_bonus=true. Use each step's own duration and track numbers.\n\nEach object must be:\n{"name":"...","duration":"6'","audio":"Track #1" or "","desc":"source wording for this activity","notes":"short teacher notes","materials":"...","is_bonus":false}\n\nNOTES RULES:\n- notes are telegraphic, imperative, minimal and easy to glance at during class; no filler and no explanatory prose.\n- Preserve teacher speech exactly whenever the source gives words the teacher is supposed to SAY, ASK, TELL, REPEAT, PROMPT or MODEL to the children. This includes quoted direct speech and clearly indicated teacher prompts even if the source formatting did not survive import.\n- Never paraphrase those spoken phrases. Copy them verbatim from the source and wrap each exact spoken phrase in **double asterisks** so the interface renders it in bold.\n- Do NOT mark ordinary instructions or narration as mandatory speech.\n- If uncertain whether wording is a teacher utterance, keep it in the notes without ** rather than inventing or rewriting it.\n- Keep useful operational cues such as prop/action, track, turn-taking and transitions, but compress them heavily.\n- Do not invent wording that is absent from the Teacher Guide.\n\nDESC RULE: keep enough original source wording for later regeneration/reference, but the teacher sees notes in class, not desc.`;
+
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }),
+      });
       const data = await resp.json();
-      const parsed = JSON.parse((data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim());
+      const text = (data.content || []).map((b) => b.text || '').join('');
+      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
       if (!Array.isArray(parsed)) throw new Error('Unexpected response format');
-      await saveActivities(activities.map((a, i) => ({ ...a, notes: parsed[i] || a.notes || '' })), true);
-    } catch (e) { setGenerateError('Notes generation error: ' + e.message); }
+
+      if (activities.length && !window.confirm(`Replace the ${activities.length} existing activities with ${parsed.length} newly generated lesson notes?`)) {
+        setGeneratingNotes(false);
+        return;
+      }
+      await saveActivities(parsed, true);
+    } catch (e) {
+      setGenerateError('Notes generation error: ' + e.message);
+    }
     setGeneratingNotes(false);
   }
 
@@ -260,14 +259,13 @@ export default function Planner() {
               <div className="section-block no-print">
                 <div className="planner-actions">
                   <button className="btn secondary" disabled={!history.length || saving} onClick={undo}>↩️ Undo</button>
-                  <button className="btn" disabled={generating} onClick={handleGenerate}>{generating ? 'Generating…' : '✨ Generate from Teacher Guide'}</button>
-                  <button className="btn secondary" disabled={generatingNotes || !activities.length} onClick={handleGenerateNotes}>{generatingNotes ? 'Condensing…' : '📝 Generate short notes'}</button>
+                  <button className="btn" disabled={generatingNotes} onClick={handleGenerateNotes}>{generatingNotes ? 'Generating…' : '📝 Generate lesson notes'}</button>
                   <button className="btn secondary" onClick={addActivity}>＋ Add activity manually</button>
                 </div>
                 {generateError && <div className="error-text">{generateError}</div>}
-                <p className="planner-help">Undo restores the last structural action (add, delete, move, bonus toggle or AI generation). Text edits keep saving normally.</p>
+                <p className="planner-help">Generate lesson notes reads the selected Teacher Guide day directly, builds the activity list and keeps teacher speech verbatim. Undo restores the last structural action. You can also build or edit the lesson completely by hand.</p>
 
-                {loading ? <p>Loading…</p> : activities.length === 0 ? <p>No activities yet. Generate from the Teacher Guide or add one manually.</p> : activities.map((a, i) => (
+                {loading ? <p>Loading…</p> : activities.length === 0 ? <p>No activities yet. Generate lesson notes from the Teacher Guide or add activities manually.</p> : activities.map((a, i) => (
                   <div key={i} className={a.is_bonus ? 'act-edit-card bonus' : 'act-edit-card'}>
                     <div className="act-edit-head">
                       <input className="activity-name-input" value={a.name || ''} onChange={(e) => updateAct(i, 'name', e.target.value)} />
@@ -279,7 +277,7 @@ export default function Planner() {
                       <label className="bonus-check"><input type="checkbox" checked={!!a.is_bonus} onChange={(e) => updateAct(i,'is_bonus',e.target.checked)} /> Bonus</label>
                     </div>
                     <label className="notes-label">Teaching notes</label>
-                    <textarea className="notes-editor" value={a.notes || ''} onChange={(e) => updateAct(i,'notes',e.target.value)} placeholder="Short, telegraphic notes. Put mandatory spoken phrases between ** markers while editing." />
+                    <textarea className="notes-editor" value={a.notes || ''} onChange={(e) => updateAct(i,'notes',e.target.value)} placeholder="Short, telegraphic notes. Teacher speech is shown in bold." />
                     {a.notes && <div className="notes-preview">{renderNotes(a.notes)}</div>}
                     <input className="materials-input" placeholder="Materials" value={a.materials || ''} onChange={(e) => updateAct(i,'materials',e.target.value)} />
                   </div>
