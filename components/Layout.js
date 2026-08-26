@@ -10,6 +10,7 @@ function todayIndex() {
 
 const NAV = [
   { href: '/', label: '🏠 Dashboard', live: true },
+  { href: '/calendar', label: '📅 Calendar', sub: 'prototype', live: true },
   { href: '/followup', label: '📝 Follow-up', sub: 'live', live: true },
   { href: '/songs', label: '🎵 Songs', sub: 'live', live: true },
   { href: '/guides', label: '📚 Teacher Guides', sub: 'live', live: true },
@@ -25,11 +26,8 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/login');
-      } else {
-        setSession(data.session);
-      }
+      if (!data.session) router.replace('/login');
+      else setSession(data.session);
       setChecking(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
@@ -39,47 +37,22 @@ export default function Layout({ children }) {
     return () => sub.subscription.unsubscribe();
   }, [router]);
 
-  if (checking) return null;
-  if (!session) return null;
+  if (checking || !session) return null;
 
   return (
     <div className="app-shell">
       <aside className="rail">
         <div className="rail-brand">Kids&amp;Us Hub</div>
         <div className="rail-sub">TEACHING TOOLS</div>
-        <div className="day-strip">
-          {DAYS.map((d, i) => (
-            <span key={i} className={i === active ? 'active' : ''} title={d} />
-          ))}
-        </div>
+        <div className="day-strip">{DAYS.map((d, i) => <span key={i} className={i === active ? 'active' : ''} title={d} />)}</div>
         <nav className="rail-nav">
           {NAV.map((item) => {
             const isActive = router.pathname === item.href;
-            if (!item.live) {
-              return (
-                <span key={item.label} className="rail-link disabled">
-                  {item.label}
-                  {item.sub && <small>{item.sub}</small>}
-                </span>
-              );
-            }
-            return (
-              <a key={item.label} href={item.href} className={`rail-link${isActive ? ' active' : ''}`}>
-                {item.label}
-                {item.sub && <small>{item.sub}</small>}
-              </a>
-            );
+            if (!item.live) return <span key={item.label} className="rail-link disabled">{item.label}{item.sub && <small>{item.sub}</small>}</span>;
+            return <a key={item.label} href={item.href} className={`rail-link${isActive ? ' active' : ''}`}>{item.label}{item.sub && <small>{item.sub}</small>}</a>;
           })}
         </nav>
-        <button
-          className="rail-logout"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            router.replace('/login');
-          }}
-        >
-          Log out
-        </button>
+        <button className="rail-logout" onClick={async () => { await supabase.auth.signOut(); router.replace('/login'); }}>Log out</button>
       </aside>
       <main className="main">{children}</main>
     </div>
