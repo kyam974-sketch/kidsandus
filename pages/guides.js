@@ -9,7 +9,7 @@ function emptyDayForm() {
 }
 
 export default function Guides() {
-  const [corso, setCorso] = useState('Sam');
+  const [corso, setCorso] = useState('Mousy');
   const [view, setView] = useState('course');
   const [sections, setSections] = useState([]);
   const [openSection, setOpenSection] = useState(null);
@@ -92,17 +92,7 @@ export default function Guides() {
   async function handleGenerateDay() {
     if (!pdfBase64) { setGenerateError('Upload a photo or PDF of the lesson plan page(s) first.'); return; }
     setGenerateError(''); setGenerating(true);
-    const prompt = `You are reading a page from a Kids&Us Teacher Guide, showing a Daily Lesson Plan ("Day #${editingDay}") for ${corso}, Story ${storyNumber}.
-
-Extract the content into the following fields, copying the exact wording from the source (do not paraphrase or translate — this is used verbatim in class):
-- lesson_goals: the "LESSON GOALS" bullet list
-- materials: the "MATERIALS" bullet list
-- bonus_materials: the "BONUS ACTIVITIES MATERIALS" list (if present, else empty string)
-- preparation: the "PREPARATION" section text (if present, else empty string)
-- lesson_plan: the full "LESSON PLAN" section, including all numbered steps, activity names, timings, track numbers, "HOW TO PLAY" instructions, and the "BONUS ACTIVITIES" section at the end, preserving line breaks and exact quoted phrases.
-
-Respond with ONLY valid JSON, no markdown:
-{"lesson_goals": "...", "materials": "...", "bonus_materials": "...", "preparation": "...", "lesson_plan": "..."}`;
+    const prompt = `You are reading a page from a Kids&Us Teacher Guide, showing a Daily Lesson Plan ("Day #${editingDay}") for ${corso}, Story ${storyNumber}.\n\nExtract the content into the following fields, copying the exact wording from the source (do not paraphrase or translate — this is used verbatim in class):\n- lesson_goals: the "LESSON GOALS" bullet list\n- materials: the "MATERIALS" bullet list\n- bonus_materials: the "BONUS ACTIVITIES MATERIALS" list (if present, else empty string)\n- preparation: the "PREPARATION" section text (if present, else empty string)\n- lesson_plan: the full "LESSON PLAN" section, including all numbered steps, activity names, timings, track numbers, "HOW TO PLAY" instructions, and the "BONUS ACTIVITIES" section at the end, preserving line breaks and exact quoted phrases.\n\nRespond with ONLY valid JSON, no markdown:\n{"lesson_goals": "...", "materials": "...", "bonus_materials": "...", "preparation": "...", "lesson_plan": "..."}`;
     try {
       const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, messages: [{ role: 'user', content: [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } }, { type: 'text', text: prompt }] }] }) });
       const data = await resp.json();
