@@ -71,17 +71,63 @@ function parseAudioNumbers(audioText) {
 }
 
 function AudioBadges({ audioText, songsMap, big = false }) {
+  const [openLyrics, setOpenLyrics] = useState(null);
+
+  useEffect(() => {
+    setOpenLyrics(null);
+  }, [audioText]);
+
   if (!audioText) return null;
   const nums = parseAudioNumbers(audioText);
   if (!nums.length) return <div className="audio-badge" style={{ fontSize: big ? 16 : 13 }}>🎵 {audioText}</div>;
+
   return (
     <div className="audio-wrap">
       {nums.map((n) => {
         const song = songsMap[n];
+        const hasLyrics = !!song?.lyrics?.trim();
+        const lyricsOpen = openLyrics === n && hasLyrics;
         return (
           <div key={n} className="audio-badge" style={{ fontSize: big ? 16 : 13 }}>
             <span>🎵 TR#{n}{song ? ` ${song.title}` : ''}</span>
-            {song?.audio_url ? <audio controls src={song.audio_url} preload="none" /> : <em>(no audio yet)</em>}
+            {song?.audio_url ? (
+              <audio
+                controls
+                src={song.audio_url}
+                preload="none"
+                onPlay={() => hasLyrics && setOpenLyrics(n)}
+                onEnded={() => setOpenLyrics(null)}
+              />
+            ) : <em>(no audio yet)</em>}
+            {hasLyrics && (
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => setOpenLyrics((current) => current === n ? null : n)}
+                style={{ marginLeft: 8 }}
+              >
+                {lyricsOpen ? 'Lyrics ▴' : 'Lyrics ▾'}
+              </button>
+            )}
+            {lyricsOpen && (
+              <div
+                className="lyrics-panel"
+                style={{
+                  width: '100%',
+                  marginTop: 10,
+                  padding: big ? 18 : 14,
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,.82)',
+                  whiteSpace: 'pre-wrap',
+                  lineHeight: 1.55,
+                  maxHeight: big ? '38vh' : 260,
+                  overflowY: 'auto',
+                  fontSize: big ? 20 : 16,
+                }}
+              >
+                {song.lyrics}
+              </div>
+            )}
           </div>
         );
       })}
@@ -133,7 +179,7 @@ export default function Planner() {
     setLoading(true);
     const [{ data: lesson }, { data: songs }, { data: guide }] = await Promise.all([
       supabase.from('lessons').select('data').eq('key', key).maybeSingle(),
-      supabase.from('songs').select('track_number, title, audio_url').eq('corso', corsoName),
+      supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', corsoName),
       supabase.from('guide_days').select('materials, bonus_materials').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
     ]);
     setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
@@ -236,7 +282,7 @@ export default function Planner() {
             <div className="light-counter">{displayIdx + 1} / {timedActs.length}</div>
             <div className="light-title">{displayAct?.name || '—'}</div>
             {(displayAct?.notes || displayAct?.desc) && <div className="light-note">{renderNotes(displayAct.notes || displayAct.desc)}</div>}
-            <AudioBadges audioText={displayAct?.audio} songsMap={songsMap} big />
+            <AudioBadges key={`light-${displayIdx}`} audioText={displayAct?.audio} songsMap={songsMap} big />
             {displayAct?.materials && <div className="light-materials">🎒 {displayAct.materials}</div>}
             <div className="light-controls">
               <button className="btn secondary dark-btn" onClick={() => setManualIdx(Math.max(0, displayIdx - 1))}>◀</button>
@@ -301,7 +347,7 @@ export default function Planner() {
                   return <div key={i} className={isCurrent ? 'live-card current progress-card' : 'live-card'} style={style}>
                     <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration}</span>{isCurrent && <span className="live-timer">⏱ {fmtCountdown(remainingSecs)}</span>}</div>
                     <div className="live-card-name">{isCurrent ? '▶ ' : ''}{a.name}</div>
-                    <AudioBadges audioText={a.audio} songsMap={songsMap} big={isCurrent} />
+                    <AudioBadges key={`live-${i}-${currentActIdx}`} audioText={a.audio} songsMap={songsMap} big={isCurrent} />
                     {a.materials && <div className="live-materials">🎒 {a.materials}</div>}
                     <div className="live-notes">{renderNotes(a.notes || a.desc)}</div>
                   </div>;
