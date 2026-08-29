@@ -29,7 +29,9 @@ const CORSO_INFO = {
 const GIORNI = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const CURRENT_YEAR = '2026-2027';
 
-function emptyEntry() { return { note: '', motivation: null, learning: null, behaviour: null }; }
+function emptyEntry() {
+  return { teacher_note: '', note: '', motivation: null, learning: null, behaviour: null };
+}
 
 export default function FollowUp() {
   const [groups, setGroups] = useState([]);
@@ -62,7 +64,6 @@ export default function FollowUp() {
   const [guideDay, setGuideDay] = useState(null);
   const [guideLoading, setGuideLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [generatingMode, setGeneratingMode] = useState(null);
   const [generateError, setGenerateError] = useState('');
 
   const [studentQuery, setStudentQuery] = useState('');
@@ -186,7 +187,7 @@ export default function FollowUp() {
 
   function copyStudentForClassroom(name) {
     const note = getEntry(name).note?.trim();
-    navigator.clipboard.writeText(note || 'No note yet for this student.');
+    navigator.clipboard.writeText(note || 'No generated judgment yet for this student.');
     setCopiedStudent(name);
     setTimeout(() => setCopiedStudent(''), 1800);
   }
@@ -238,104 +239,99 @@ export default function FollowUp() {
     await loadData();
   }
 
-  function buildPrompt(mode) {
+  function buildPrompt() {
     const corsoContext = (selectedGroup && CORSO_INFO[selectedGroup.corso]) || `Corso: ${selectedGroup?.corso || ''}`;
     const goals = guideDay?.lesson_goals || '(Teacher Guide goals not available for this day)';
     const lessonContext = guideDay?.lesson_plan || '';
-    const noteCtx = form.group_note.trim() ? `\nTeacher group observation: "${form.group_note.trim()}"` : '';
+    const groupObservation = form.group_note.trim() || '(none)';
 
-    if (mode === 'fromNote') {
-      return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up notes that will later support term reports.
-
-COURSE PROFILE:
-${corsoContext}
-
-TEACHER GUIDE — Story ${form.story}, Day ${form.day}
-LESSON GOALS:
-${goals}
-${lessonContext ? `\nLESSON CONTEXT:\n${lessonContext}` : ''}
-${noteCtx}
-
-Students present: ${presentStudents.join(', ')}.
-
-For EACH student present, create a concise Italian note of 2-3 sentences. Base learning comments on the Teacher Guide goals for THIS day. Use the teacher observation when provided. Do not invent specific behaviour or achievement that the teacher did not report. Also give 1-5 values for motivation, learning and behaviour; if evidence is limited, use a neutral value rather than pretending certainty.
-Scale: 1=Poor, 2=Satisfactory, 3=Good, 4=Very good, 5=Excellent.
-
-Return ONLY valid JSON exactly in this form:
-{"Student Name":{"note":"...","motivation":3,"learning":3,"behaviour":3}}`;
-    }
-
-    const ratingsDesc = presentStudents.map((name) => {
+    const studentEvidence = presentStudents.map((name) => {
       const e = getEntry(name);
-      const parts = [];
-      if (e.motivation) parts.push(`motivation: ${EMOJI_SCALE.find((x) => x.value === e.motivation)?.label}`);
-      if (e.learning) parts.push(`learning: ${EMOJI_SCALE.find((x) => x.value === e.learning)?.label}`);
-      if (e.behaviour) parts.push(`behaviour: ${EMOJI_SCALE.find((x) => x.value === e.behaviour)?.label}`);
-      return `${name}: ${parts.length ? parts.join(', ') : 'no rating selected'}`;
-    }).join('\n');
+      const ratings = RATING_FIELDS.map((field) => {
+        const selected = EMOJI_SCALE.find((x) => x.value === e[field]);
+        return `${RATING_LABELS[field]}: ${selected ? `${selected.label} (${selected.value}/5)` : 'not selected'}`;
+      }).join('; ');
+      return `${name}\n${ratings}\nTeacher individual observation: ${e.teacher_note?.trim() || '(none)'}`;
+    }).join('\n\n');
 
-    return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up notes.
+    return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up judgments that will later support term reports.
 
-COURSE PROFILE:
+SOURCE OF TRUTH — TEACHER GUIDE
+Course profile:
 ${corsoContext}
 
-TEACHER GUIDE — Story ${form.story}, Day ${form.day}
-LESSON GOALS:
+Teacher Guide — Story ${form.story}, Day ${form.day}
+Lesson goals:
 ${goals}
-${noteCtx}
+${lessonContext ? `\nLesson plan actually taught / available for this Day:\n${lessonContext}` : ''}
 
-Teacher ratings:
-${ratingsDesc}
+TEACHER GROUP OBSERVATION
+${groupObservation}
 
-For each student write a concise Italian note of 2-3 sentences consistent with the selected ratings and the learning goals for this specific day. Do not invent concrete incidents.
+INDIVIDUAL TEACHER EVIDENCE
+${studentEvidence}
+
+TASK
+For EACH student present, write one concise individualized judgment in Italian, 2-3 sentences, suitable as an internal follow-up note and useful later for a term report.
+
+STRICT RULES
+- Use the Teacher Guide for this exact Story/Day as the learning context. Do not use Planner summaries as a source.
+- The selected Motivation/Learning/Behaviour ratings are teacher evidence. Respect them; do not change or reinterpret them into different ratings.
+- Use each student's individual teacher observation when present.
+- The group observation is context only: do NOT automatically attribute a group event or behaviour to every student.
+- Do not invent incidents, answers, vocabulary produced, behaviours, achievements or difficulties that the teacher did not report or that are not supported by the selected ratings.
+- Do not claim that a child achieved a specific lesson goal merely because it appears in the Teacher Guide. Connect the judgment to lesson goals only when the teacher evidence supports that connection.
+- If evidence for one dimension is absent, simply avoid making a claim about that dimension instead of guessing.
+- Keep developmental expectations appropriate to the course profile, especially for Mousy and Linda.
+- Do not mention numeric ratings, emojis, the AI, the prompt, or lack of evidence in the final judgment.
+- Tone: professional, natural, concise, factual, not inflated.
 
 Return ONLY valid JSON exactly in this form:
-{"Student Name":"note text"}`;
+{"Student Name":"judgment text"}`;
   }
 
-  async function handleGenerate(mode) {
+  async function handleGenerate() {
     setGenerateError('');
     if (!presentStudents.length) { setGenerateError('Segna almeno un allievo come presente.'); return; }
     if (!selectedGroup) { setGenerateError('Seleziona prima il gruppo.'); return; }
     if (guideLoading) { setGenerateError('Sto ancora caricando la Teacher Guide del giorno.'); return; }
     if (!guideDay) { setGenerateError(`Non trovo la Teacher Guide per ${selectedGroup.corso}, Story ${form.story}, Day ${form.day}.`); return; }
-    if (mode === 'fromEmoji' && !presentStudents.some((n) => {
-      const e = getEntry(n); return e.motivation || e.learning || e.behaviour;
-    })) { setGenerateError("Assegna almeno un'emoji a qualche allievo."); return; }
 
-    setGenerating(true); setGeneratingMode(mode);
+    const withoutEvidence = presentStudents.filter((name) => {
+      const e = getEntry(name);
+      return !e.teacher_note?.trim() && !RATING_FIELDS.some((field) => e[field]);
+    });
+    if (withoutEvidence.length) {
+      setGenerateError(`Per generare un giudizio serve almeno un'emoji o una nota individuale per: ${withoutEvidence.join(', ')}.`);
+      return;
+    }
+
+    setGenerating(true);
     try {
       const resp = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3000, messages: [{ role: 'user', content: buildPrompt(mode) }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3000, messages: [{ role: 'user', content: buildPrompt() }] }),
       });
       const data = await resp.json();
       const raw = (data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim();
       if (!raw) throw new Error(data.error?.message || 'Empty AI response');
       const parsed = JSON.parse(raw);
-      if (mode === 'fromNote') {
-        presentStudents.forEach((name) => {
-          const r = parsed[name];
-          if (!r) return;
-          setEntryPatch(name, typeof r === 'object'
-            ? { note: r.note || '', motivation: r.motivation || null, learning: r.learning || null, behaviour: r.behaviour || null }
-            : { note: String(r) });
-        });
-      } else {
-        presentStudents.forEach((name) => { if (parsed[name]) setEntryPatch(name, { note: parsed[name] }); });
-      }
+      presentStudents.forEach((name) => {
+        const judgment = parsed[name];
+        if (judgment) setEntryPatch(name, { note: typeof judgment === 'string' ? judgment : String(judgment.note || '') });
+      });
     } catch (e) {
       setGenerateError('Generation error: ' + e.message);
     }
-    setGenerating(false); setGeneratingMode(null);
+    setGenerating(false);
   }
 
   return (
     <Layout>
       <div className="page-eyebrow">Active module</div>
       <h1 className="page-title">Follow-up</h1>
-      <p className="page-desc">Record today's notes. Lesson goals come directly from the Teacher Guide for the selected Story and Day.</p>
+      <p className="page-desc">Record teacher evidence, then generate individual judgments grounded in the exact Teacher Guide Story and Day.</p>
 
       <div className="section-block">
         <h2>New follow-up</h2>
@@ -395,6 +391,8 @@ Return ONLY valid JSON exactly in this form:
             </div>
           )}
 
+          <div className="field"><label>Group note (optional)</label><textarea value={form.group_note} onChange={(e) => setForm({ ...form, group_note: e.target.value })} placeholder="Dynamics, particular episodes, classroom mood…" /></div>
+
           {presentStudents.length > 0 && (
             <div className="field">
               <label>Individual assessments</label>
@@ -403,10 +401,11 @@ Return ONLY valid JSON exactly in this form:
                 return <div key={name} style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 10, background: '#fff' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <strong>{name}</strong>
-                    <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy for myclassroom'}</button>
+                    <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
                   {RATING_FIELDS.map((field) => <div key={field} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 12, color: 'var(--ink-soft)', width: 80 }}>{RATING_LABELS[field]}</span>{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div>)}
-                  <textarea placeholder="Individual note…" value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
+                  <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
+                  {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
               })}
             </div>
@@ -416,17 +415,13 @@ Return ONLY valid JSON exactly in this form:
             <div className="field">
               <label>Generate with AI</label>
               <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, background: '#fff' }}>
-                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>No PDF needed. The AI uses the selected Teacher Guide day and its lesson goals.</p>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button type="button" className="btn" disabled={generating || !guideDay} onClick={() => handleGenerate('fromNote')} style={{ flex: 1, minWidth: 220 }}>{generating && generatingMode === 'fromNote' ? 'Generating…' : 'Generate notes + assessments from Teacher Guide'}</button>
-                  <button type="button" className="btn secondary" disabled={generating || !guideDay} onClick={() => handleGenerate('fromEmoji')} style={{ flex: 1, minWidth: 220 }}>{generating && generatingMode === 'fromEmoji' ? 'Generating…' : 'Generate notes from chosen emojis'}</button>
-                </div>
+                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses the exact Teacher Guide Day, your selected emojis, the optional group note and each optional individual observation. It generates the written judgment only; your ratings stay exactly as you selected them.</p>
+                <button type="button" className="btn" disabled={generating || !guideDay} onClick={handleGenerate} style={{ width: '100%' }}>{generating ? 'Generating judgments…' : 'Generate individual judgments'}</button>
                 {generateError && <div className="error-text" style={{ marginTop: 10 }}>{generateError}</div>}
               </div>
             </div>
           )}
 
-          <div className="field"><label>Group note (optional)</label><textarea value={form.group_note} onChange={(e) => setForm({ ...form, group_note: e.target.value })} placeholder="Dynamics, particular episodes, classroom mood…" /></div>
           {saveError && <div className="error-text">{saveError}</div>}
           {saveOk && <div style={{ color: 'var(--sage)', fontSize: 13, marginBottom: 14 }}>Saved.</div>}
           <button className="btn" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save follow-up'}</button>
