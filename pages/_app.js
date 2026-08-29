@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import '../styles/globals.css';
 
@@ -43,6 +44,11 @@ function CalendarPlannerBridge() {
 export default function App({ Component, pageProps }) {
   return (
     <>
+      <Head>
+        <title>Kids&amp;Us Hub</title>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+      </Head>
       <CalendarPlannerBridge />
       <Component {...pageProps} />
     </>
