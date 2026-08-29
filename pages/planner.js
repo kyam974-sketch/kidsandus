@@ -19,6 +19,52 @@ function renderNotes(text) {
   );
 }
 
+function escapeHtml(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function notesToHtml(text) {
+  return String(text || '').split('**').map((part, i) => {
+    const safe = escapeHtml(part).replace(/\n/g, '<br>');
+    return i % 2 === 1 ? `<strong class="mandatory-phrase">${safe}</strong>` : safe;
+  }).join('');
+}
+
+function editorToNotes(root) {
+  function walk(node) {
+    if (node.nodeType === 3) return node.nodeValue || '';
+    if (node.nodeType !== 1) return '';
+    const tag = node.tagName;
+    if (tag === 'BR') return '\n';
+    const inner = Array.from(node.childNodes).map(walk).join('');
+    if (tag === 'STRONG' || tag === 'B') return `**${inner}**`;
+    if (tag === 'DIV' || tag === 'P') return inner + '\n';
+    return inner;
+  }
+  return Array.from(root.childNodes).map(walk).join('').replace(/\n{3,}/g, '\n\n').replace(/\n$/, '');
+}
+
+function RichNotesEditor({ value, onCommit }) {
+  return (
+    <div
+      className="notes-editor"
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline="true"
+      data-placeholder="Short, telegraphic notes. Teacher speech is shown in bold."
+      dangerouslySetInnerHTML={{ __html: notesToHtml(value) }}
+      onBlur={(e) => onCommit(editorToNotes(e.currentTarget))}
+      style={{ whiteSpace: 'pre-wrap' }}
+    />
+  );
+}
+
 function parseAudioNumbers(audioText) {
   if (!audioText) return [];
   return [...String(audioText).matchAll(/#(\d+)/g)].map((m) => parseInt(m[1], 10));
@@ -231,8 +277,7 @@ export default function Planner() {
                       <label className="bonus-check"><input type="checkbox" checked={!!a.is_bonus} onChange={(e) => updateAct(i,'is_bonus',e.target.checked)} /> Bonus</label>
                     </div>
                     <label className="notes-label">Teaching notes</label>
-                    <textarea className="notes-editor" value={a.notes || ''} onChange={(e) => updateAct(i,'notes',e.target.value)} placeholder="Short, telegraphic notes. Teacher speech is shown in bold." />
-                    {a.notes && <div className="notes-preview">{renderNotes(a.notes)}</div>}
+                    <RichNotesEditor value={a.notes || ''} onCommit={(value) => updateAct(i, 'notes', value)} />
                     <input className="materials-input" placeholder="Materials" value={a.materials || ''} onChange={(e) => updateAct(i,'materials',e.target.value)} />
                   </div>
                 ))}
