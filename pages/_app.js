@@ -46,7 +46,14 @@ export default function App({ Component, pageProps }) {
     <>
       <Head>
         <title>Kids&amp;Us Hub</title>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="application-name" content="Kids&Us Hub" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Kids&Us Hub" />
+        <meta name="theme-color" content="#ff5364" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
       </Head>
       <CalendarPlannerBridge />
