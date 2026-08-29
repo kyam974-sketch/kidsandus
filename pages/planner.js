@@ -105,7 +105,7 @@ function fmtCountdown(seconds) {
 }
 
 export default function Planner() {
-  const [courseId, setCourseId] = useState('sam');
+  const [courseId, setCourseId] = useState('mousy');
   const [storyNumber, setStoryNumber] = useState(1);
   const [dayNumber, setDayNumber] = useState(1);
   const [activities, setActivities] = useState([]);
@@ -277,7 +277,7 @@ export default function Planner() {
                       <label className="bonus-check"><input type="checkbox" checked={!!a.is_bonus} onChange={(e) => updateAct(i,'is_bonus',e.target.checked)} /> Bonus</label>
                     </div>
                     <label className="notes-label">Teaching notes</label>
-                    <RichNotesEditor value={a.notes || ''} onCommit={(value) => updateAct(i, 'notes', value)} />
+                    <RichNotesEditor key={`${key}-${i}`} value={a.notes || ''} onCommit={(value) => updateAct(i,'notes',value)} />
                     <input className="materials-input" placeholder="Materials" value={a.materials || ''} onChange={(e) => updateAct(i,'materials',e.target.value)} />
                   </div>
                 ))}
