@@ -15,7 +15,7 @@ const NAV = [
   { href: '/songs', label: '🎵 Songs', sub: 'live', live: true },
   { href: '/guides', label: '📚 Teacher Guides', sub: 'live', live: true },
   { href: '/planner', label: '✨ Planner', sub: 'live', live: true },
-  { href: '#', label: '📊 Term Reports', sub: 'soon', live: false },
+  { href: '/term-reports', label: '📊 Term Reports', sub: 'linked', live: true },
 ];
 
 export default function Layout({ children }) {
