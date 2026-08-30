@@ -296,7 +296,7 @@ export default function Planner() {
               <div className="planner-selectors">
                 <div className="field compact"><label>Course</label><select value={courseId} onChange={(e) => setCourseId(e.target.value)}>{COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
                 <div className="field compact"><label>Story</label><select value={storyNumber} onChange={(e) => setStoryNumber(Number(e.target.value))}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
-                <div className="field compact day-field"><label>Day</label><input type="number" min="1" value={dayNumber} onChange={(e) => setDayNumber(Number(e.target.value) || 1)} /></div>
+                <div className="field compact day-field"><label>Day</label><select size={5} value={dayNumber} onChange={(e) => setDayNumber(Number(e.target.value))} style={{ minWidth: 110, height: 152, overflowY: 'auto' }}>{Array.from({ length: 20 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div>
                 <div className="mode-buttons"><button className={mode === 'edit' ? 'btn' : 'btn secondary'} onClick={() => setMode('edit')}>Edit</button><button className={mode === 'live' ? 'btn' : 'btn secondary'} onClick={() => setMode('live')}>Live</button><button className="btn secondary" onClick={() => setMode('light')}>Extra Light</button></div>
               </div>
               {saving && <div className="saving-note">Saving…</div>}
