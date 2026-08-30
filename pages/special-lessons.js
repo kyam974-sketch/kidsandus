@@ -134,7 +134,7 @@ export default function SpecialLessons() {
     setSaving(false);
     if (error) setMessage(`Errore salvataggio: ${error.message}`);
     else {
-      setMessage('Lezione speciale salvata. La trovi qui sotto in “Lezioni salvate”, con il pulsante Live.');
+      setMessage('Lezione speciale salvata. La trovi qui sotto in “Lezioni salvate”, con Live ed Extra Light.');
       await loadSavedLessons();
     }
   }
@@ -199,9 +199,12 @@ export default function SpecialLessons() {
             const meta = parseSavedKey(lesson.key);
             const typeLabel = TYPES.find((t) => t.id === meta.type)?.label || meta.type;
             const courseName = COURSES.find((c) => c.id === meta.course)?.name || meta.course;
-            return <div key={lesson.id} className="act-edit-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            return <div key={lesson.id} className="act-edit-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div><strong>{meta.title}</strong><div className="planner-help">{typeLabel} · {courseName} · {meta.contextA} · {meta.contextB}</div></div>
-              <a className="btn" href={`/special-lessons-live?id=${lesson.id}`}>▶ Live</a>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <a className="btn" href={`/special-lessons-live?id=${lesson.id}`}>▶ Live</a>
+                <a className="btn secondary" href={`/special-lessons-live?id=${lesson.id}&mode=light`}>Extra Light</a>
+              </div>
             </div>;
           })}
         </div>
