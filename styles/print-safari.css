@@ -1,0 +1,109 @@
+@media print {
+  html,
+  body,
+  #__next {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .rail,
+  .planner-screen {
+    display: none !important;
+  }
+
+  .main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-only,
+  .print-sheet,
+  .print-plan,
+  .print-bonus {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .print-plan {
+    background-image: none !important;
+  }
+
+  .print-activity {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    padding: 8px 0 10px !important;
+  }
+
+  .print-clock {
+    float: left !important;
+    width: 58px !important;
+    margin: 0 10px 0 0 !important;
+  }
+
+  .print-body {
+    display: block !important;
+    margin-left: 68px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .print-activity::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+
+  .print-act-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-notes,
+  .print-materials,
+  .print-audio,
+  .print-ready,
+  .print-ready pre {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .print-ready {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+}
