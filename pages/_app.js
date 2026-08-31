@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import '../styles/globals.css';
+import '../styles/print-safari.css';
 
 function setReactField(element, value) {
   if (!element) return false;
@@ -24,15 +25,14 @@ function CalendarPlannerBridge() {
     let tries = 0;
     const apply = () => {
       const selectors = document.querySelectorAll('.planner-selectors select');
-      const dayInput = document.querySelector('.planner-selectors input[type="number"]');
-      if (selectors.length < 2 || !dayInput) {
+      if (selectors.length < 3) {
         tries += 1;
         if (tries < 30) window.setTimeout(apply, 50);
         return;
       }
       if (course) setReactField(selectors[0], course);
       if (story) setReactField(selectors[1], story);
-      if (day) setReactField(dayInput, day);
+      if (day) setReactField(selectors[2], day);
     };
 
     apply();
