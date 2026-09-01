@@ -48,6 +48,23 @@ function CalendarPlannerBridge() {
   return null;
 }
 
+function PrintFontPreloader() {
+  useEffect(() => {
+    if (!document.fonts?.load) return;
+    document.fonts.load(`400 16px ${printHandwriting.style.fontFamily}`).catch(() => {});
+  }, []);
+
+  return (
+    <span
+      className={printHandwriting.className}
+      aria-hidden="true"
+      style={{ position: 'fixed', left: '-10000px', top: 0, opacity: 0, pointerEvents: 'none' }}
+    >
+      Lesson notes handwriting preload
+    </span>
+  );
+}
+
 export default function App({ Component, pageProps }) {
   return (
     <>
@@ -70,6 +87,7 @@ export default function App({ Component, pageProps }) {
           }
         }`}</style>
       </Head>
+      <PrintFontPreloader />
       <CalendarPlannerBridge />
       <Component {...pageProps} />
     </>
