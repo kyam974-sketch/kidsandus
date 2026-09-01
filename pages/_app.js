@@ -5,6 +5,7 @@ import { Short_Stack } from 'next/font/google';
 import '../styles/globals.css';
 import '../styles/print-safari.css';
 import '../styles/print-font.css';
+import '../styles/print-grid.css';
 
 const printHandwriting = Short_Stack({
   subsets: ['latin'],
