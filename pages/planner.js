@@ -180,7 +180,7 @@ export default function Planner() {
     const [{ data: lesson }, { data: songs }, { data: guide }] = await Promise.all([
       supabase.from('lessons').select('data').eq('key', key).maybeSingle(),
       supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', corsoName),
-      supabase.from('guide_days').select('materials, bonus_materials').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
+      supabase.from('guide_days').select('materials, bonus_materials, preparation').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
     ]);
     setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
     setHistory([]);
@@ -339,7 +339,7 @@ export default function Planner() {
                 </div>
                 <div className="live-tools"><div className="field compact"><label>Start time</label><input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div><button className="btn secondary" onClick={() => window.print()}>🖨️ Print audit notes</button></div>
 
-                {(dayGuide?.materials || dayGuide?.bonus_materials) && <div className="ready-note"><div className="ready-title">🎒 Get Ready for the Class</div>{dayGuide.materials && <pre className="ready-list">{dayGuide.materials}</pre>}{dayGuide.bonus_materials && <><div className="ready-subtitle">Bonus</div><pre className="ready-list">{dayGuide.bonus_materials}</pre></>}</div>}
+                {(dayGuide?.preparation || dayGuide?.materials || dayGuide?.bonus_materials) && <div className="ready-note"><div className="ready-title">🎒 Get Ready for the Class</div>{dayGuide.preparation && <><div className="ready-subtitle">Before Class</div><pre className="ready-list">{dayGuide.preparation}</pre></>}{dayGuide.materials && <><div className="ready-subtitle">Materials</div><pre className="ready-list">{dayGuide.materials}</pre></>}{dayGuide.bonus_materials && <><div className="ready-subtitle">Bonus</div><pre className="ready-list">{dayGuide.bonus_materials}</pre></>}</div>}
 
                 {timedActs.map((a, i) => {
                   const isCurrent = i === currentActIdx;
@@ -364,7 +364,7 @@ export default function Planner() {
           <div><div className="print-kicker">Lesson notes · 2026/27</div><h1>{corsoName} · Story {storyNumber} · Day {dayNumber}</h1></div>
           <div className="print-time">Start {startTime}</div>
         </header>
-        {(dayGuide?.materials || dayGuide?.bonus_materials) && <div className="print-ready"><strong>Get ready</strong>{dayGuide.materials && <pre>{dayGuide.materials}</pre>}{dayGuide.bonus_materials && <><strong>Bonus materials</strong><pre>{dayGuide.bonus_materials}</pre></>}</div>}
+        {(dayGuide?.preparation || dayGuide?.materials || dayGuide?.bonus_materials) && <div className="print-ready"><strong>Get ready</strong>{dayGuide.preparation && <><strong>Before Class</strong><pre>{dayGuide.preparation}</pre></>}{dayGuide.materials && <><strong>Materials</strong><pre>{dayGuide.materials}</pre></>}{dayGuide.bonus_materials && <><strong>Bonus materials</strong><pre>{dayGuide.bonus_materials}</pre></>}</div>}
         <div className="print-plan">
           {printActivities.map((a, i) => <article className="print-activity" key={i}><div className="print-clock"><strong>{a.startClock}</strong><span>{a.endClock}</span></div><div className="print-body"><div className="print-act-title"><span>{i+1}. {a.name}</span><small>{a.duration}</small></div>{a.audio && <div className="print-audio">🎵 {a.audio}</div>}{a.materials && <div className="print-materials">Materials: {a.materials}</div>}<div className="print-notes">{renderNotes(a.noteText || a.desc)}</div></div></article>)}
           {bonusActs.length > 0 && <div className="print-bonus"><h2>Bonus activities</h2>{bonusActs.map((a,i) => <article className="print-activity" key={i}><div className="print-clock">BONUS</div><div className="print-body"><div className="print-act-title"><span>{a.name}</span></div>{a.materials && <div className="print-materials">Materials: {a.materials}</div>}<div className="print-notes">{renderNotes(a.notes || a.desc)}</div></div></article>)}</div>}
