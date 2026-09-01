@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+
 @media print {
   @page {
     size: A4;
@@ -58,18 +60,16 @@
     overflow: visible !important;
   }
 
-  /* Clean notebook paper: white page, very faint blue rules, no dark fill. */
+  /* Real notebook paper: pale blue horizontal rules and one soft red margin line. */
   .print-sheet {
     color: #263142 !important;
     background-color: #fff !important;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      #fff 0,
-      #fff 27px,
-      #eef2f7 27px,
-      #eef2f7 28px
-    ) !important;
-    background-size: 100% 28px !important;
+    background-image:
+      linear-gradient(to right, transparent 0, transparent 52px, #f1c9cf 52px, #f1c9cf 53px, transparent 53px),
+      repeating-linear-gradient(to bottom, #fff 0, #fff 25px, #dce8f2 25px, #dce8f2 26px) !important;
+    background-size: 100% 100%, 100% 26px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-header {
@@ -77,52 +77,48 @@
     justify-content: space-between !important;
     align-items: flex-start !important;
     border-bottom: 1px solid #dfe4eb !important;
-    padding: 0 0 7px 0 !important;
+    padding: 0 0 7px 64px !important;
     margin-bottom: 7px !important;
-    background: #fff !important;
+    background: rgba(255,255,255,.94) !important;
   }
 
   .print-header h1 {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 17pt !important;
-    line-height: 1.15 !important;
+    font-size: 18pt !important;
+    line-height: 1.12 !important;
     margin: 2px 0 0 !important;
     color: #263142 !important;
     font-weight: 700 !important;
   }
 
   .print-kicker {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 7.5pt !important;
+    font-size: 8pt !important;
     text-transform: uppercase !important;
-    letter-spacing: .07em !important;
+    letter-spacing: .04em !important;
     color: #7a8493 !important;
   }
 
   .print-time {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
     border: 1px solid #d8dde5 !important;
     border-radius: 999px !important;
-    padding: 3px 7px !important;
+    padding: 2px 7px !important;
     background: #fff !important;
     font-weight: 700 !important;
-    font-size: 8.3pt !important;
+    font-size: 8.5pt !important;
   }
 
-  /* Compact sticky: all source content retained, but arranged in columns. */
+  /* Small sticky note, two columns, all content retained. */
   .print-ready {
-    width: 60% !important;
-    max-width: 112mm !important;
-    margin: 1px 0 8px auto !important;
-    padding: 5px 7px 4px !important;
+    width: 38% !important;
+    max-width: 72mm !important;
+    margin: 1px 0 7px auto !important;
+    padding: 4px 6px 3px !important;
     border: 1px solid #e6d98a !important;
-    border-radius: 3px !important;
+    border-radius: 2px !important;
     background-color: #fffbe4 !important;
     box-shadow: none !important;
     transform: none !important;
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 6.9pt !important;
-    line-height: 1.1 !important;
+    font-size: 6.1pt !important;
+    line-height: 1.02 !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
     -webkit-print-color-adjust: exact !important;
@@ -131,9 +127,9 @@
 
   .print-ready strong {
     display: block !important;
-    font-size: 7.1pt !important;
-    line-height: 1.08 !important;
-    margin: 0 0 2px !important;
+    font-size: 6.4pt !important;
+    line-height: 1.02 !important;
+    margin: 0 0 1px !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
     color: #514a24 !important;
@@ -141,12 +137,11 @@
 
   .print-ready pre {
     white-space: pre-line !important;
-    font-family: inherit !important;
-    font-size: 6.6pt !important;
-    line-height: 1.08 !important;
-    margin: 1px 0 3px !important;
+    font-size: 5.9pt !important;
+    line-height: 1.02 !important;
+    margin: 0 0 2px !important;
     columns: 2 !important;
-    column-gap: 5mm !important;
+    column-gap: 3.5mm !important;
     column-rule: 1px solid #efe6ac !important;
     min-height: 0 !important;
     height: auto !important;
@@ -177,9 +172,8 @@
     width: 55px !important;
     margin: 1px 9px 0 0 !important;
     padding-top: 1px !important;
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 8.2pt !important;
-    line-height: 1.22 !important;
+    font-size: 8.6pt !important;
+    line-height: 1.16 !important;
     color: #7a8493 !important;
   }
 
@@ -190,7 +184,8 @@
 
   .print-clock strong {
     color: #344054 !important;
-    font-size: 9pt !important;
+    font-size: 9.4pt !important;
+    font-weight: 700 !important;
   }
 
   .print-body {
@@ -213,16 +208,14 @@
     justify-content: space-between !important;
     gap: 9px !important;
     align-items: baseline !important;
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 11.8pt !important;
-    line-height: 1.2 !important;
+    font-size: 13pt !important;
+    line-height: 1.08 !important;
     font-weight: 700 !important;
     color: #263142 !important;
     break-after: avoid !important;
     page-break-after: avoid !important;
   }
 
-  /* Flat pastel highlighter avoids the black gradient artefact in Chrome/iPad print. */
   .print-act-title > span {
     display: inline !important;
     padding: 0 4px 1px !important;
@@ -236,34 +229,29 @@
   }
 
   .print-act-title small {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 8.3pt !important;
+    font-size: 8.7pt !important;
     color: #7a8493 !important;
     white-space: nowrap !important;
   }
 
   .print-audio,
   .print-materials {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 8.5pt !important;
-    line-height: 1.28 !important;
+    font-size: 9pt !important;
+    line-height: 1.18 !important;
     color: #5f6b7a !important;
-    margin-top: 2px !important;
+    margin-top: 1px !important;
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
   }
 
-  /* Readable italic rather than a cartoon handwriting font. */
   .print-notes {
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-style: italic !important;
-    font-size: 10.3pt !important;
-    line-height: 1.45 !important;
+    font-size: 11.2pt !important;
+    line-height: 1.34 !important;
     color: #263142 !important;
     white-space: pre-wrap !important;
-    margin-top: 3px !important;
+    margin-top: 2px !important;
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
@@ -272,7 +260,6 @@
 
   .print-notes .mandatory-phrase {
     font-weight: 700 !important;
-    font-style: italic !important;
     text-decoration: none !important;
     padding: 0 2px !important;
     border-radius: 2px !important;
@@ -294,12 +281,18 @@
     width: fit-content !important;
     margin: 7px 0 3px 64px !important;
     padding: 1px 5px !important;
-    font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-    font-size: 12.5pt !important;
+    font-size: 13pt !important;
     font-weight: 700 !important;
     background-color: #e8dcf7 !important;
     color: #3e3650 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* One handwriting face for the whole printed notebook. */
+  html body .print-sheet,
+  html body .print-sheet * {
+    font-family: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive !important;
+    font-style: normal !important;
   }
 }
