@@ -68,6 +68,33 @@ function PrintFontPreloader() {
   );
 }
 
+function PrintReadyGuard() {
+  useEffect(() => {
+    const nativePrint = window.print.bind(window);
+    let printing = false;
+
+    window.print = async () => {
+      if (printing) return;
+      printing = true;
+      try {
+        if (document.fonts?.ready) await document.fonts.ready;
+        const sheet = document.querySelector('.print-sheet');
+        if (sheet) void sheet.getBoundingClientRect().height;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        nativePrint();
+      } finally {
+        window.setTimeout(() => { printing = false; }, 250);
+      }
+    };
+
+    return () => {
+      window.print = nativePrint;
+    };
+  }, []);
+
+  return null;
+}
+
 function PwaSetup() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -97,6 +124,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
+        <PrintReadyGuard />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
