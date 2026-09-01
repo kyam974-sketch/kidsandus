@@ -1,0 +1,7 @@
+@media print {
+  html body .print-sheet,
+  html body .print-sheet * {
+    font-family: var(--font-handwriting), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-style: normal !important;
+  }
+}
