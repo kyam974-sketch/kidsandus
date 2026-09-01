@@ -68,6 +68,18 @@ function PrintFontPreloader() {
   );
 }
 
+function PwaSetup() {
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const register = () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    };
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
+  }, []);
+  return null;
+}
+
 export default function App({ Component, pageProps }) {
   return (
     <>
@@ -84,6 +96,7 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
       </Head>
       <div className={printHandwriting.variable}>
+        <PwaSetup />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
