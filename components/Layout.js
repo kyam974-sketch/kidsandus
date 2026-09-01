@@ -23,6 +23,9 @@ export default function Layout({ children }) {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [session, setSession] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isAppleMobile, setIsAppleMobile] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const active = todayIndex();
 
   useEffect(() => {
@@ -37,6 +40,40 @@ export default function Layout({ children }) {
     });
     return () => sub.subscription.unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    const apple = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    setIsAppleMobile(apple);
+    setIsStandalone(!!standalone);
+
+    const handleInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      setIsStandalone(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
+  }, []);
+
+  async function installApp() {
+    if (installPrompt) {
+      await installPrompt.prompt();
+      await installPrompt.userChoice.catch(() => null);
+      setInstallPrompt(null);
+      return;
+    }
+    if (isAppleMobile) {
+      window.alert('Su iPad: apri kidsandus.vercel.app in Safari → Condividi → Aggiungi alla schermata Home → attiva “Apri come app web” → Aggiungi.');
+    }
+  }
 
   if (checking || !session) return null;
 
@@ -53,6 +90,15 @@ export default function Layout({ children }) {
             return <a key={item.label} href={item.href} className={`rail-link${isActive ? ' active' : ''}`}>{item.label}{item.sub && <small>{item.sub}</small>}</a>;
           })}
         </nav>
+        {!isStandalone && (installPrompt || isAppleMobile) && (
+          <button
+            className="rail-logout"
+            onClick={installApp}
+            style={{ background: '#edf3ff', borderColor: '#d7e2fa', color: '#315aa8', fontWeight: 700 }}
+          >
+            {installPrompt ? '⬇️ Install app' : '📲 Add to Home'}
+          </button>
+        )}
         <button className="rail-logout" onClick={async () => { await supabase.auth.signOut(); router.replace('/login'); }}>Log out</button>
       </aside>
       <main className="main">{children}</main>
