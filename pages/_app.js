@@ -4,11 +4,13 @@ import { useRouter } from 'next/router';
 import { Short_Stack } from 'next/font/google';
 import '../styles/globals.css';
 import '../styles/print-safari.css';
+import '../styles/print-font.css';
 
 const printHandwriting = Short_Stack({
   subsets: ['latin'],
   weight: '400',
   display: 'swap',
+  variable: '--font-handwriting',
 });
 
 function setReactField(element, value) {
@@ -79,17 +81,12 @@ export default function App({ Component, pageProps }) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="512x512" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
-        <style>{`@media print {
-          html body .print-sheet,
-          html body .print-sheet * {
-            font-family: ${printHandwriting.style.fontFamily} !important;
-            font-style: normal !important;
-          }
-        }`}</style>
       </Head>
-      <PrintFontPreloader />
-      <CalendarPlannerBridge />
-      <Component {...pageProps} />
+      <div className={printHandwriting.variable}>
+        <PrintFontPreloader />
+        <CalendarPlannerBridge />
+        <Component {...pageProps} />
+      </div>
     </>
   );
 }
