@@ -1,18 +1,38 @@
 {
+  "id": "/",
   "name": "Kids&Us Hub",
-  "short_name": "Kids&Us",
+  "short_name": "Kids&Us Hub",
   "description": "Kids&Us teaching hub",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff5364",
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/apple-touch-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Planner",
+      "short_name": "Planner",
+      "url": "/planner"
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/calendar"
     }
   ]
 }
