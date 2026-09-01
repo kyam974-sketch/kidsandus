@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Short+Stack&display=swap');
 
 @media print {
   @page {
@@ -45,18 +45,13 @@
     margin: 0 !important;
   }
 
-  /*
-    The notebook ruling is made with real painted lines (box-shadows), not a
-    background image/gradient. Chrome on iPad was turning print backgrounds
-    black or dropping them completely. Borders/shadows print reliably even
-    when "background graphics" is disabled.
-  */
   .print-sheet {
     position: relative !important;
     isolation: isolate !important;
     background-image: none !important;
   }
 
+  /* Real notebook rules: borders/shadows survive Chrome/iPad print preview. */
   .print-sheet::before {
     content: '';
     position: absolute;
@@ -65,48 +60,48 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: #d6e4f0;
+    background: #c9dceb;
     box-shadow:
-      0 28px 0 #d6e4f0, 0 56px 0 #d6e4f0, 0 84px 0 #d6e4f0, 0 112px 0 #d6e4f0,
-      0 140px 0 #d6e4f0, 0 168px 0 #d6e4f0, 0 196px 0 #d6e4f0, 0 224px 0 #d6e4f0,
-      0 252px 0 #d6e4f0, 0 280px 0 #d6e4f0, 0 308px 0 #d6e4f0, 0 336px 0 #d6e4f0,
-      0 364px 0 #d6e4f0, 0 392px 0 #d6e4f0, 0 420px 0 #d6e4f0, 0 448px 0 #d6e4f0,
-      0 476px 0 #d6e4f0, 0 504px 0 #d6e4f0, 0 532px 0 #d6e4f0, 0 560px 0 #d6e4f0,
-      0 588px 0 #d6e4f0, 0 616px 0 #d6e4f0, 0 644px 0 #d6e4f0, 0 672px 0 #d6e4f0,
-      0 700px 0 #d6e4f0, 0 728px 0 #d6e4f0, 0 756px 0 #d6e4f0, 0 784px 0 #d6e4f0,
-      0 812px 0 #d6e4f0, 0 840px 0 #d6e4f0, 0 868px 0 #d6e4f0, 0 896px 0 #d6e4f0,
-      0 924px 0 #d6e4f0, 0 952px 0 #d6e4f0, 0 980px 0 #d6e4f0, 0 1008px 0 #d6e4f0,
-      0 1036px 0 #d6e4f0, 0 1064px 0 #d6e4f0, 0 1092px 0 #d6e4f0, 0 1120px 0 #d6e4f0,
-      0 1148px 0 #d6e4f0, 0 1176px 0 #d6e4f0, 0 1204px 0 #d6e4f0, 0 1232px 0 #d6e4f0,
-      0 1260px 0 #d6e4f0, 0 1288px 0 #d6e4f0, 0 1316px 0 #d6e4f0, 0 1344px 0 #d6e4f0,
-      0 1372px 0 #d6e4f0, 0 1400px 0 #d6e4f0, 0 1428px 0 #d6e4f0, 0 1456px 0 #d6e4f0,
-      0 1484px 0 #d6e4f0, 0 1512px 0 #d6e4f0, 0 1540px 0 #d6e4f0, 0 1568px 0 #d6e4f0,
-      0 1596px 0 #d6e4f0, 0 1624px 0 #d6e4f0, 0 1652px 0 #d6e4f0, 0 1680px 0 #d6e4f0,
-      0 1708px 0 #d6e4f0, 0 1736px 0 #d6e4f0, 0 1764px 0 #d6e4f0, 0 1792px 0 #d6e4f0,
-      0 1820px 0 #d6e4f0, 0 1848px 0 #d6e4f0, 0 1876px 0 #d6e4f0, 0 1904px 0 #d6e4f0,
-      0 1932px 0 #d6e4f0, 0 1960px 0 #d6e4f0, 0 1988px 0 #d6e4f0, 0 2016px 0 #d6e4f0,
-      0 2044px 0 #d6e4f0, 0 2072px 0 #d6e4f0, 0 2100px 0 #d6e4f0, 0 2128px 0 #d6e4f0,
-      0 2156px 0 #d6e4f0, 0 2184px 0 #d6e4f0, 0 2212px 0 #d6e4f0, 0 2240px 0 #d6e4f0,
-      0 2268px 0 #d6e4f0, 0 2296px 0 #d6e4f0, 0 2324px 0 #d6e4f0, 0 2352px 0 #d6e4f0,
-      0 2380px 0 #d6e4f0, 0 2408px 0 #d6e4f0, 0 2436px 0 #d6e4f0, 0 2464px 0 #d6e4f0,
-      0 2492px 0 #d6e4f0, 0 2520px 0 #d6e4f0, 0 2548px 0 #d6e4f0, 0 2576px 0 #d6e4f0,
-      0 2604px 0 #d6e4f0, 0 2632px 0 #d6e4f0, 0 2660px 0 #d6e4f0, 0 2688px 0 #d6e4f0,
-      0 2716px 0 #d6e4f0, 0 2744px 0 #d6e4f0, 0 2772px 0 #d6e4f0, 0 2800px 0 #d6e4f0,
-      0 2828px 0 #d6e4f0, 0 2856px 0 #d6e4f0, 0 2884px 0 #d6e4f0, 0 2912px 0 #d6e4f0,
-      0 2940px 0 #d6e4f0, 0 2968px 0 #d6e4f0, 0 2996px 0 #d6e4f0, 0 3024px 0 #d6e4f0,
-      0 3052px 0 #d6e4f0, 0 3080px 0 #d6e4f0, 0 3108px 0 #d6e4f0, 0 3136px 0 #d6e4f0,
-      0 3164px 0 #d6e4f0, 0 3192px 0 #d6e4f0, 0 3220px 0 #d6e4f0, 0 3248px 0 #d6e4f0,
-      0 3276px 0 #d6e4f0, 0 3304px 0 #d6e4f0, 0 3332px 0 #d6e4f0, 0 3360px 0 #d6e4f0,
-      0 3388px 0 #d6e4f0, 0 3416px 0 #d6e4f0, 0 3444px 0 #d6e4f0, 0 3472px 0 #d6e4f0,
-      0 3500px 0 #d6e4f0, 0 3528px 0 #d6e4f0, 0 3556px 0 #d6e4f0, 0 3584px 0 #d6e4f0,
-      0 3612px 0 #d6e4f0, 0 3640px 0 #d6e4f0, 0 3668px 0 #d6e4f0, 0 3696px 0 #d6e4f0,
-      0 3724px 0 #d6e4f0, 0 3752px 0 #d6e4f0, 0 3780px 0 #d6e4f0, 0 3808px 0 #d6e4f0,
-      0 3836px 0 #d6e4f0, 0 3864px 0 #d6e4f0, 0 3892px 0 #d6e4f0, 0 3920px 0 #d6e4f0,
-      0 3948px 0 #d6e4f0, 0 3976px 0 #d6e4f0, 0 4004px 0 #d6e4f0, 0 4032px 0 #d6e4f0,
-      0 4060px 0 #d6e4f0, 0 4088px 0 #d6e4f0, 0 4116px 0 #d6e4f0, 0 4144px 0 #d6e4f0,
-      0 4172px 0 #d6e4f0, 0 4200px 0 #d6e4f0, 0 4228px 0 #d6e4f0, 0 4256px 0 #d6e4f0,
-      0 4284px 0 #d6e4f0, 0 4312px 0 #d6e4f0, 0 4340px 0 #d6e4f0, 0 4368px 0 #d6e4f0,
-      0 4396px 0 #d6e4f0, 0 4424px 0 #d6e4f0, 0 4452px 0 #d6e4f0, 0 4480px 0 #d6e4f0;
+      0 28px 0 #c9dceb, 0 56px 0 #c9dceb, 0 84px 0 #c9dceb, 0 112px 0 #c9dceb,
+      0 140px 0 #c9dceb, 0 168px 0 #c9dceb, 0 196px 0 #c9dceb, 0 224px 0 #c9dceb,
+      0 252px 0 #c9dceb, 0 280px 0 #c9dceb, 0 308px 0 #c9dceb, 0 336px 0 #c9dceb,
+      0 364px 0 #c9dceb, 0 392px 0 #c9dceb, 0 420px 0 #c9dceb, 0 448px 0 #c9dceb,
+      0 476px 0 #c9dceb, 0 504px 0 #c9dceb, 0 532px 0 #c9dceb, 0 560px 0 #c9dceb,
+      0 588px 0 #c9dceb, 0 616px 0 #c9dceb, 0 644px 0 #c9dceb, 0 672px 0 #c9dceb,
+      0 700px 0 #c9dceb, 0 728px 0 #c9dceb, 0 756px 0 #c9dceb, 0 784px 0 #c9dceb,
+      0 812px 0 #c9dceb, 0 840px 0 #c9dceb, 0 868px 0 #c9dceb, 0 896px 0 #c9dceb,
+      0 924px 0 #c9dceb, 0 952px 0 #c9dceb, 0 980px 0 #c9dceb, 0 1008px 0 #c9dceb,
+      0 1036px 0 #c9dceb, 0 1064px 0 #c9dceb, 0 1092px 0 #c9dceb, 0 1120px 0 #c9dceb,
+      0 1148px 0 #c9dceb, 0 1176px 0 #c9dceb, 0 1204px 0 #c9dceb, 0 1232px 0 #c9dceb,
+      0 1260px 0 #c9dceb, 0 1288px 0 #c9dceb, 0 1316px 0 #c9dceb, 0 1344px 0 #c9dceb,
+      0 1372px 0 #c9dceb, 0 1400px 0 #c9dceb, 0 1428px 0 #c9dceb, 0 1456px 0 #c9dceb,
+      0 1484px 0 #c9dceb, 0 1512px 0 #c9dceb, 0 1540px 0 #c9dceb, 0 1568px 0 #c9dceb,
+      0 1596px 0 #c9dceb, 0 1624px 0 #c9dceb, 0 1652px 0 #c9dceb, 0 1680px 0 #c9dceb,
+      0 1708px 0 #c9dceb, 0 1736px 0 #c9dceb, 0 1764px 0 #c9dceb, 0 1792px 0 #c9dceb,
+      0 1820px 0 #c9dceb, 0 1848px 0 #c9dceb, 0 1876px 0 #c9dceb, 0 1904px 0 #c9dceb,
+      0 1932px 0 #c9dceb, 0 1960px 0 #c9dceb, 0 1988px 0 #c9dceb, 0 2016px 0 #c9dceb,
+      0 2044px 0 #c9dceb, 0 2072px 0 #c9dceb, 0 2100px 0 #c9dceb, 0 2128px 0 #c9dceb,
+      0 2156px 0 #c9dceb, 0 2184px 0 #c9dceb, 0 2212px 0 #c9dceb, 0 2240px 0 #c9dceb,
+      0 2268px 0 #c9dceb, 0 2296px 0 #c9dceb, 0 2324px 0 #c9dceb, 0 2352px 0 #c9dceb,
+      0 2380px 0 #c9dceb, 0 2408px 0 #c9dceb, 0 2436px 0 #c9dceb, 0 2464px 0 #c9dceb,
+      0 2492px 0 #c9dceb, 0 2520px 0 #c9dceb, 0 2548px 0 #c9dceb, 0 2576px 0 #c9dceb,
+      0 2604px 0 #c9dceb, 0 2632px 0 #c9dceb, 0 2660px 0 #c9dceb, 0 2688px 0 #c9dceb,
+      0 2716px 0 #c9dceb, 0 2744px 0 #c9dceb, 0 2772px 0 #c9dceb, 0 2800px 0 #c9dceb,
+      0 2828px 0 #c9dceb, 0 2856px 0 #c9dceb, 0 2884px 0 #c9dceb, 0 2912px 0 #c9dceb,
+      0 2940px 0 #c9dceb, 0 2968px 0 #c9dceb, 0 2996px 0 #c9dceb, 0 3024px 0 #c9dceb,
+      0 3052px 0 #c9dceb, 0 3080px 0 #c9dceb, 0 3108px 0 #c9dceb, 0 3136px 0 #c9dceb,
+      0 3164px 0 #c9dceb, 0 3192px 0 #c9dceb, 0 3220px 0 #c9dceb, 0 3248px 0 #c9dceb,
+      0 3276px 0 #c9dceb, 0 3304px 0 #c9dceb, 0 3332px 0 #c9dceb, 0 3360px 0 #c9dceb,
+      0 3388px 0 #c9dceb, 0 3416px 0 #c9dceb, 0 3444px 0 #c9dceb, 0 3472px 0 #c9dceb,
+      0 3500px 0 #c9dceb, 0 3528px 0 #c9dceb, 0 3556px 0 #c9dceb, 0 3584px 0 #c9dceb,
+      0 3612px 0 #c9dceb, 0 3640px 0 #c9dceb, 0 3668px 0 #c9dceb, 0 3696px 0 #c9dceb,
+      0 3724px 0 #c9dceb, 0 3752px 0 #c9dceb, 0 3780px 0 #c9dceb, 0 3808px 0 #c9dceb,
+      0 3836px 0 #c9dceb, 0 3864px 0 #c9dceb, 0 3892px 0 #c9dceb, 0 3920px 0 #c9dceb,
+      0 3948px 0 #c9dceb, 0 3976px 0 #c9dceb, 0 4004px 0 #c9dceb, 0 4032px 0 #c9dceb,
+      0 4060px 0 #c9dceb, 0 4088px 0 #c9dceb, 0 4116px 0 #c9dceb, 0 4144px 0 #c9dceb,
+      0 4172px 0 #c9dceb, 0 4200px 0 #c9dceb, 0 4228px 0 #c9dceb, 0 4256px 0 #c9dceb,
+      0 4284px 0 #c9dceb, 0 4312px 0 #c9dceb, 0 4340px 0 #c9dceb, 0 4368px 0 #c9dceb,
+      0 4396px 0 #c9dceb, 0 4424px 0 #c9dceb, 0 4452px 0 #c9dceb, 0 4480px 0 #c9dceb;
     pointer-events: none;
   }
 
@@ -160,7 +155,6 @@
     font-size: 8.5pt !important;
   }
 
-  /* Tiny preparation sticky: deliberately secondary to the lesson notes. */
   .print-ready {
     width: 28% !important;
     max-width: 52mm !important;
@@ -218,7 +212,7 @@
     overflow: visible !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
-    padding: 5px 0 7px !important;
+    padding: 6px 0 8px !important;
     border: 0 !important;
   }
 
@@ -228,8 +222,8 @@
     margin: 1px 9px 0 0 !important;
     padding-top: 1px !important;
     font-size: 8.6pt !important;
-    line-height: 1.14 !important;
-    color: #69768a !important;
+    line-height: 1.16 !important;
+    color: #657386 !important;
   }
 
   .print-clock strong,
@@ -239,7 +233,7 @@
 
   .print-clock strong {
     color: #344054 !important;
-    font-size: 9.3pt !important;
+    font-size: 9.4pt !important;
     font-weight: 700 !important;
   }
 
@@ -263,7 +257,7 @@
     justify-content: space-between !important;
     gap: 9px !important;
     align-items: baseline !important;
-    font-size: 12.7pt !important;
+    font-size: 13pt !important;
     line-height: 1.08 !important;
     font-weight: 700 !important;
     color: #24324a !important;
@@ -274,7 +268,7 @@
   .print-act-title > span {
     display: inline !important;
     padding: 0 4px 1px !important;
-    background: #f8c7d8 !important;
+    background-color: #f8c7d8 !important;
     color: #24324a !important;
     -webkit-text-fill-color: #24324a !important;
     -webkit-box-decoration-break: clone !important;
@@ -284,16 +278,16 @@
   }
 
   .print-act-title small {
-    font-size: 8.6pt !important;
-    color: #6c788b !important;
+    font-size: 8.7pt !important;
+    color: #657386 !important;
     white-space: nowrap !important;
   }
 
   .print-audio,
   .print-materials {
-    font-size: 8.9pt !important;
-    line-height: 1.16 !important;
-    color: #59677a !important;
+    font-size: 9pt !important;
+    line-height: 1.18 !important;
+    color: #526174 !important;
     margin-top: 1px !important;
     min-height: 0 !important;
     height: auto !important;
@@ -302,8 +296,8 @@
   }
 
   .print-notes {
-    font-size: 10.9pt !important;
-    line-height: 1.3 !important;
+    font-size: 11.2pt !important;
+    line-height: 1.34 !important;
     color: #24324a !important;
     white-space: pre-wrap !important;
     margin-top: 2px !important;
@@ -318,7 +312,7 @@
     text-decoration: none !important;
     padding: 0 2px !important;
     border-radius: 2px !important;
-    background: #fff09a !important;
+    background-color: #fff09a !important;
     color: #24324a !important;
     -webkit-text-fill-color: #24324a !important;
     -webkit-box-decoration-break: clone !important;
@@ -328,26 +322,26 @@
   }
 
   .print-bonus {
-    margin-top: 6px !important;
+    margin-top: 7px !important;
     padding-top: 2px !important;
   }
 
   .print-bonus h2 {
     width: fit-content !important;
-    margin: 6px 0 3px 64px !important;
+    margin: 7px 0 3px 64px !important;
     padding: 1px 5px !important;
-    font-size: 12.5pt !important;
+    font-size: 13pt !important;
     font-weight: 700 !important;
-    background: #e8dcf7 !important;
+    background-color: #e8dcf7 !important;
     color: #3e3650 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* One simple handwriting face throughout. Bold and sizes are preserved. */
+  /* No generic cursive fallback: on iOS it becomes ornate Snell Roundhand. */
   html body .print-sheet,
   html body .print-sheet * {
-    font-family: 'Architects Daughter', 'Segoe Print', 'Comic Sans MS', cursive !important;
+    font-family: 'Short Stack', 'Atkinson Hyperlegible', Arial, sans-serif !important;
     font-style: normal !important;
   }
 }
