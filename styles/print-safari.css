@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
 @media print {
   @page {
@@ -13,12 +13,23 @@
     min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
-    background: #fff !important;
+    background: #ffffff !important;
     color-scheme: light !important;
   }
 
   body {
     color: #263142 !important;
+  }
+
+  .app-shell,
+  .main,
+  .print-only,
+  .print-sheet,
+  .print-plan,
+  .print-bonus,
+  .print-activity,
+  .print-body {
+    background-color: #ffffff !important;
   }
 
   .app-shell {
@@ -27,7 +38,6 @@
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-    background: #fff !important;
   }
 
   .rail,
@@ -45,7 +55,6 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
-    background: #fff !important;
   }
 
   .print-only,
@@ -60,16 +69,15 @@
     overflow: visible !important;
   }
 
-  /* Real notebook paper: pale blue horizontal rules and one soft red margin line. */
-  .print-sheet {
-    color: #263142 !important;
-    background-color: #fff !important;
-    background-image:
-      linear-gradient(to right, transparent 0, transparent 52px, #f1c9cf 52px, #f1c9cf 53px, transparent 53px),
-      repeating-linear-gradient(to bottom, #fff 0, #fff 25px, #dce8f2 25px, #dce8f2 26px) !important;
-    background-size: 100% 100%, 100% 26px !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  /* Notebook rules are a tiny SVG pattern rather than a CSS gradient.
+     This avoids the black-background rendering bug seen in Chrome/iPad print preview. */
+  .print-sheet,
+  .print-plan,
+  .print-bonus {
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='27' viewBox='0 0 20 27'%3E%3Cline x1='0' y1='26.5' x2='20' y2='26.5' stroke='%23d8e5f0' stroke-width='1'/%3E%3C/svg%3E") !important;
+    background-repeat: repeat !important;
+    background-size: 20px 27px !important;
   }
 
   .print-header {
@@ -77,14 +85,14 @@
     justify-content: space-between !important;
     align-items: flex-start !important;
     border-bottom: 1px solid #dfe4eb !important;
-    padding: 0 0 7px 64px !important;
-    margin-bottom: 7px !important;
-    background: rgba(255,255,255,.94) !important;
+    padding: 0 0 7px 0 !important;
+    margin-bottom: 6px !important;
+    background: #ffffff !important;
   }
 
   .print-header h1 {
     font-size: 18pt !important;
-    line-height: 1.12 !important;
+    line-height: 1.1 !important;
     margin: 2px 0 0 !important;
     color: #263142 !important;
     font-weight: 700 !important;
@@ -93,7 +101,7 @@
   .print-kicker {
     font-size: 8pt !important;
     text-transform: uppercase !important;
-    letter-spacing: .04em !important;
+    letter-spacing: .03em !important;
     color: #7a8493 !important;
   }
 
@@ -101,24 +109,24 @@
     border: 1px solid #d8dde5 !important;
     border-radius: 999px !important;
     padding: 2px 7px !important;
-    background: #fff !important;
+    background: #ffffff !important;
     font-weight: 700 !important;
     font-size: 8.5pt !important;
   }
 
-  /* Small sticky note, two columns, all content retained. */
+  /* Small preparation note: compact, two columns, no decorative shadow. */
   .print-ready {
-    width: 38% !important;
-    max-width: 72mm !important;
-    margin: 1px 0 7px auto !important;
-    padding: 4px 6px 3px !important;
+    width: 32% !important;
+    max-width: 60mm !important;
+    margin: 1px 0 6px auto !important;
+    padding: 3px 5px 2px !important;
     border: 1px solid #e6d98a !important;
     border-radius: 2px !important;
-    background-color: #fffbe4 !important;
+    background: #fffbe4 !important;
     box-shadow: none !important;
     transform: none !important;
-    font-size: 6.1pt !important;
-    line-height: 1.02 !important;
+    font-size: 5.9pt !important;
+    line-height: 1 !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
     -webkit-print-color-adjust: exact !important;
@@ -127,8 +135,8 @@
 
   .print-ready strong {
     display: block !important;
-    font-size: 6.4pt !important;
-    line-height: 1.02 !important;
+    font-size: 6.2pt !important;
+    line-height: 1 !important;
     margin: 0 0 1px !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
@@ -137,20 +145,16 @@
 
   .print-ready pre {
     white-space: pre-line !important;
-    font-size: 5.9pt !important;
-    line-height: 1.02 !important;
-    margin: 0 0 2px !important;
+    font-size: 5.6pt !important;
+    line-height: 1 !important;
+    margin: 0 0 1px !important;
     columns: 2 !important;
-    column-gap: 3.5mm !important;
+    column-gap: 3mm !important;
     column-rule: 1px solid #efe6ac !important;
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-  }
-
-  .print-plan {
-    background: transparent !important;
   }
 
   .print-activity {
@@ -164,7 +168,6 @@
     page-break-inside: auto !important;
     padding: 6px 0 8px !important;
     border: 0 !important;
-    background: transparent !important;
   }
 
   .print-clock {
@@ -289,10 +292,10 @@
     print-color-adjust: exact !important;
   }
 
-  /* One handwriting face for the whole printed notebook. */
+  /* One simple handwriting font everywhere; sizes and bold formatting still vary. */
   html body .print-sheet,
   html body .print-sheet * {
-    font-family: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive !important;
+    font-family: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive !important;
     font-style: normal !important;
   }
 }
