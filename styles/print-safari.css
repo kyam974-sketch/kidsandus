@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap');
 
 @media print {
   @page {
@@ -8,36 +8,18 @@
 
   html,
   body,
-  #__next {
+  #__next,
+  .app-shell,
+  .main,
+  .print-only,
+  .print-sheet {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
     background: #ffffff !important;
+    color: #24324a !important;
     color-scheme: light !important;
-  }
-
-  body {
-    color: #263142 !important;
-  }
-
-  .app-shell,
-  .main,
-  .print-only,
-  .print-sheet,
-  .print-plan,
-  .print-bonus,
-  .print-activity,
-  .print-body {
-    background-color: #ffffff !important;
-  }
-
-  .app-shell {
-    display: block !important;
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
   }
 
   .rail,
@@ -45,18 +27,7 @@
     display: none !important;
   }
 
-  .main {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-  }
-
+  .main,
   .print-only,
   .print-sheet,
   .print-plan,
@@ -69,40 +40,115 @@
     overflow: visible !important;
   }
 
-  /* Notebook rules are a tiny SVG pattern rather than a CSS gradient.
-     This avoids the black-background rendering bug seen in Chrome/iPad print preview. */
-  .print-sheet,
-  .print-plan,
-  .print-bonus {
-    background-color: #ffffff !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='27' viewBox='0 0 20 27'%3E%3Cline x1='0' y1='26.5' x2='20' y2='26.5' stroke='%23d8e5f0' stroke-width='1'/%3E%3C/svg%3E") !important;
-    background-repeat: repeat !important;
-    background-size: 20px 27px !important;
+  .main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /*
+    The notebook ruling is made with real painted lines (box-shadows), not a
+    background image/gradient. Chrome on iPad was turning print backgrounds
+    black or dropping them completely. Borders/shadows print reliably even
+    when "background graphics" is disabled.
+  */
+  .print-sheet {
+    position: relative !important;
+    isolation: isolate !important;
+    background-image: none !important;
+  }
+
+  .print-sheet::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: 27px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #d6e4f0;
+    box-shadow:
+      0 28px 0 #d6e4f0, 0 56px 0 #d6e4f0, 0 84px 0 #d6e4f0, 0 112px 0 #d6e4f0,
+      0 140px 0 #d6e4f0, 0 168px 0 #d6e4f0, 0 196px 0 #d6e4f0, 0 224px 0 #d6e4f0,
+      0 252px 0 #d6e4f0, 0 280px 0 #d6e4f0, 0 308px 0 #d6e4f0, 0 336px 0 #d6e4f0,
+      0 364px 0 #d6e4f0, 0 392px 0 #d6e4f0, 0 420px 0 #d6e4f0, 0 448px 0 #d6e4f0,
+      0 476px 0 #d6e4f0, 0 504px 0 #d6e4f0, 0 532px 0 #d6e4f0, 0 560px 0 #d6e4f0,
+      0 588px 0 #d6e4f0, 0 616px 0 #d6e4f0, 0 644px 0 #d6e4f0, 0 672px 0 #d6e4f0,
+      0 700px 0 #d6e4f0, 0 728px 0 #d6e4f0, 0 756px 0 #d6e4f0, 0 784px 0 #d6e4f0,
+      0 812px 0 #d6e4f0, 0 840px 0 #d6e4f0, 0 868px 0 #d6e4f0, 0 896px 0 #d6e4f0,
+      0 924px 0 #d6e4f0, 0 952px 0 #d6e4f0, 0 980px 0 #d6e4f0, 0 1008px 0 #d6e4f0,
+      0 1036px 0 #d6e4f0, 0 1064px 0 #d6e4f0, 0 1092px 0 #d6e4f0, 0 1120px 0 #d6e4f0,
+      0 1148px 0 #d6e4f0, 0 1176px 0 #d6e4f0, 0 1204px 0 #d6e4f0, 0 1232px 0 #d6e4f0,
+      0 1260px 0 #d6e4f0, 0 1288px 0 #d6e4f0, 0 1316px 0 #d6e4f0, 0 1344px 0 #d6e4f0,
+      0 1372px 0 #d6e4f0, 0 1400px 0 #d6e4f0, 0 1428px 0 #d6e4f0, 0 1456px 0 #d6e4f0,
+      0 1484px 0 #d6e4f0, 0 1512px 0 #d6e4f0, 0 1540px 0 #d6e4f0, 0 1568px 0 #d6e4f0,
+      0 1596px 0 #d6e4f0, 0 1624px 0 #d6e4f0, 0 1652px 0 #d6e4f0, 0 1680px 0 #d6e4f0,
+      0 1708px 0 #d6e4f0, 0 1736px 0 #d6e4f0, 0 1764px 0 #d6e4f0, 0 1792px 0 #d6e4f0,
+      0 1820px 0 #d6e4f0, 0 1848px 0 #d6e4f0, 0 1876px 0 #d6e4f0, 0 1904px 0 #d6e4f0,
+      0 1932px 0 #d6e4f0, 0 1960px 0 #d6e4f0, 0 1988px 0 #d6e4f0, 0 2016px 0 #d6e4f0,
+      0 2044px 0 #d6e4f0, 0 2072px 0 #d6e4f0, 0 2100px 0 #d6e4f0, 0 2128px 0 #d6e4f0,
+      0 2156px 0 #d6e4f0, 0 2184px 0 #d6e4f0, 0 2212px 0 #d6e4f0, 0 2240px 0 #d6e4f0,
+      0 2268px 0 #d6e4f0, 0 2296px 0 #d6e4f0, 0 2324px 0 #d6e4f0, 0 2352px 0 #d6e4f0,
+      0 2380px 0 #d6e4f0, 0 2408px 0 #d6e4f0, 0 2436px 0 #d6e4f0, 0 2464px 0 #d6e4f0,
+      0 2492px 0 #d6e4f0, 0 2520px 0 #d6e4f0, 0 2548px 0 #d6e4f0, 0 2576px 0 #d6e4f0,
+      0 2604px 0 #d6e4f0, 0 2632px 0 #d6e4f0, 0 2660px 0 #d6e4f0, 0 2688px 0 #d6e4f0,
+      0 2716px 0 #d6e4f0, 0 2744px 0 #d6e4f0, 0 2772px 0 #d6e4f0, 0 2800px 0 #d6e4f0,
+      0 2828px 0 #d6e4f0, 0 2856px 0 #d6e4f0, 0 2884px 0 #d6e4f0, 0 2912px 0 #d6e4f0,
+      0 2940px 0 #d6e4f0, 0 2968px 0 #d6e4f0, 0 2996px 0 #d6e4f0, 0 3024px 0 #d6e4f0,
+      0 3052px 0 #d6e4f0, 0 3080px 0 #d6e4f0, 0 3108px 0 #d6e4f0, 0 3136px 0 #d6e4f0,
+      0 3164px 0 #d6e4f0, 0 3192px 0 #d6e4f0, 0 3220px 0 #d6e4f0, 0 3248px 0 #d6e4f0,
+      0 3276px 0 #d6e4f0, 0 3304px 0 #d6e4f0, 0 3332px 0 #d6e4f0, 0 3360px 0 #d6e4f0,
+      0 3388px 0 #d6e4f0, 0 3416px 0 #d6e4f0, 0 3444px 0 #d6e4f0, 0 3472px 0 #d6e4f0,
+      0 3500px 0 #d6e4f0, 0 3528px 0 #d6e4f0, 0 3556px 0 #d6e4f0, 0 3584px 0 #d6e4f0,
+      0 3612px 0 #d6e4f0, 0 3640px 0 #d6e4f0, 0 3668px 0 #d6e4f0, 0 3696px 0 #d6e4f0,
+      0 3724px 0 #d6e4f0, 0 3752px 0 #d6e4f0, 0 3780px 0 #d6e4f0, 0 3808px 0 #d6e4f0,
+      0 3836px 0 #d6e4f0, 0 3864px 0 #d6e4f0, 0 3892px 0 #d6e4f0, 0 3920px 0 #d6e4f0,
+      0 3948px 0 #d6e4f0, 0 3976px 0 #d6e4f0, 0 4004px 0 #d6e4f0, 0 4032px 0 #d6e4f0,
+      0 4060px 0 #d6e4f0, 0 4088px 0 #d6e4f0, 0 4116px 0 #d6e4f0, 0 4144px 0 #d6e4f0,
+      0 4172px 0 #d6e4f0, 0 4200px 0 #d6e4f0, 0 4228px 0 #d6e4f0, 0 4256px 0 #d6e4f0,
+      0 4284px 0 #d6e4f0, 0 4312px 0 #d6e4f0, 0 4340px 0 #d6e4f0, 0 4368px 0 #d6e4f0,
+      0 4396px 0 #d6e4f0, 0 4424px 0 #d6e4f0, 0 4452px 0 #d6e4f0, 0 4480px 0 #d6e4f0;
+    pointer-events: none;
+  }
+
+  .print-sheet::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    bottom: 0;
+    left: 54px;
+    border-left: 1px solid #efcbd1;
+    pointer-events: none;
+  }
+
+  .print-sheet > * {
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .print-header {
     display: flex !important;
     justify-content: space-between !important;
     align-items: flex-start !important;
-    border-bottom: 1px solid #dfe4eb !important;
-    padding: 0 0 7px 0 !important;
-    margin-bottom: 6px !important;
+    border-bottom: 0 !important;
+    padding: 0 0 6px 64px !important;
+    margin-bottom: 5px !important;
     background: #ffffff !important;
   }
 
   .print-header h1 {
     font-size: 18pt !important;
-    line-height: 1.1 !important;
+    line-height: 1.08 !important;
     margin: 2px 0 0 !important;
-    color: #263142 !important;
+    color: #24324a !important;
     font-weight: 700 !important;
   }
 
   .print-kicker {
     font-size: 8pt !important;
     text-transform: uppercase !important;
-    letter-spacing: .03em !important;
-    color: #7a8493 !important;
+    letter-spacing: .02em !important;
+    color: #6c788b !important;
   }
 
   .print-time {
@@ -114,19 +160,19 @@
     font-size: 8.5pt !important;
   }
 
-  /* Small preparation note: compact, two columns, no decorative shadow. */
+  /* Tiny preparation sticky: deliberately secondary to the lesson notes. */
   .print-ready {
-    width: 32% !important;
-    max-width: 60mm !important;
-    margin: 1px 0 6px auto !important;
-    padding: 3px 5px 2px !important;
-    border: 1px solid #e6d98a !important;
+    width: 28% !important;
+    max-width: 52mm !important;
+    margin: 0 0 5px auto !important;
+    padding: 3px 4px 2px !important;
+    border: 1px solid #e5d98f !important;
     border-radius: 2px !important;
     background: #fffbe4 !important;
     box-shadow: none !important;
     transform: none !important;
-    font-size: 5.9pt !important;
-    line-height: 1 !important;
+    font-size: 5.7pt !important;
+    line-height: 1.02 !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
     -webkit-print-color-adjust: exact !important;
@@ -135,26 +181,32 @@
 
   .print-ready strong {
     display: block !important;
-    font-size: 6.2pt !important;
+    font-size: 5.9pt !important;
     line-height: 1 !important;
     margin: 0 0 1px !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
     color: #514a24 !important;
   }
 
   .print-ready pre {
     white-space: pre-line !important;
-    font-size: 5.6pt !important;
+    font-size: 5.35pt !important;
     line-height: 1 !important;
     margin: 0 0 1px !important;
     columns: 2 !important;
-    column-gap: 3mm !important;
-    column-rule: 1px solid #efe6ac !important;
+    column-gap: 2.5mm !important;
+    column-rule: 1px solid #eee4ab !important;
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  .print-plan,
+  .print-bonus,
+  .print-activity,
+  .print-body {
+    background: transparent !important;
+    color: #24324a !important;
   }
 
   .print-activity {
@@ -166,7 +218,7 @@
     overflow: visible !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
-    padding: 6px 0 8px !important;
+    padding: 5px 0 7px !important;
     border: 0 !important;
   }
 
@@ -176,8 +228,8 @@
     margin: 1px 9px 0 0 !important;
     padding-top: 1px !important;
     font-size: 8.6pt !important;
-    line-height: 1.16 !important;
-    color: #7a8493 !important;
+    line-height: 1.14 !important;
+    color: #69768a !important;
   }
 
   .print-clock strong,
@@ -187,7 +239,7 @@
 
   .print-clock strong {
     color: #344054 !important;
-    font-size: 9.4pt !important;
+    font-size: 9.3pt !important;
     font-weight: 700 !important;
   }
 
@@ -211,10 +263,10 @@
     justify-content: space-between !important;
     gap: 9px !important;
     align-items: baseline !important;
-    font-size: 13pt !important;
+    font-size: 12.7pt !important;
     line-height: 1.08 !important;
     font-weight: 700 !important;
-    color: #263142 !important;
+    color: #24324a !important;
     break-after: avoid !important;
     page-break-after: avoid !important;
   }
@@ -222,9 +274,9 @@
   .print-act-title > span {
     display: inline !important;
     padding: 0 4px 1px !important;
-    background-color: #f8c7d8 !important;
-    color: #263142 !important;
-    -webkit-text-fill-color: #263142 !important;
+    background: #f8c7d8 !important;
+    color: #24324a !important;
+    -webkit-text-fill-color: #24324a !important;
     -webkit-box-decoration-break: clone !important;
     box-decoration-break: clone !important;
     -webkit-print-color-adjust: exact !important;
@@ -232,16 +284,16 @@
   }
 
   .print-act-title small {
-    font-size: 8.7pt !important;
-    color: #7a8493 !important;
+    font-size: 8.6pt !important;
+    color: #6c788b !important;
     white-space: nowrap !important;
   }
 
   .print-audio,
   .print-materials {
-    font-size: 9pt !important;
-    line-height: 1.18 !important;
-    color: #5f6b7a !important;
+    font-size: 8.9pt !important;
+    line-height: 1.16 !important;
+    color: #59677a !important;
     margin-top: 1px !important;
     min-height: 0 !important;
     height: auto !important;
@@ -250,9 +302,9 @@
   }
 
   .print-notes {
-    font-size: 11.2pt !important;
-    line-height: 1.34 !important;
-    color: #263142 !important;
+    font-size: 10.9pt !important;
+    line-height: 1.3 !important;
+    color: #24324a !important;
     white-space: pre-wrap !important;
     margin-top: 2px !important;
     min-height: 0 !important;
@@ -266,9 +318,9 @@
     text-decoration: none !important;
     padding: 0 2px !important;
     border-radius: 2px !important;
-    background-color: #fff09a !important;
-    color: #263142 !important;
-    -webkit-text-fill-color: #263142 !important;
+    background: #fff09a !important;
+    color: #24324a !important;
+    -webkit-text-fill-color: #24324a !important;
     -webkit-box-decoration-break: clone !important;
     box-decoration-break: clone !important;
     -webkit-print-color-adjust: exact !important;
@@ -276,26 +328,26 @@
   }
 
   .print-bonus {
-    margin-top: 7px !important;
+    margin-top: 6px !important;
     padding-top: 2px !important;
   }
 
   .print-bonus h2 {
     width: fit-content !important;
-    margin: 7px 0 3px 64px !important;
+    margin: 6px 0 3px 64px !important;
     padding: 1px 5px !important;
-    font-size: 13pt !important;
+    font-size: 12.5pt !important;
     font-weight: 700 !important;
-    background-color: #e8dcf7 !important;
+    background: #e8dcf7 !important;
     color: #3e3650 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* One simple handwriting font everywhere; sizes and bold formatting still vary. */
+  /* One simple handwriting face throughout. Bold and sizes are preserved. */
   html body .print-sheet,
   html body .print-sheet * {
-    font-family: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive !important;
+    font-family: 'Architects Daughter', 'Segoe Print', 'Comic Sans MS', cursive !important;
     font-style: normal !important;
   }
 }
