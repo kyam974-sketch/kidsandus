@@ -119,8 +119,9 @@ export default function App({ Component, pageProps }) {
         <meta name="theme-color" content="#ff5364" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
