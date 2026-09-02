@@ -10,6 +10,8 @@ function todayIndex() {
 
 const NAV = [
   { href: '/', label: '🏠 Dashboard', live: true },
+  { href: '/students', label: '👧 Students', sub: 'roster', live: true },
+  { href: '/classes', label: '🧑‍🏫 Classes', sub: 'roster', live: true },
   { href: '/calendar', label: '📅 Calendar', sub: 'prototype', live: true },
   { href: '/followup', label: '📝 Follow-up', sub: 'live', live: true },
   { href: '/songs', label: '🎵 Songs', sub: 'live', live: true },
