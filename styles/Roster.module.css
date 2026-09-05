@@ -83,8 +83,10 @@
 .studentLine { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid #eef1f5; }
 .studentLine:last-child { border-bottom: none; }
 .smallButton { border: none; background: transparent; color: #c94747; font-size: 13px; padding: 3px 5px; }
-.addRow { display: flex; gap: 8px; margin-top: 10px; }
-.addRow select { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 14px; background: #fff; }
+.addRow { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.studentPicker { flex: 1; display: grid; gap: 6px; min-width: 0; }
+.studentPicker input,
+.studentPicker select { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px; font-size: 15px; background: #fff; color: var(--ink); }
 
 .notice { margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #eef5e3; color: #4f6f28; font-size: 14px; }
 .error { margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #fff0f0; color: #b63f3f; font-size: 14px; }
@@ -95,4 +97,5 @@
   .full { grid-column: auto; }
   .row { grid-template-columns: 1fr; }
   .classGrid { grid-template-columns: 1fr; }
+  .addRow { align-items: stretch; }
 }
