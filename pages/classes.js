@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
+import { SCHOOL_YEAR, officialCourseStartForWeekday, officialPlanForWeekday } from '../lib/schoolCalendar';
 import styles from '../styles/Roster.module.css';
 
 const DAYS = [
@@ -14,16 +15,18 @@ const DAYS = [
 
 const COURSE_ORDER = ['mousy', 'linda', 'sam', 'emma', 'oliver', 'marcia', 'pam'];
 
-const EMPTY = {
-  name: '',
-  course: '',
-  weekday: 1,
-  start_time: '16:00',
-  duration_minutes: 60,
-  start_date: '2026-09-21',
-  location: 'Grosseto',
-  school_year: '2026-2027',
-};
+function makeEmptyForm(weekday = 1) {
+  return {
+    name: '',
+    course: '',
+    weekday,
+    start_time: '16:00',
+    duration_minutes: 60,
+    start_date: officialCourseStartForWeekday(weekday),
+    location: 'Grosseto',
+    school_year: SCHOOL_YEAR,
+  };
+}
 
 function displayStudent(student) {
   return student.preferred_name?.trim() || [student.first_name, student.last_name].filter(Boolean).join(' ');
@@ -47,7 +50,7 @@ export default function ClassesPage() {
   const [students, setStudents] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => makeEmptyForm());
   const [addingStudent, setAddingStudent] = useState({});
   const [studentSearch, setStudentSearch] = useState({});
   const [loading, setLoading] = useState(true);
@@ -74,6 +77,7 @@ export default function ClassesPage() {
   useEffect(() => { loadData(); }, []);
 
   const courseMap = useMemo(() => Object.fromEntries(courses.map((c) => [c.label, c])), [courses]);
+  const selectedPlan = useMemo(() => officialPlanForWeekday(form.weekday), [form.weekday]);
 
   function rosterFor(classId) {
     const ids = memberships.filter((m) => m.class_id === classId).map((m) => m.student_id);
@@ -97,13 +101,21 @@ export default function ClassesPage() {
     setForm((f) => ({ ...f, course, duration_minutes: duration }));
   }
 
+  function setWeekday(weekday) {
+    const value = Number(weekday);
+    setForm((f) => ({
+      ...f,
+      weekday: value,
+      start_date: officialCourseStartForWeekday(value),
+    }));
+  }
+
   async function createClass(e) {
     e.preventDefault();
     setError('');
     setNotice('');
     if (!form.course) { setError('Scegli un corso.'); return; }
     if (!form.start_time) { setError('Inserisci l’orario.'); return; }
-    if (!form.start_date) { setError('Inserisci la data di inizio.'); return; }
     const day = DAYS.find((d) => d.value === Number(form.weekday))?.label || '';
     const generatedName = `${form.course} · ${day} ${timeShort(form.start_time)}`;
     const payload = {
@@ -112,9 +124,11 @@ export default function ClassesPage() {
       weekday: Number(form.weekday),
       start_time: form.start_time,
       duration_minutes: Number(form.duration_minutes),
-      start_date: form.start_date,
+      start_date: officialCourseStartForWeekday(form.weekday),
       location: form.location.trim() || 'Grosseto',
-      school_year: form.school_year.trim() || '2026-2027',
+      school_year: SCHOOL_YEAR,
+      story_number: 1,
+      day_number: 1,
       calendar_source: 'hub',
       active: true,
     };
@@ -125,8 +139,8 @@ export default function ClassesPage() {
       setError(insertError.code === '23505' ? 'Esiste già una classe attiva nello stesso slot per questo corso.' : insertError.message);
       return;
     }
-    setForm(EMPTY);
-    setNotice('Classe creata. Ora puoi assegnare gli studenti.');
+    setForm(makeEmptyForm());
+    setNotice('Classe creata. Il planning Story/Day seguirà automaticamente il calendario Kids&Us 2026/27. Ora puoi assegnare gli studenti.');
     await loadData();
   }
 
@@ -167,7 +181,7 @@ export default function ClassesPage() {
     <Layout>
       <div className="page-eyebrow">Roster · Schedule base</div>
       <h1 className="page-title">Classes</h1>
-      <p className="page-desc">Crea le classi reali e assegna gli studenti. Questi slot saranno la base del Calendar e della futura sincronizzazione Outlook.</p>
+      <p className="page-desc">Crea le classi reali e assegna gli studenti. Le date e la progressione Story/Day seguono automaticamente il planning Kids&Us 2026/27, saltando festività e vacanze scolastiche.</p>
 
       <section className={styles.panel}>
         <h2>Nuova classe</h2>
@@ -187,7 +201,7 @@ export default function ClassesPage() {
           </div>
           <div className={styles.field}>
             <label>Giorno *</label>
-            <select value={form.weekday} onChange={(e) => setForm({ ...form, weekday: Number(e.target.value) })}>
+            <select value={form.weekday} onChange={(e) => setWeekday(e.target.value)}>
               {DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </div>
@@ -200,8 +214,8 @@ export default function ClassesPage() {
             <input type="number" min="15" max="180" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
           </div>
           <div className={styles.field}>
-            <label>Inizio lezioni *</label>
-            <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+            <label>Prima lezione · calendario Kids&Us</label>
+            <input type="date" value={form.start_date} readOnly />
           </div>
           <div className={styles.field}>
             <label>Sede</label>
@@ -209,8 +223,17 @@ export default function ClassesPage() {
           </div>
           <div className={styles.field}>
             <label>Anno scolastico</label>
-            <input value={form.school_year} onChange={(e) => setForm({ ...form, school_year: e.target.value })} />
+            <input value={SCHOOL_YEAR} readOnly />
           </div>
+
+          <div className={`${styles.full} ${styles.muted}`}>
+            {selectedPlan.map((part) => (
+              <span key={part.story} style={{ display: 'inline-block', marginRight: '14px', marginBottom: '4px' }}>
+                Story {part.story}: {part.sessions} lezioni · {dateShort(part.start)} → {dateShort(part.end)}
+              </span>
+            ))}
+          </div>
+
           <div className={`${styles.actions} ${styles.full}`}>
             <button className={styles.primary} disabled={saving}>{saving ? 'Creazione…' : 'Crea classe'}</button>
           </div>
