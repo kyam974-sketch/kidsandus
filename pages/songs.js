@@ -28,23 +28,40 @@ export default function Songs() {
     if (!file) return;
     setUploadError('');
     setUploadingId(song.id);
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `${song.corso.toLowerCase().replace(/[^a-z0-9]/g, '')}/${song.track_number}_${safeName}`;
 
-    const { error: upErr } = await supabase.storage.from('songs-audio').upload(path, file, {
-      upsert: true,
-      contentType: file.type || 'audio/mpeg',
-    });
-    if (upErr) {
-      setUploadError('Upload error: ' + upErr.message);
+    try {
+      if (!file.size) {
+        throw new Error('Il file selezionato risulta vuoto. Se è su iCloud, attendi che sia scaricato sul dispositivo e riprova.');
+      }
+
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${song.corso.toLowerCase().replace(/[^a-z0-9]/g, '')}/${song.track_number}_${safeName}`;
+
+      // Reading the File explicitly avoids Safari/iPad occasionally sending an empty
+      // multipart body to Supabase Storage ("No content provided").
+      const buffer = await file.arrayBuffer();
+      if (!buffer.byteLength) throw new Error('Il file selezionato non contiene dati leggibili.');
+      const body = new Uint8Array(buffer);
+
+      const { error: upErr } = await supabase.storage.from('songs-audio').upload(path, body, {
+        upsert: true,
+        contentType: file.type || 'audio/mpeg',
+      });
+      if (upErr) throw new Error(upErr.message);
+
+      const { data: pub } = supabase.storage.from('songs-audio').getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from('songs')
+        .update({ audio_path: path, audio_url: pub.publicUrl })
+        .eq('id', song.id);
+      if (updErr) throw new Error('Audio caricato, ma non salvato sulla traccia: ' + updErr.message);
+
+      await loadSongs();
+    } catch (err) {
+      setUploadError('Upload error: ' + (err?.message || 'errore sconosciuto'));
+    } finally {
       setUploadingId(null);
-      return;
     }
-    const { data: pub } = supabase.storage.from('songs-audio').getPublicUrl(path);
-    const { error: updErr } = await supabase.from('songs').update({ audio_path: path, audio_url: pub.publicUrl }).eq('id', song.id);
-    if (updErr) setUploadError('Save error: ' + updErr.message);
-    setUploadingId(null);
-    await loadSongs();
   }
 
   async function handleRemoveAudio(song) {
