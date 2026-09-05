@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
+import { SCHOOL_YEAR, closureForDate, officialCourseStartForWeekday, scheduledLessonForDate } from '../lib/schoolCalendar';
 import styles from '../styles/Calendar.module.css';
 
-const SCHOOL_YEAR = '2026-2027';
-const DEFAULT_COURSE_START = '2026-09-21';
 const DAYS = [
   { value: 1, label: 'Monday' }, { value: 2, label: 'Tuesday' }, { value: 3, label: 'Wednesday' },
   { value: 4, label: 'Thursday' }, { value: 5, label: 'Friday' }, { value: 6, label: 'Saturday' },
@@ -32,35 +31,6 @@ function eventSortMinutes(event) {
   if (event.all_day) return -1;
   const d = new Date(event.start_at);
   return d.getHours() * 60 + d.getMinutes();
-}
-function dateOnly(value) {
-  const d = value instanceof Date ? new Date(value) : new Date(`${value}T12:00:00`);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-function firstOccurrence(item) {
-  const start = dateOnly(item.start_date || DEFAULT_COURSE_START);
-  const startWeekday = start.getDay() === 0 ? 7 : start.getDay();
-  const delta = (Number(item.weekday) - startWeekday + 7) % 7;
-  const first = new Date(start);
-  first.setDate(first.getDate() + delta);
-  return first;
-}
-function lessonOccurrence(item, date) {
-  if (Number(item.weekday) !== (date.getDay() === 0 ? 7 : date.getDay())) return null;
-  const first = firstOccurrence(item);
-  const current = dateOnly(date);
-  if (current < first) return null;
-  const daysSince = Math.round((current.getTime() - first.getTime()) / 86400000);
-  if (daysSince % 7 !== 0) return null;
-  const weekIndex = Math.floor(daysSince / 7);
-  const baseIndex = ((Number(item.story_number) || 1) - 1) * 10 + ((Number(item.day_number) || 1) - 1);
-  const lessonIndex = baseIndex + weekIndex;
-  return {
-    story: Math.floor(lessonIndex / 10) + 1,
-    day: (lessonIndex % 10) + 1,
-    weekIndex,
-  };
 }
 
 export default function CalendarPage() {
@@ -129,10 +99,17 @@ export default function CalendarPage() {
       name: item.name,
       weekday: item.weekday,
       start_time: String(item.start_time).slice(0, 5),
-      start_date: item.start_date || DEFAULT_COURSE_START,
-      story_number: item.story_number || 1,
-      day_number: item.day_number || 1,
+      start_date: item.start_date || officialCourseStartForWeekday(item.weekday),
     });
+  }
+
+  function changeEditingWeekday(weekday) {
+    const value = Number(weekday);
+    setEditing((current) => ({
+      ...current,
+      weekday: value,
+      start_date: officialCourseStartForWeekday(value),
+    }));
   }
 
   async function saveEdit() {
@@ -143,9 +120,9 @@ export default function CalendarPage() {
       name: editing.name.trim(),
       weekday: Number(editing.weekday),
       start_time: editing.start_time,
-      start_date: editing.start_date,
-      story_number: Number(editing.story_number) || 1,
-      day_number: Number(editing.day_number) || 1,
+      start_date: officialCourseStartForWeekday(editing.weekday),
+      story_number: 1,
+      day_number: 1,
     }).eq('id', editing.id);
     setSaving(false);
     if (updateError) { setError(updateError.message); return; }
@@ -157,7 +134,7 @@ export default function CalendarPage() {
     <Layout>
       <div className="page-eyebrow">2026/27 · Classes + Apple Calendar</div>
       <h1 className="page-title">📅 Teaching week</h1>
-      <p className="page-desc">Le classi dell’Hub e gli impegni Exchange che il tuo dispositivo vede in Apple Calendar, nello stesso posto.</p>
+      <p className="page-desc">Le classi dell’Hub e gli impegni Exchange che il tuo dispositivo vede in Apple Calendar, nello stesso posto. Il Planner avanza solo nei giorni di lezione previsti dal calendario Kids&Us.</p>
 
       <div className={styles.toolbar}>
         <button className="btn secondary" onClick={() => setWeekOffset((v) => v - 1)}>←</button>
@@ -177,11 +154,9 @@ export default function CalendarPage() {
       {editing && <div className={`section-block ${styles.editor}`}>
         <div className={styles.editorTitle}>Edit class slot</div>
         <label>Class<input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></label>
-        <label>Day<select value={editing.weekday} onChange={(e) => setEditing({ ...editing, weekday: Number(e.target.value) })}>{DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
+        <label>Day<select value={editing.weekday} onChange={(e) => changeEditingWeekday(e.target.value)}>{DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
         <label>Start<input type="time" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} /></label>
-        <label>Course starts<input type="date" value={editing.start_date} onChange={(e) => setEditing({ ...editing, start_date: e.target.value })} /></label>
-        <label>Starting Story<input type="number" min="1" max="6" value={editing.story_number} onChange={(e) => setEditing({ ...editing, story_number: Number(e.target.value) || 1 })} /></label>
-        <label>Starting Day<input type="number" min="1" max="10" value={editing.day_number} onChange={(e) => setEditing({ ...editing, day_number: Number(e.target.value) || 1 })} /></label>
+        <label>First lesson · Kids&Us calendar<input type="date" value={editing.start_date} readOnly /></label>
         <button className="btn" disabled={saving} onClick={saveEdit}>{saving ? 'Saving…' : 'Save'}</button>
         <button className="btn secondary" onClick={() => setEditing(null)}>Cancel</button>
       </div>}
@@ -190,9 +165,10 @@ export default function CalendarPage() {
 
       {loading ? <div className="section-block">Loading…</div> : <div className={styles.weekList}>
         {week.map((day) => {
+          const closure = closureForDate(day.date);
           const dayClasses = classes
             .map((item) => {
-              const occurrence = lessonOccurrence(item, day.date);
+              const occurrence = scheduledLessonForDate(item, day.date);
               return occurrence ? { ...item, occurrence } : null;
             })
             .filter(Boolean);
@@ -208,11 +184,15 @@ export default function CalendarPage() {
           const today = weekOffset === 0 && new Date().toDateString() === day.date.toDateString();
           return <section className={`${styles.dayRow} ${today ? styles.today : ''}`} key={day.value}>
             <div className={styles.dayHeader}>
-              <div><span className={styles.dayName}>{day.label}</span><span className={styles.date}>{day.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span></div>
+              <div>
+                <span className={styles.dayName}>{day.label}</span>
+                <span className={styles.date}>{day.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                {closure && <span className={styles.date}> · {closure.label}</span>}
+              </div>
               <a className={styles.addDay} href="/classes" title="Create class">＋</a>
             </div>
             <div className={styles.lessons}>
-              {items.length === 0 ? <div className={styles.empty}>No classes or work events</div> : items.map(({ kind, item }) => {
+              {items.length === 0 ? <div className={styles.empty}>{closure ? 'School holiday · lessons paused' : 'No classes or work events'}</div> : items.map(({ kind, item }) => {
                 if (kind === 'external') {
                   const spansDay = (new Date(item.end_at) - new Date(item.start_at)) >= 24 * 60 * 60 * 1000;
                   return <article className={`${styles.lesson} ${styles.externalEvent} ${item.source_priority === 1 ? styles.externalPrimary : styles.externalSecondary}`} key={`ext-${item.id}-${day.value}`}>
@@ -236,7 +216,7 @@ export default function CalendarPage() {
                   <div className={styles.lessonMain}>
                     <div className={styles.course}>{item.course}</div>
                     <div className={styles.groupLabel}>{item.name} · {item.location}</div>
-                    <div className={styles.plan}>Story {story} · Day {lessonDay} <span>· {item.duration_minutes} min</span></div>
+                    <div className={styles.plan}>Story {story} · Day {lessonDay} <span>· {item.duration_minutes} min · {item.occurrence.totalSessions} sessions in this Story</span></div>
                   </div>
                   <div className={styles.actions}>
                     <a className={styles.open} href={`/planner?course=${encodeURIComponent(courseId)}&story=${story}&day=${lessonDay}&start=${encodeURIComponent(start)}`}>Open Planner →</a>
@@ -249,7 +229,7 @@ export default function CalendarPage() {
         })}
       </div>}
 
-      <div className={styles.note}>Le classi compaiono solo dalla loro data di inizio. La prima settimana parte da Story/Day impostati nella classe e poi il Planner avanza di un Day a ogni settimana. 🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria perché contiene anche eventi di altre colleghe.</div>
+      <div className={styles.note}>La progressione non è più “un Day ogni settimana”. Ogni classe segue le quattro finestre ufficiali Kids&Us 2026/27 e salta automaticamente le chiusure scolastiche. Le Story ripartono da Day 1 all’inizio di ogni Part; in base al giorno della settimana ogni Part contiene 8 o 9 lezioni. I propedeutici restano separati come Special Lessons. 🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria.</div>
     </Layout>
   );
 }
