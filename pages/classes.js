@@ -28,6 +28,19 @@ function makeEmptyForm(weekday = 1) {
   };
 }
 
+function makeEditForm(item) {
+  return {
+    id: item.id,
+    name: item.name || '',
+    course: item.course || '',
+    weekday: Number(item.weekday) || 1,
+    start_time: String(item.start_time || '').slice(0, 5),
+    duration_minutes: Number(item.duration_minutes) || 60,
+    start_date: officialCourseStartForWeekday(Number(item.weekday) || 1),
+    location: item.location || 'Grosseto',
+  };
+}
+
 function displayStudent(student) {
   return student.preferred_name?.trim() || [student.first_name, student.last_name].filter(Boolean).join(' ');
 }
@@ -51,6 +64,7 @@ export default function ClassesPage() {
   const [memberships, setMemberships] = useState([]);
   const [courses, setCourses] = useState([]);
   const [form, setForm] = useState(() => makeEmptyForm());
+  const [editing, setEditing] = useState(null);
   const [addingStudent, setAddingStudent] = useState({});
   const [studentSearch, setStudentSearch] = useState({});
   const [loading, setLoading] = useState(true);
@@ -110,6 +124,26 @@ export default function ClassesPage() {
     }));
   }
 
+  function startEdit(item) {
+    setError('');
+    setNotice('');
+    setEditing(makeEditForm(item));
+  }
+
+  function setEditingCourse(course) {
+    const duration = courseMap[course]?.expected_minutes || editing?.duration_minutes || 60;
+    setEditing((current) => ({ ...current, course, duration_minutes: duration }));
+  }
+
+  function setEditingWeekday(weekday) {
+    const value = Number(weekday);
+    setEditing((current) => ({
+      ...current,
+      weekday: value,
+      start_date: officialCourseStartForWeekday(value),
+    }));
+  }
+
   async function createClass(e) {
     e.preventDefault();
     setError('');
@@ -144,6 +178,60 @@ export default function ClassesPage() {
     await loadData();
   }
 
+  async function saveClassEdit(e) {
+    e.preventDefault();
+    if (!editing) return;
+    setError('');
+    setNotice('');
+    if (!editing.course) { setError('Scegli un corso.'); return; }
+    if (!editing.start_time) { setError('Inserisci l’orario.'); return; }
+
+    const day = DAYS.find((d) => d.value === Number(editing.weekday))?.label || '';
+    const generatedName = `${editing.course} · ${day} ${timeShort(editing.start_time)}`;
+    const payload = {
+      name: editing.name.trim() || generatedName,
+      course: editing.course,
+      weekday: Number(editing.weekday),
+      start_time: editing.start_time,
+      duration_minutes: Number(editing.duration_minutes),
+      start_date: officialCourseStartForWeekday(editing.weekday),
+      location: editing.location.trim() || 'Grosseto',
+      school_year: SCHOOL_YEAR,
+      story_number: 1,
+      day_number: 1,
+    };
+
+    setSaving(true);
+    const { error: updateError } = await supabase.from('classes').update(payload).eq('id', editing.id);
+    setSaving(false);
+    if (updateError) {
+      setError(updateError.code === '23505' ? 'Esiste già una classe attiva nello stesso slot per questo corso.' : updateError.message);
+      return;
+    }
+
+    setEditing(null);
+    setNotice('Classe modificata. Il Calendar è stato riallineato automaticamente al giorno scelto.');
+    await loadData();
+  }
+
+  async function deleteClass(item) {
+    const rosterCount = rosterFor(item.id).length;
+    const detail = rosterCount > 0 ? ` e le ${rosterCount} assegnazioni studenti collegate` : '';
+    if (!window.confirm(`Eliminare definitivamente la classe “${item.name}”${detail}? Questa operazione non si può annullare.`)) return;
+
+    setError('');
+    setNotice('');
+    const { error: deleteError } = await supabase.from('classes').delete().eq('id', item.id);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+
+    if (editing?.id === item.id) setEditing(null);
+    setNotice('Classe eliminata. Le assegnazioni studenti e le eventuali sessioni collegate sono state rimosse automaticamente.');
+    await loadData();
+  }
+
   async function addStudent(classId) {
     const studentId = addingStudent[classId];
     if (!studentId) return;
@@ -166,13 +254,6 @@ export default function ClassesPage() {
       .update({ active: false, left_on: new Date().toISOString().slice(0, 10) })
       .eq('class_id', classId)
       .eq('student_id', studentId);
-    if (updateError) { setError(updateError.message); return; }
-    await loadData();
-  }
-
-  async function archiveClass(item) {
-    if (!window.confirm(`Archiviare la classe ${item.name}?`)) return;
-    const { error: updateError } = await supabase.from('classes').update({ active: false }).eq('id', item.id);
     if (updateError) { setError(updateError.message); return; }
     await loadData();
   }
@@ -249,6 +330,7 @@ export default function ClassesPage() {
             const roster = rosterFor(item.id);
             const available = availableFor(item.id);
             const filteredAvailable = filteredAvailableFor(item.id);
+            const isEditing = editing?.id === item.id;
             return (
               <section key={item.id} className={styles.classCard}>
                 <div className={styles.classTop}>
@@ -256,9 +338,55 @@ export default function ClassesPage() {
                     <div className={styles.classTitle}>{item.name}</div>
                     <div className={styles.badges}><span className={styles.badgeCourse}>{item.course}</span><span className={styles.badge}>{item.school_year}</span></div>
                   </div>
-                  <button className={styles.danger} onClick={() => archiveClass(item)}>Archivia</button>
+                  <div className={styles.actions}>
+                    <button className={styles.secondary} onClick={() => startEdit(item)} disabled={isEditing}>Modifica</button>
+                    <button className={styles.danger} onClick={() => deleteClass(item)}>Elimina</button>
+                  </div>
                 </div>
                 <div className={styles.schedule}>{day} · {timeShort(item.start_time)} · {item.duration_minutes} min · {item.location}{item.start_date ? ` · dal ${dateShort(item.start_date)}` : ''}</div>
+
+                {isEditing && (
+                  <form onSubmit={saveClassEdit} className={styles.editPanel}>
+                    <div className={styles.editGrid}>
+                      <div className={styles.field}>
+                        <label>Corso *</label>
+                        <select value={editing.course} onChange={(e) => setEditingCourse(e.target.value)}>
+                          {courses.map((c) => <option key={c.id} value={c.label}>{c.label}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.field}>
+                        <label>Nome classe</label>
+                        <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                      </div>
+                      <div className={styles.field}>
+                        <label>Giorno *</label>
+                        <select value={editing.weekday} onChange={(e) => setEditingWeekday(e.target.value)}>
+                          {DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.field}>
+                        <label>Orario *</label>
+                        <input type="time" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} />
+                      </div>
+                      <div className={styles.field}>
+                        <label>Durata</label>
+                        <input type="number" min="15" max="180" value={editing.duration_minutes} onChange={(e) => setEditing({ ...editing, duration_minutes: Number(e.target.value) })} />
+                      </div>
+                      <div className={styles.field}>
+                        <label>Prima lezione · calendario Kids&Us</label>
+                        <input type="date" value={editing.start_date} readOnly />
+                      </div>
+                      <div className={styles.field}>
+                        <label>Sede</label>
+                        <input value={editing.location} onChange={(e) => setEditing({ ...editing, location: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className={styles.actions}>
+                      <button className={styles.primary} disabled={saving}>{saving ? 'Salvataggio…' : 'Salva modifiche'}</button>
+                      <button type="button" className={styles.secondary} onClick={() => setEditing(null)}>Annulla</button>
+                    </div>
+                  </form>
+                )}
 
                 <div className={styles.roster}>
                   <div className={styles.rosterHead}><span>Students</span><span className={styles.count}>{roster.length}</span></div>
