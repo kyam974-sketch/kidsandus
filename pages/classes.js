@@ -28,6 +28,10 @@ function displayStudent(student) {
   return student.preferred_name?.trim() || [student.first_name, student.last_name].filter(Boolean).join(' ');
 }
 
+function sortStudents(items) {
+  return items.slice().sort((a, b) => displayStudent(a).localeCompare(displayStudent(b), 'it', { sensitivity: 'base' }));
+}
+
 function timeShort(value) {
   return value ? String(value).slice(0, 5) : '';
 }
@@ -39,6 +43,7 @@ export default function ClassesPage() {
   const [courses, setCourses] = useState([]);
   const [form, setForm] = useState(EMPTY);
   const [addingStudent, setAddingStudent] = useState({});
+  const [studentSearch, setStudentSearch] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -48,13 +53,13 @@ export default function ClassesPage() {
     setLoading(true);
     const [{ data: c, error: ce }, { data: s }, { data: m }, { data: cr }] = await Promise.all([
       supabase.from('classes').select('*').eq('active', true).order('weekday').order('start_time'),
-      supabase.from('students').select('*').eq('active', true).order('last_name').order('first_name'),
+      supabase.from('students').select('*').eq('active', true),
       supabase.from('class_students').select('*').eq('active', true),
       supabase.from('course_registry').select('id,label,expected_minutes,active').eq('active', true),
     ]);
     if (ce) setError(ce.message);
     setClasses(c || []);
-    setStudents(s || []);
+    setStudents(sortStudents(s || []));
     setMemberships(m || []);
     setCourses((cr || []).slice().sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id)));
     setLoading(false);
@@ -66,12 +71,19 @@ export default function ClassesPage() {
 
   function rosterFor(classId) {
     const ids = memberships.filter((m) => m.class_id === classId).map((m) => m.student_id);
-    return students.filter((s) => ids.includes(s.id));
+    return sortStudents(students.filter((s) => ids.includes(s.id)));
   }
 
   function availableFor(classId) {
     const assigned = new Set(memberships.filter((m) => m.class_id === classId).map((m) => m.student_id));
-    return students.filter((s) => !assigned.has(s.id));
+    return sortStudents(students.filter((s) => !assigned.has(s.id)));
+  }
+
+  function filteredAvailableFor(classId) {
+    const query = (studentSearch[classId] || '').trim().toLocaleLowerCase('it');
+    const available = availableFor(classId);
+    if (!query) return available;
+    return available.filter((student) => displayStudent(student).toLocaleLowerCase('it').includes(query));
   }
 
   function setCourse(course) {
@@ -120,6 +132,7 @@ export default function ClassesPage() {
     );
     if (upsertError) { setError(upsertError.message); return; }
     setAddingStudent((prev) => ({ ...prev, [classId]: '' }));
+    setStudentSearch((prev) => ({ ...prev, [classId]: '' }));
     await loadData();
   }
 
@@ -200,6 +213,7 @@ export default function ClassesPage() {
             const day = DAYS.find((d) => d.value === Number(item.weekday))?.label || '';
             const roster = rosterFor(item.id);
             const available = availableFor(item.id);
+            const filteredAvailable = filteredAvailableFor(item.id);
             return (
               <section key={item.id} className={styles.classCard}>
                 <div className={styles.classTop}>
@@ -222,10 +236,22 @@ export default function ClassesPage() {
 
                   {available.length > 0 && (
                     <div className={styles.addRow}>
-                      <select value={addingStudent[item.id] || ''} onChange={(e) => setAddingStudent((prev) => ({ ...prev, [item.id]: e.target.value }))}>
-                        <option value="">Aggiungi studente…</option>
-                        {available.map((student) => <option key={student.id} value={student.id}>{displayStudent(student)}</option>)}
-                      </select>
+                      <div className={styles.studentPicker}>
+                        <input
+                          type="search"
+                          placeholder="Cerca studente…"
+                          value={studentSearch[item.id] || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setStudentSearch((prev) => ({ ...prev, [item.id]: value }));
+                            setAddingStudent((prev) => ({ ...prev, [item.id]: '' }));
+                          }}
+                        />
+                        <select value={addingStudent[item.id] || ''} onChange={(e) => setAddingStudent((prev) => ({ ...prev, [item.id]: e.target.value }))}>
+                          <option value="">{filteredAvailable.length === 0 ? 'Nessun risultato' : 'Scegli studente…'}</option>
+                          {filteredAvailable.map((student) => <option key={student.id} value={student.id}>{displayStudent(student)}</option>)}
+                        </select>
+                      </div>
                       <button className={styles.secondary} onClick={() => addStudent(item.id)} disabled={!addingStudent[item.id]}>Aggiungi</button>
                     </div>
                   )}
