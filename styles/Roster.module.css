@@ -78,6 +78,8 @@
 .classTop { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .classTitle { font-size: 20px; font-weight: 700; }
 .schedule { margin: 8px 0 14px; color: var(--ink-soft); font-size: 14px; }
+.editPanel { border-top: 1px solid var(--line); padding-top: 14px; margin: 4px 0 14px; }
+.editGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; margin-bottom: 12px; }
 .roster { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 8px; }
 .rosterHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; }
 .studentLine { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid #eef1f5; }
@@ -97,5 +99,7 @@
   .full { grid-column: auto; }
   .row { grid-template-columns: 1fr; }
   .classGrid { grid-template-columns: 1fr; }
+  .classTop { flex-direction: column; }
+  .editGrid { grid-template-columns: 1fr; }
   .addRow { align-items: stretch; }
 }
