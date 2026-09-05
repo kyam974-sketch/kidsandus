@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import styles from '../styles/Calendar.module.css';
 
 const SCHOOL_YEAR = '2026-2027';
+const DEFAULT_COURSE_START = '2026-09-21';
 const DAYS = [
   { value: 1, label: 'Monday' }, { value: 2, label: 'Tuesday' }, { value: 3, label: 'Wednesday' },
   { value: 4, label: 'Thursday' }, { value: 5, label: 'Friday' }, { value: 6, label: 'Saturday' },
@@ -31,6 +32,35 @@ function eventSortMinutes(event) {
   if (event.all_day) return -1;
   const d = new Date(event.start_at);
   return d.getHours() * 60 + d.getMinutes();
+}
+function dateOnly(value) {
+  const d = value instanceof Date ? new Date(value) : new Date(`${value}T12:00:00`);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function firstOccurrence(item) {
+  const start = dateOnly(item.start_date || DEFAULT_COURSE_START);
+  const startWeekday = start.getDay() === 0 ? 7 : start.getDay();
+  const delta = (Number(item.weekday) - startWeekday + 7) % 7;
+  const first = new Date(start);
+  first.setDate(first.getDate() + delta);
+  return first;
+}
+function lessonOccurrence(item, date) {
+  if (Number(item.weekday) !== (date.getDay() === 0 ? 7 : date.getDay())) return null;
+  const first = firstOccurrence(item);
+  const current = dateOnly(date);
+  if (current < first) return null;
+  const daysSince = Math.round((current.getTime() - first.getTime()) / 86400000);
+  if (daysSince % 7 !== 0) return null;
+  const weekIndex = Math.floor(daysSince / 7);
+  const baseIndex = ((Number(item.story_number) || 1) - 1) * 10 + ((Number(item.day_number) || 1) - 1);
+  const lessonIndex = baseIndex + weekIndex;
+  return {
+    story: Math.floor(lessonIndex / 10) + 1,
+    day: (lessonIndex % 10) + 1,
+    weekIndex,
+  };
 }
 
 export default function CalendarPage() {
@@ -99,6 +129,7 @@ export default function CalendarPage() {
       name: item.name,
       weekday: item.weekday,
       start_time: String(item.start_time).slice(0, 5),
+      start_date: item.start_date || DEFAULT_COURSE_START,
       story_number: item.story_number || 1,
       day_number: item.day_number || 1,
     });
@@ -112,6 +143,7 @@ export default function CalendarPage() {
       name: editing.name.trim(),
       weekday: Number(editing.weekday),
       start_time: editing.start_time,
+      start_date: editing.start_date,
       story_number: Number(editing.story_number) || 1,
       day_number: Number(editing.day_number) || 1,
     }).eq('id', editing.id);
@@ -147,8 +179,9 @@ export default function CalendarPage() {
         <label>Class<input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></label>
         <label>Day<select value={editing.weekday} onChange={(e) => setEditing({ ...editing, weekday: Number(e.target.value) })}>{DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
         <label>Start<input type="time" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} /></label>
-        <label>Story<input type="number" min="1" max="6" value={editing.story_number} onChange={(e) => setEditing({ ...editing, story_number: Number(e.target.value) || 1 })} /></label>
-        <label>Day<input type="number" min="1" value={editing.day_number} onChange={(e) => setEditing({ ...editing, day_number: Number(e.target.value) || 1 })} /></label>
+        <label>Course starts<input type="date" value={editing.start_date} onChange={(e) => setEditing({ ...editing, start_date: e.target.value })} /></label>
+        <label>Starting Story<input type="number" min="1" max="6" value={editing.story_number} onChange={(e) => setEditing({ ...editing, story_number: Number(e.target.value) || 1 })} /></label>
+        <label>Starting Day<input type="number" min="1" max="10" value={editing.day_number} onChange={(e) => setEditing({ ...editing, day_number: Number(e.target.value) || 1 })} /></label>
         <button className="btn" disabled={saving} onClick={saveEdit}>{saving ? 'Saving…' : 'Save'}</button>
         <button className="btn secondary" onClick={() => setEditing(null)}>Cancel</button>
       </div>}
@@ -157,7 +190,12 @@ export default function CalendarPage() {
 
       {loading ? <div className="section-block">Loading…</div> : <div className={styles.weekList}>
         {week.map((day) => {
-          const dayClasses = classes.filter((item) => item.weekday === day.value);
+          const dayClasses = classes
+            .map((item) => {
+              const occurrence = lessonOccurrence(item, day.date);
+              return occurrence ? { ...item, occurrence } : null;
+            })
+            .filter(Boolean);
           const dayExternal = externalEvents
             .filter((event) => eventOnDay(event, day.date))
             .filter((event) => event.source_calendar === 'Calendario' ? showPrimary : showDirector);
@@ -191,15 +229,17 @@ export default function CalendarPage() {
                 const start = String(item.start_time).slice(0, 5);
                 const end = addMinutes(start, item.duration_minutes);
                 const courseId = COURSE_IDS[item.course] || item.course.toLowerCase();
-                return <article className={styles.lesson} key={item.id}>
+                const story = item.occurrence.story;
+                const lessonDay = item.occurrence.day;
+                return <article className={styles.lesson} key={`${item.id}-${day.date.toISOString().slice(0, 10)}`}>
                   <div className={styles.timeBlock}><strong>{start}</strong><span>{end}</span></div>
                   <div className={styles.lessonMain}>
                     <div className={styles.course}>{item.course}</div>
                     <div className={styles.groupLabel}>{item.name} · {item.location}</div>
-                    <div className={styles.plan}>Story {item.story_number || 1} · Day {item.day_number || 1} <span>· {item.duration_minutes} min</span></div>
+                    <div className={styles.plan}>Story {story} · Day {lessonDay} <span>· {item.duration_minutes} min</span></div>
                   </div>
                   <div className={styles.actions}>
-                    <a className={styles.open} href={`/planner?course=${encodeURIComponent(courseId)}&story=${item.story_number || 1}&day=${item.day_number || 1}&start=${encodeURIComponent(start)}`}>Open Planner →</a>
+                    <a className={styles.open} href={`/planner?course=${encodeURIComponent(courseId)}&story=${story}&day=${lessonDay}&start=${encodeURIComponent(start)}`}>Open Planner →</a>
                     <button onClick={() => startEdit(item)}>Edit</button>
                   </div>
                 </article>;
@@ -209,7 +249,7 @@ export default function CalendarPage() {
         })}
       </div>}
 
-      <div className={styles.note}>🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria perché contiene anche eventi di altre colleghe. Gli eventi Exchange sono solo letti: l’Hub non prova a modificarli.</div>
+      <div className={styles.note}>Le classi compaiono solo dalla loro data di inizio. La prima settimana parte da Story/Day impostati nella classe e poi il Planner avanza di un Day a ogni settimana. 🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria perché contiene anche eventi di altre colleghe.</div>
     </Layout>
   );
 }
