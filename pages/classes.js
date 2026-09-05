@@ -12,6 +12,8 @@ const DAYS = [
   { value: 6, label: 'Saturday' },
 ];
 
+const COURSE_ORDER = ['mousy', 'linda', 'sam', 'emma', 'oliver', 'marcia', 'pam'];
+
 const EMPTY = {
   name: '',
   course: '',
@@ -48,13 +50,13 @@ export default function ClassesPage() {
       supabase.from('classes').select('*').eq('active', true).order('weekday').order('start_time'),
       supabase.from('students').select('*').eq('active', true).order('last_name').order('first_name'),
       supabase.from('class_students').select('*').eq('active', true),
-      supabase.from('course_registry').select('id,label,expected_minutes,active').eq('active', true).order('label'),
+      supabase.from('course_registry').select('id,label,expected_minutes,active').eq('active', true),
     ]);
     if (ce) setError(ce.message);
     setClasses(c || []);
     setStudents(s || []);
     setMemberships(m || []);
-    setCourses(cr || []);
+    setCourses((cr || []).slice().sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id)));
     setLoading(false);
   }
 
