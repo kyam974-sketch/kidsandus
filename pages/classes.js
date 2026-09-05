@@ -20,6 +20,7 @@ const EMPTY = {
   weekday: 1,
   start_time: '16:00',
   duration_minutes: 60,
+  start_date: '2026-09-21',
   location: 'Grosseto',
   school_year: '2026-2027',
 };
@@ -34,6 +35,11 @@ function sortStudents(items) {
 
 function timeShort(value) {
   return value ? String(value).slice(0, 5) : '';
+}
+
+function dateShort(value) {
+  if (!value) return '';
+  return new Date(`${value}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export default function ClassesPage() {
@@ -97,6 +103,7 @@ export default function ClassesPage() {
     setNotice('');
     if (!form.course) { setError('Scegli un corso.'); return; }
     if (!form.start_time) { setError('Inserisci l’orario.'); return; }
+    if (!form.start_date) { setError('Inserisci la data di inizio.'); return; }
     const day = DAYS.find((d) => d.value === Number(form.weekday))?.label || '';
     const generatedName = `${form.course} · ${day} ${timeShort(form.start_time)}`;
     const payload = {
@@ -105,6 +112,7 @@ export default function ClassesPage() {
       weekday: Number(form.weekday),
       start_time: form.start_time,
       duration_minutes: Number(form.duration_minutes),
+      start_date: form.start_date,
       location: form.location.trim() || 'Grosseto',
       school_year: form.school_year.trim() || '2026-2027',
       calendar_source: 'hub',
@@ -192,6 +200,10 @@ export default function ClassesPage() {
             <input type="number" min="15" max="180" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
           </div>
           <div className={styles.field}>
+            <label>Inizio lezioni *</label>
+            <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+          </div>
+          <div className={styles.field}>
             <label>Sede</label>
             <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           </div>
@@ -223,7 +235,7 @@ export default function ClassesPage() {
                   </div>
                   <button className={styles.danger} onClick={() => archiveClass(item)}>Archivia</button>
                 </div>
-                <div className={styles.schedule}>{day} · {timeShort(item.start_time)} · {item.duration_minutes} min · {item.location}</div>
+                <div className={styles.schedule}>{day} · {timeShort(item.start_time)} · {item.duration_minutes} min · {item.location}{item.start_date ? ` · dal ${dateShort(item.start_date)}` : ''}</div>
 
                 <div className={styles.roster}>
                   <div className={styles.rosterHead}><span>Students</span><span className={styles.count}>{roster.length}</span></div>
