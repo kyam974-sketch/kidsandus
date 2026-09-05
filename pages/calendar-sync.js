@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
 
 const ENDPOINT = 'https://zuaalqhbesywmfvuvgho.supabase.co/functions/v1/apple-calendar-sync';
+const SHORTCUT_FEED_ENDPOINT = 'https://zuaalqhbesywmfvuvgho.supabase.co/functions/v1/hub-calendar-feed';
 const SHORTCUT_NAME = 'Kids&Us Calendar Sync';
 const SCHOOL_START = '2026-09-21';
 const SCHOOL_END = '2027-06-12';
@@ -89,19 +90,16 @@ export default function CalendarSyncSetup() {
   }
 
   const runUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}`;
-  const outboundBody = `{
-  "token": "<sync token>",
-  "outbound_only": true,
-  "window_start": "${SCHOOL_START}",
-  "window_end": "${SCHOOL_END}"
-}`;
+  const shortcutFeedUrl = token
+    ? `${SHORTCUT_FEED_ENDPOINT}?token=${encodeURIComponent(token)}&format=shortcut&days=60`
+    : '';
 
   return (
     <Layout>
       <div className="page-eyebrow">Calendar · Exchange bridge</div>
       <h1 className="page-title">📅 Exchange Calendar Sync</h1>
       <p className="page-desc">
-        Obiettivo: le lezioni dell’Hub devono essere create nel vero calendario aziendale Microsoft 365 / Exchange <strong>Calendario</strong>, così compaiono identiche in Outlook e nell’app Calendario di iPhone. Un calendario separato in abbonamento non viene usato.
+        Le lezioni dell’Hub devono finire nel vero calendario aziendale Microsoft 365 / Exchange <strong>Calendario</strong>, così sono visibili anche in Outlook e nell’app Calendario di iPhone.
       </p>
 
       {error && <div className="error-text">{error}</div>}
@@ -124,36 +122,40 @@ export default function CalendarSyncSetup() {
       </div>
 
       <div className="section-block" style={{ border: '2px solid var(--green, #547c2f)' }}>
-        <div className="page-eyebrow">Target definitivo</div>
-        <h2>2. Hub → Microsoft 365 / Exchange</h2>
-        <p style={{ marginBottom: 0 }}>
-          La sincronizzazione definitiva scriverà direttamente nel calendario Exchange <strong>Calendario</strong> tramite Microsoft Graph. Dopo il collegamento iniziale dell’account Microsoft, non servirà costruire a mano il flusso in Comandi Rapidi.
+        <div className="page-eyebrow">Metodo semplificato</div>
+        <h2>2. Hub → Exchange con un piccolo Shortcut dedicato</h2>
+        <p>
+          Il server ora restituisce le lezioni dei prossimi 60 giorni già appiattite, una per riga, nel formato <strong>Titolo ### Inizio ### Fine</strong>. Non servono più dizionari annidati, chiavi <code>title/start/end</code> o quattro blocchi “Ottieni valore”.
+        </p>
+        <div className="field">
+          <label>URL pronto per il nuovo Shortcut</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input readOnly value={loading ? 'Loading…' : shortcutFeedUrl} style={{ flex: 1 }} />
+            <button className="btn" disabled={!shortcutFeedUrl} onClick={() => copy(shortcutFeedUrl, 'shortcut-feed')}>
+              {copied === 'shortcut-feed' ? 'Copied' : 'Copy URL'}
+            </button>
+          </div>
+        </div>
+        <p style={{ marginBottom: 0, color: 'var(--ink-soft)' }}>
+          Il nuovo Shortcut sarà separato da quello esistente: prima elimina dal calendario <strong>Calendario</strong> solo gli eventi futuri che iniziano con “Kids&Us ·”, poi ricrea il blocco dei prossimi 60 giorni dall’Hub. In questo modo modifiche e cancellazioni si riallineano senza gestire ID o duplicati.
         </p>
       </div>
 
       <div className="section-block">
-        <h2>3. Calendar → Hub · già disponibile</h2>
+        <h2>3. Calendar → Hub · resta separato</h2>
         <p>
-          Il Comando Rapido <strong>{SHORTCUT_NAME}</strong> può continuare a leggere i calendari Exchange <strong>Calendario</strong> e <strong>Giorgia Fini</strong> e mostrarli nell’Hub come eventi read-only.
+          Il Comando Rapido <strong>{SHORTCUT_NAME}</strong> può continuare a leggere i calendari Exchange <strong>Calendario</strong> e <strong>Giorgia Fini</strong> e mostrarli nell’Hub come eventi read-only. Non dobbiamo più modificare quella parte fragile.
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a className="btn secondary" href={runUrl} style={{ textDecoration: 'none' }}>Run existing sync</a>
-          <a className="btn secondary" href="shortcuts://open-shortcut?name=Kids%26Us%20Calendar%20Sync" style={{ textDecoration: 'none' }}>Open Shortcut</a>
+          <a className="btn secondary" href="shortcuts://open-shortcut?name=Kids%26Us%20Calendar%20Sync" style={{ textDecoration: 'none' }}>Open existing Shortcut</a>
         </div>
       </div>
-
-      <details className="section-block">
-        <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Advanced · current Shortcut bridge</summary>
-        <p style={{ marginTop: 12, color: 'var(--ink-soft)' }}>
-          Questo resta soltanto come ponte temporaneo. Non è la soluzione definitiva per Hub → Exchange.
-        </p>
-        <pre className="pre-text" style={{ background: '#f7f8fb', padding: 14, borderRadius: 10 }}>{outboundBody}</pre>
-      </details>
 
       <div className="section-block">
         <h2>Connection data</h2>
         <div className="field">
-          <label>Shortcut endpoint</label>
+          <label>Inbound Shortcut endpoint</label>
           <div style={{ display: 'flex', gap: 8 }}>
             <input readOnly value={ENDPOINT} style={{ flex: 1 }} />
             <button className="btn secondary" onClick={() => copy(ENDPOINT, 'endpoint')}>{copied === 'endpoint' ? 'Copied' : 'Copy'}</button>
