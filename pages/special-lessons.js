@@ -18,7 +18,7 @@ const COURSES = [
 const TYPES = [
   { id: 'makeup', label: 'Recupero / Makeup', help: 'Per chi ha saltato una o più lezioni: recupera i contenuti necessari del Day perso.' },
   { id: 'demo', label: 'Demo', help: 'Lezione dimostrativa costruita scegliendo attività già note, in base a materiali e obiettivi.' },
-  { id: 'propedeutica', label: 'Propedeutica', help: 'Lezione ponte prima dell’inizio ufficiale del calendario. Può usare attività richiamate dalla banca senza anticipare la Story.' },
+  { id: 'propedeutica', label: 'Propedeutica', help: 'Una sola lezione ponte per ciascun corso standard, prima dell’inizio ufficiale. Nursery escluse. Può usare attività richiamate dalla banca senza anticipare la Story.' },
   { id: 'other', label: 'Altro', help: 'Lezione speciale costruita liberamente dalla banca attività o a mano.' },
 ];
 
@@ -150,7 +150,6 @@ export default function SpecialLessons() {
   const [courseId, setCourseId] = useState('mousy');
   const [story, setStory] = useState(1);
   const [sourceDay, setSourceDay] = useState(1);
-  const [prepNumber, setPrepNumber] = useState(1);
   const [duration, setDuration] = useState(45);
   const [title, setTitle] = useState('');
   const [activities, setActivities] = useState([]);
@@ -168,6 +167,10 @@ export default function SpecialLessons() {
   const [bankStory, setBankStory] = useState('all');
   const [bankDay, setBankDay] = useState('all');
 
+  const availableCourses = useMemo(
+    () => type === 'propedeutica' ? COURSES.filter((c) => !c.id.endsWith('_nursery')) : COURSES,
+    [type]
+  );
   const course = useMemo(() => COURSES.find((c) => c.id === courseId), [courseId]);
   const sourceKey = `${courseId}|Story ${story}|${sourceDay}`;
   const includedActivities = activities.filter((a) => a.included !== false);
@@ -199,6 +202,12 @@ export default function SpecialLessons() {
 
   function changeType(nextType) {
     setType(nextType);
+
+    if (nextType === 'propedeutica' && courseId.endsWith('_nursery')) {
+      setCourseId('mousy');
+      setDuration(45);
+    }
+
     if (!editingLessonId) {
       setActivities([]);
       setMessage('');
@@ -234,7 +243,6 @@ export default function SpecialLessons() {
     const durationMatch = `${meta.contextA} ${meta.contextB}`.match(/(\d+)\s*min/i);
     const storyMatch = String(meta.contextA || '').match(/Story\s+(\d+)/i);
     const dayMatch = String(meta.contextB || '').match(/Day\s+(\d+)/i);
-    const prepMatch = String(meta.contextB || '').match(/Lesson\s+(\d+)/i);
 
     setEditingLessonId(lesson.id);
     setEditingLessonKey(lesson.key);
@@ -243,7 +251,6 @@ export default function SpecialLessons() {
     setDuration(durationMatch ? Number(durationMatch[1]) : (nextCourse?.duration || 45));
     if (storyMatch) setStory(Number(storyMatch[1]));
     if (dayMatch) setSourceDay(Number(dayMatch[1]));
-    if (prepMatch) setPrepNumber(Number(prepMatch[1]));
     setTitle(meta.title || '');
     setActivities(Array.isArray(lesson.data) ? lesson.data.map((a) => ({ ...a, included: true })) : []);
     setBankOpen(false);
@@ -387,32 +394,65 @@ export default function SpecialLessons() {
       return;
     }
 
+    if (type === 'propedeutica' && courseId.endsWith('_nursery')) {
+      setMessage('Le propedeutiche sono disponibili solo per i corsi standard, non per Nursery.');
+      return;
+    }
+
     setSaving(true);
     setMessage('');
     const freshStamp = new Date().toISOString().replace(/[:.]/g, '-');
     const oldStamp = editingLessonKey ? String(editingLessonKey).split('|').slice(-1)[0] : '';
     const stamp = oldStamp || freshStamp;
-    const safeTitle = (title || typeInfo?.label || 'lesson').replace(/[^a-zA-Z0-9À-ÿ _-]/g, '').trim().replace(/\s+/g, '_');
+    const defaultTitle = type === 'propedeutica' ? `Propedeutica ${course?.name || ''}`.trim() : (typeInfo?.label || 'lesson');
+    const safeTitle = (title || defaultTitle).replace(/[^a-zA-Z0-9À-ÿ _-]/g, '').trim().replace(/\s+/g, '_');
     let contextA = 'Custom';
     let contextB = 'Custom';
     if (type === 'makeup') { contextA = `Story ${story}`; contextB = `Day ${sourceDay}`; }
     if (type === 'demo') { contextA = 'Demo'; contextB = `${duration} min`; }
-    if (type === 'propedeutica') { contextA = 'Pre-course'; contextB = `Lesson ${prepNumber}`; }
+    if (type === 'propedeutica') { contextA = 'Pre-course'; contextB = `${duration} min`; }
     const key = `special|${type}|${courseId}|${contextA}|${contextB}|${safeTitle}|${stamp}`;
 
-    const result = editingLessonId
-      ? await supabase.from('lessons').update({ key, data: finalActivities }).eq('id', editingLessonId).like('key', 'special|%')
+    let targetLessonId = editingLessonId;
+    let replacingExistingPropedeutica = false;
+
+    if (type === 'propedeutica' && !targetLessonId) {
+      const { data: existing, error: existingError } = await supabase
+        .from('lessons')
+        .select('id,key')
+        .like('key', `special|propedeutica|${courseId}|%`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingError) {
+        setSaving(false);
+        setMessage(`Errore controllo propedeutica: ${existingError.message}`);
+        return;
+      }
+
+      if (existing?.id) {
+        targetLessonId = existing.id;
+        replacingExistingPropedeutica = true;
+      }
+    }
+
+    const result = targetLessonId
+      ? await supabase.from('lessons').update({ key, data: finalActivities }).eq('id', targetLessonId).like('key', 'special|%')
       : await supabase.from('lessons').insert({ key, data: finalActivities });
 
     setSaving(false);
     if (result.error) {
-      setMessage(`${editingLessonId ? 'Errore salvataggio modifiche' : 'Errore salvataggio'}: ${result.error.message}`);
+      setMessage(`${targetLessonId ? 'Errore salvataggio modifiche' : 'Errore salvataggio'}: ${result.error.message}`);
       return;
     }
 
-    if (editingLessonId) {
+    if (targetLessonId) {
+      setEditingLessonId(targetLessonId);
       setEditingLessonKey(key);
-      setMessage('Modifiche salvate. Live ed Extra Light useranno subito questa versione aggiornata.');
+      setMessage(replacingExistingPropedeutica
+        ? 'Propedeutica aggiornata: per questo corso resta una sola lezione propedeutica.'
+        : 'Modifiche salvate. Live ed Extra Light useranno subito questa versione aggiornata.');
     } else {
       setMessage('Lezione speciale salvata. La trovi qui sotto in “Lezioni salvate”, con Live ed Extra Light.');
     }
@@ -436,14 +476,13 @@ export default function SpecialLessons() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
             <div className="field"><label>Tipo lezione</label><select value={type} onChange={(e) => changeType(e.target.value)}>{TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
-            <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => changeCourse(e.target.value)}>{COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+            <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => changeCourse(e.target.value)}>{availableCourses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             {type === 'makeup' && <><div className="field"><label>Story</label><select value={story} onChange={(e) => setStory(Number(e.target.value))}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div><div className="field"><label>Day perso</label><select value={sourceDay} onChange={(e) => setSourceDay(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div></>}
-            {type === 'propedeutica' && <div className="field"><label>Lezione propedeutica</label><select value={prepNumber} onChange={(e) => setPrepNumber(Number(e.target.value))}>{[1,2,3].map((n) => <option key={n} value={n}>Lezione {n}</option>)}</select></div>}
             <div className="field"><label>Durata</label><select value={duration} onChange={(e) => setDuration(Number(e.target.value))}><option value={30}>30 min</option><option value={45}>45 min</option><option value={60}>60 min</option></select></div>
           </div>
 
           <div className="ready-note"><strong>{typeInfo?.label}</strong><div style={{ marginTop: 6 }}>{typeInfo?.help}</div></div>
-          <div className="field"><label>Titolo / nota</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Es. Recupero Story 1 · Day 3" /></div>
+          <div className="field"><label>Titolo / nota</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === 'propedeutica' ? `Propedeutica ${course?.name || ''}` : 'Es. Recupero Story 1 · Day 3'} /></div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {type === 'makeup' && <button className="btn" onClick={loadRecoveryDay} disabled={loading}>{loading ? 'Loading…' : 'Carica attività del Day perso'}</button>}
