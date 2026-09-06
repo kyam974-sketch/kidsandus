@@ -158,6 +158,8 @@ export default function SpecialLessons() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [savedLessons, setSavedLessons] = useState([]);
+  const [editingLessonId, setEditingLessonId] = useState(null);
+  const [editingLessonKey, setEditingLessonKey] = useState('');
   const [bankOpen, setBankOpen] = useState(false);
   const [bankLoading, setBankLoading] = useState(false);
   const [bankRows, setBankRows] = useState([]);
@@ -182,17 +184,7 @@ export default function SpecialLessons() {
     });
   }, [bankRows, bankQuery, bankStory, bankDay]);
 
-  useEffect(() => {
-    if (course) setDuration(course.duration);
-  }, [courseId]);
-
   useEffect(() => { loadSavedLessons(); }, []);
-
-  useEffect(() => {
-    setActivities([]);
-    setMessage('');
-    setTitle('');
-  }, [type]);
 
   useEffect(() => {
     setBankOpen(false);
@@ -203,9 +195,92 @@ export default function SpecialLessons() {
     setBankDay('all');
   }, [courseId]);
 
+  function changeType(nextType) {
+    setType(nextType);
+    if (!editingLessonId) {
+      setActivities([]);
+      setMessage('');
+      setTitle('');
+    }
+  }
+
+  function changeCourse(nextCourseId) {
+    setCourseId(nextCourseId);
+    const nextCourse = COURSES.find((item) => item.id === nextCourseId);
+    if (nextCourse && !editingLessonId) setDuration(nextCourse.duration);
+  }
+
   async function loadSavedLessons() {
-    const { data } = await supabase.from('lessons').select('id,key,created_at').like('key', 'special|%').order('created_at', { ascending: false }).limit(50);
+    const { data } = await supabase
+      .from('lessons')
+      .select('id,key,data,created_at')
+      .like('key', 'special|%')
+      .order('created_at', { ascending: false })
+      .limit(50);
     setSavedLessons(data || []);
+  }
+
+  function startEditLesson(lesson) {
+    const meta = parseSavedKey(lesson.key);
+    const nextCourse = COURSES.find((item) => item.id === meta.course);
+    const durationMatch = `${meta.contextA} ${meta.contextB}`.match(/(\d+)\s*min/i);
+    const storyMatch = String(meta.contextA || '').match(/Story\s+(\d+)/i);
+    const dayMatch = String(meta.contextB || '').match(/Day\s+(\d+)/i);
+    const prepMatch = String(meta.contextB || '').match(/Lesson\s+(\d+)/i);
+
+    setEditingLessonId(lesson.id);
+    setEditingLessonKey(lesson.key);
+    setType(meta.type || 'other');
+    setCourseId(meta.course || 'sam');
+    setDuration(durationMatch ? Number(durationMatch[1]) : (nextCourse?.duration || 60));
+    if (storyMatch) setStory(Number(storyMatch[1]));
+    if (dayMatch) setSourceDay(Number(dayMatch[1]));
+    if (prepMatch) setPrepNumber(Number(prepMatch[1]));
+    setTitle(meta.title || '');
+    setActivities(Array.isArray(lesson.data) ? lesson.data.map((a) => ({ ...a, included: true })) : []);
+    setBankOpen(false);
+    setBankRows([]);
+    setBankMessage('');
+    setBankQuery('');
+    setMessage('Stai modificando una Special Lesson salvata. Le modifiche verranno applicate alla stessa lezione.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEditing() {
+    setEditingLessonId(null);
+    setEditingLessonKey('');
+    setActivities([]);
+    setTitle('');
+    setMessage('');
+    if (course) setDuration(course.duration);
+  }
+
+  async function deleteSavedLesson(lesson) {
+    const meta = parseSavedKey(lesson.key);
+    if (!window.confirm(`Eliminare definitivamente la Special Lesson “${meta.title}”? Questa operazione non si può annullare.`)) return;
+
+    setSaving(true);
+    setMessage('');
+    const { error } = await supabase
+      .from('lessons')
+      .delete()
+      .eq('id', lesson.id)
+      .like('key', 'special|%');
+    setSaving(false);
+
+    if (error) {
+      setMessage(`Errore eliminazione: ${error.message}`);
+      return;
+    }
+
+    if (editingLessonId === lesson.id) {
+      setEditingLessonId(null);
+      setEditingLessonKey('');
+      setActivities([]);
+      setTitle('');
+    }
+    setMessage(`Special Lesson “${meta.title}” eliminata.`);
+    await loadSavedLessons();
   }
 
   async function loadRecoveryDay() {
@@ -296,9 +371,12 @@ export default function SpecialLessons() {
       setMessage('Inserisci o seleziona prima almeno un’attività.');
       return;
     }
+
     setSaving(true);
     setMessage('');
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const freshStamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const oldStamp = editingLessonKey ? String(editingLessonKey).split('|').slice(-1)[0] : '';
+    const stamp = oldStamp || freshStamp;
     const safeTitle = (title || typeInfo?.label || 'lesson').replace(/[^a-zA-Z0-9À-ÿ _-]/g, '').trim().replace(/\s+/g, '_');
     let contextA = 'Custom';
     let contextB = 'Custom';
@@ -306,13 +384,24 @@ export default function SpecialLessons() {
     if (type === 'demo') { contextA = 'Demo'; contextB = `${duration} min`; }
     if (type === 'propedeutica') { contextA = 'Pre-course'; contextB = `Lesson ${prepNumber}`; }
     const key = `special|${type}|${courseId}|${contextA}|${contextB}|${safeTitle}|${stamp}`;
-    const { error } = await supabase.from('lessons').insert({ key, data: finalActivities });
+
+    const result = editingLessonId
+      ? await supabase.from('lessons').update({ key, data: finalActivities }).eq('id', editingLessonId).like('key', 'special|%')
+      : await supabase.from('lessons').insert({ key, data: finalActivities });
+
     setSaving(false);
-    if (error) setMessage(`Errore salvataggio: ${error.message}`);
-    else {
-      setMessage('Lezione speciale salvata. La trovi qui sotto in “Lezioni salvate”, con Live ed Extra Light.');
-      await loadSavedLessons();
+    if (result.error) {
+      setMessage(`${editingLessonId ? 'Errore salvataggio modifiche' : 'Errore salvataggio'}: ${result.error.message}`);
+      return;
     }
+
+    if (editingLessonId) {
+      setEditingLessonKey(key);
+      setMessage('Modifiche salvate. Live ed Extra Light useranno subito questa versione aggiornata.');
+    } else {
+      setMessage('Lezione speciale salvata. La trovi qui sotto in “Lezioni salvate”, con Live ed Extra Light.');
+    }
+    await loadSavedLessons();
   }
 
   return (
@@ -323,9 +412,16 @@ export default function SpecialLessons() {
         <p className="page-desc">Costruisci demo, recuperi, propedeutiche e altre lezioni richiamando attività già presenti nel Planner oppure aggiungendole a mano.</p>
 
         <div className="section-block" style={{ display: 'grid', gap: 18 }}>
+          {editingLessonId && (
+            <div className="ready-note" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div><strong>✏️ Modifica Special Lesson</strong><div style={{ marginTop: 4 }}>Stai lavorando sulla lezione salvata: Salva modifiche aggiorna questa stessa lezione.</div></div>
+              <button className="btn secondary" onClick={cancelEditing}>Annulla modifica</button>
+            </div>
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
-            <div className="field"><label>Tipo lezione</label><select value={type} onChange={(e) => setType(e.target.value)}>{TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
-            <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => setCourseId(e.target.value)}>{COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+            <div className="field"><label>Tipo lezione</label><select value={type} onChange={(e) => changeType(e.target.value)}>{TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
+            <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => changeCourse(e.target.value)}>{COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             {type === 'makeup' && <><div className="field"><label>Story</label><select value={story} onChange={(e) => setStory(Number(e.target.value))}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div><div className="field"><label>Day perso</label><select value={sourceDay} onChange={(e) => setSourceDay(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div></>}
             {type === 'propedeutica' && <div className="field"><label>Lezione propedeutica</label><select value={prepNumber} onChange={(e) => setPrepNumber(Number(e.target.value))}>{[1,2,3].map((n) => <option key={n} value={n}>Lezione {n}</option>)}</select></div>}
             <div className="field"><label>Durata</label><select value={duration} onChange={(e) => setDuration(Number(e.target.value))}><option value={30}>30 min</option><option value={45}>45 min</option><option value={60}>60 min</option></select></div>
@@ -338,7 +434,7 @@ export default function SpecialLessons() {
             {type === 'makeup' && <button className="btn" onClick={loadRecoveryDay} disabled={loading}>{loading ? 'Loading…' : 'Carica attività del Day perso'}</button>}
             <button className="btn" onClick={openActivityBank} disabled={bankLoading}>{bankLoading ? 'Loading…' : bankOpen ? 'Chiudi Recall activity' : '↩ Recall activity'}</button>
             <button className="btn secondary" onClick={addActivity}>＋ Aggiungi attività</button>
-            <button className="btn secondary" onClick={saveLesson} disabled={saving || !includedActivities.length}>{saving ? 'Saving…' : 'Salva lezione'}</button>
+            <button className="btn secondary" onClick={saveLesson} disabled={saving || !includedActivities.length}>{saving ? 'Saving…' : editingLessonId ? 'Salva modifiche' : 'Salva lezione'}</button>
           </div>
 
           <div className="planner-help">Target: {duration} min · Core selezionato: {coreMinutes} min · Corso: {course?.name}</div>
@@ -424,9 +520,12 @@ export default function SpecialLessons() {
             const meta = parseSavedKey(lesson.key);
             const typeLabel = TYPES.find((t) => t.id === meta.type)?.label || meta.type;
             const courseName = COURSES.find((c) => c.id === meta.course)?.name || meta.course;
-            return <div key={lesson.id} className="act-edit-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            const isEditingThis = editingLessonId === lesson.id;
+            return <div key={lesson.id} className="act-edit-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', border: isEditingThis ? '2px solid var(--blue, #5278c7)' : undefined }}>
               <div><strong>{meta.title}</strong><div className="planner-help">{typeLabel} · {courseName} · {meta.contextA} · {meta.contextB}</div></div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn secondary" onClick={() => startEditLesson(lesson)}>✏️ Modifica</button>
+                <button className="link-btn danger" onClick={() => deleteSavedLesson(lesson)} disabled={saving}>Elimina</button>
                 <a className="btn" href={`/special-lessons-live?id=${lesson.id}`}>▶ Live</a>
                 <a className="btn secondary" href={`/special-lessons-live?id=${lesson.id}&mode=light`}>Extra Light</a>
               </div>
