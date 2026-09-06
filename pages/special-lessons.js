@@ -173,9 +173,11 @@ export default function SpecialLessons() {
   const includedActivities = activities.filter((a) => a.included !== false);
   const coreMinutes = includedActivities.filter((a) => !a.is_bonus).reduce((sum, a) => sum + minutes(a.duration), 0);
   const typeInfo = TYPES.find((t) => t.id === type);
+  const recallActive = bankQuery.trim().length > 0 || bankStory !== 'all' || bankDay !== 'all';
 
   const filteredBankRows = useMemo(() => {
     const query = bankQuery.trim().toLocaleLowerCase('en');
+    if (!query && bankStory === 'all' && bankDay === 'all') return [];
     return bankRows.filter((item) => {
       if (query && !item.searchable.includes(query)) return false;
       if (bankStory !== 'all' && !item.origins.some((origin) => String(origin.story) === String(bankStory))) return false;
@@ -208,6 +210,12 @@ export default function SpecialLessons() {
     setCourseId(nextCourseId);
     const nextCourse = COURSES.find((item) => item.id === nextCourseId);
     if (nextCourse && !editingLessonId) setDuration(nextCourse.duration);
+  }
+
+  function scrollToFlow() {
+    window.setTimeout(() => {
+      document.getElementById('special-flow')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 
   async function loadSavedLessons() {
@@ -300,10 +308,11 @@ export default function SpecialLessons() {
     }
     setActivities(data.data.map((a) => ({ ...a, included: !a.is_bonus, source_is_bonus: !!a.is_bonus })));
     setMessage('Attività del Day caricate per il recupero. Togli la spunta a ciò che non serve; poi puoi aggiungere altre attività con Recall activity.');
+    scrollToFlow();
   }
 
   async function openActivityBank() {
-    if (bankOpen && bankRows.length) {
+    if (bankOpen) {
       setBankOpen(false);
       return;
     }
@@ -327,7 +336,7 @@ export default function SpecialLessons() {
     const bank = buildActivityBank(data || []);
     setBankRows(bank);
     setBankMessage(bank.length
-      ? `${bank.length} attività/varianti disponibili per ${course?.name || courseId}. Le attività identiche sono raggruppate; le versioni realmente diverse restano separate.`
+      ? 'Activity Library pronta. Cerca o filtra per richiamare solo le attività che ti servono.'
       : 'Nessuna attività disponibile nel Planner per questo corso.');
   }
 
@@ -340,7 +349,12 @@ export default function SpecialLessons() {
       recalled_from: item.origins.map(originLabel).join(', '),
     };
     setActivities((current) => [...current, next]);
+    setBankOpen(false);
+    setBankQuery('');
+    setBankStory('all');
+    setBankDay('all');
     setMessage(`Aggiunta “${item.name}” al flow. Puoi modificarla liberamente senza cambiare l’attività originale del Planner.`);
+    scrollToFlow();
   }
 
   function updateActivity(index, field, value) {
@@ -363,6 +377,7 @@ export default function SpecialLessons() {
 
   function addActivity() {
     setActivities((current) => [...current, { name: 'New activity', duration: "5'", audio: '', notes: '', materials: '', is_bonus: false, included: true }]);
+    scrollToFlow();
   }
 
   async function saveLesson() {
@@ -441,54 +456,7 @@ export default function SpecialLessons() {
           {message && <div className="ready-note">{message}</div>}
         </div>
 
-        {bankOpen && (
-          <div className="section-block" style={{ border: '2px solid var(--blue, #5278c7)' }}>
-            <div className="page-eyebrow">Activity Library · {course?.name}</div>
-            <h2 style={{ marginTop: 4 }}>↩ Recall activity</h2>
-            <p style={{ marginTop: 0 }}>Cerca per nome, materiale, teaching notes, track oppure provenienza. Le attività uguali vengono mostrate una volta sola; se lo stesso nome ha meccaniche o materiali diversi, trovi varianti separate.</p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 2fr) repeat(2, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
-              <div className="field"><label>Cerca</label><input type="search" value={bankQuery} onChange={(e) => setBankQuery(e.target.value)} placeholder="Es. scarves, balloons, TR#25, body parts…" /></div>
-              <div className="field"><label>Story</label><select value={bankStory} onChange={(e) => { setBankStory(e.target.value); setBankDay('all'); }}><option value="all">Tutte</option>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
-              <div className="field"><label>Day</label><select value={bankDay} onChange={(e) => setBankDay(e.target.value)}><option value="all">Tutti</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div>
-            </div>
-
-            {bankMessage && <div className="planner-help" style={{ marginTop: 10 }}>{bankMessage}</div>}
-            <div className="planner-help" style={{ marginTop: 6 }}>{filteredBankRows.length} risultati</div>
-
-            <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
-              {filteredBankRows.map((item) => {
-                const a = item.representative || {};
-                const originPreview = item.origins.slice(0, 8).map(originLabel).join(' · ');
-                const extraOrigins = item.origins.length > 8 ? ` · +${item.origins.length - 8}` : '';
-                return (
-                  <div key={item.id} className="act-edit-card" style={{ margin: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                      <div style={{ flex: '1 1 420px' }}>
-                        <div style={{ fontSize: '1.08rem', fontWeight: 800 }}>
-                          {item.name}
-                          {item.variantCount > 1 && <span className="planner-help"> · Variant {item.variantIndex}/{item.variantCount}</span>}
-                        </div>
-                        <div className="planner-help" style={{ marginTop: 5 }}>
-                          {item.durations.length ? `Duration: ${item.durations.join(' / ')}` : 'Duration: —'}
-                          {a.audio ? ` · Audio: ${a.audio}` : ''}
-                          {item.occurrenceCount > 1 ? ` · Used ${item.occurrenceCount} times` : ''}
-                        </div>
-                        {item.origins.length > 0 && <div className="planner-help" style={{ marginTop: 4 }}>From: {originPreview}{extraOrigins}</div>}
-                        {a.materials && <div style={{ marginTop: 8 }}><strong>Materials:</strong> {a.materials}</div>}
-                        {a.notes && <details style={{ marginTop: 8 }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Teaching notes</summary><div style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{a.notes}</div></details>}
-                      </div>
-                      <button className="btn" onClick={() => addFromBank(item)}>＋ Add to lesson</button>
-                    </div>
-                  </div>
-                );
-              })}
-              {!bankLoading && !filteredBankRows.length && <p>Nessuna attività corrisponde ai filtri.</p>}
-            </div>
-          </div>
-        )}
-
-        <div className="section-block">
+        <div id="special-flow" className="section-block">
           <h2 style={{ marginTop: 0 }}>Flow della lezione</h2>
           {(type === 'demo' || type === 'propedeutica' || type === 'other') && !activities.length && <p>Parti vuota: usa <strong>Recall activity</strong> per richiamare attività già esistenti oppure aggiungine una manualmente.</p>}
           {!activities.length ? <p>Nessuna attività caricata.</p> : activities.map((a, i) => (
@@ -513,6 +481,56 @@ export default function SpecialLessons() {
             </div>
           ))}
         </div>
+
+        {bankOpen && (
+          <div className="section-block" style={{ border: '2px solid var(--blue, #5278c7)' }}>
+            <div className="page-eyebrow">Activity Library · {course?.name}</div>
+            <h2 style={{ marginTop: 4 }}>↩ Recall activity</h2>
+            <p style={{ marginTop: 0 }}>Cerca per nome, materiale, teaching notes, track oppure provenienza. Nessuna attività viene mostrata finché non la richiami con una ricerca o un filtro.</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 2fr) repeat(2, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
+              <div className="field"><label>Cerca</label><input type="search" value={bankQuery} onChange={(e) => setBankQuery(e.target.value)} placeholder="Es. scarves, balloons, TR#25, body parts…" /></div>
+              <div className="field"><label>Story</label><select value={bankStory} onChange={(e) => { setBankStory(e.target.value); setBankDay('all'); }}><option value="all">Tutte</option>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
+              <div className="field"><label>Day</label><select value={bankDay} onChange={(e) => setBankDay(e.target.value)}><option value="all">Tutti</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div>
+            </div>
+
+            {bankMessage && <div className="planner-help" style={{ marginTop: 10 }}>{bankMessage}</div>}
+            {!recallActive && <div className="planner-help" style={{ marginTop: 8 }}>Scrivi cosa cerchi oppure scegli Story/Day.</div>}
+            {recallActive && <div className="planner-help" style={{ marginTop: 6 }}>{filteredBankRows.length} risultati</div>}
+
+            {recallActive && (
+              <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
+                {filteredBankRows.map((item) => {
+                  const a = item.representative || {};
+                  const originPreview = item.origins.slice(0, 8).map(originLabel).join(' · ');
+                  const extraOrigins = item.origins.length > 8 ? ` · +${item.origins.length - 8}` : '';
+                  return (
+                    <div key={item.id} className="act-edit-card" style={{ margin: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 420px' }}>
+                          <div style={{ fontSize: '1.08rem', fontWeight: 800 }}>
+                            {item.name}
+                            {item.variantCount > 1 && <span className="planner-help"> · Variant {item.variantIndex}/{item.variantCount}</span>}
+                          </div>
+                          <div className="planner-help" style={{ marginTop: 5 }}>
+                            {item.durations.length ? `Duration: ${item.durations.join(' / ')}` : 'Duration: —'}
+                            {a.audio ? ` · Audio: ${a.audio}` : ''}
+                            {item.occurrenceCount > 1 ? ` · Used ${item.occurrenceCount} times` : ''}
+                          </div>
+                          {item.origins.length > 0 && <div className="planner-help" style={{ marginTop: 4 }}>From: {originPreview}{extraOrigins}</div>}
+                          {a.materials && <div style={{ marginTop: 8 }}><strong>Materials:</strong> {a.materials}</div>}
+                          {a.notes && <details style={{ marginTop: 8 }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Teaching notes</summary><div style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{a.notes}</div></details>}
+                        </div>
+                        <button className="btn" onClick={() => addFromBank(item)}>＋ Add to lesson</button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!bankLoading && !filteredBankRows.length && <p>Nessuna attività corrisponde alla ricerca.</p>}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="section-block">
           <h2 style={{ marginTop: 0 }}>Lezioni salvate</h2>
