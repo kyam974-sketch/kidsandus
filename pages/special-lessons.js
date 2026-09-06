@@ -147,11 +147,11 @@ function originLabel(origin) {
 
 export default function SpecialLessons() {
   const [type, setType] = useState('makeup');
-  const [courseId, setCourseId] = useState('sam');
+  const [courseId, setCourseId] = useState('mousy');
   const [story, setStory] = useState(1);
   const [sourceDay, setSourceDay] = useState(1);
   const [prepNumber, setPrepNumber] = useState(1);
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(45);
   const [title, setTitle] = useState('');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -231,8 +231,8 @@ export default function SpecialLessons() {
     setEditingLessonId(lesson.id);
     setEditingLessonKey(lesson.key);
     setType(meta.type || 'other');
-    setCourseId(meta.course || 'sam');
-    setDuration(durationMatch ? Number(durationMatch[1]) : (nextCourse?.duration || 60));
+    setCourseId(meta.course || 'mousy');
+    setDuration(durationMatch ? Number(durationMatch[1]) : (nextCourse?.duration || 45));
     if (storyMatch) setStory(Number(storyMatch[1]));
     if (dayMatch) setSourceDay(Number(dayMatch[1]));
     if (prepMatch) setPrepNumber(Number(prepMatch[1]));
