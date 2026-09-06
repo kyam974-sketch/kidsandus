@@ -3,9 +3,12 @@ import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
 
 const COURSES = [
-  { id: 'mousy', name: 'Mousy' }, { id: 'linda', name: 'Linda' }, { id: 'sam', name: 'Sam' },
-  { id: 'emma', name: 'Emma' }, { id: 'oliver', name: 'Oliver' }, { id: 'marcia', name: 'Marcia' },
-  { id: 'pam', name: 'Pam & Paul' }, { id: 'ben', name: 'Ben & Brenda' },
+  { id: 'mousy', name: 'Mousy', audioCourse: 'Mousy' },
+  { id: 'mousy_nursery', name: 'Mousy Nursery', audioCourse: 'Mousy' },
+  { id: 'linda', name: 'Linda', audioCourse: 'Linda' },
+  { id: 'linda_nursery', name: 'Linda Nursery', audioCourse: 'Linda' },
+  { id: 'sam', name: 'Sam' }, { id: 'emma', name: 'Emma' }, { id: 'oliver', name: 'Oliver' },
+  { id: 'marcia', name: 'Marcia' }, { id: 'pam', name: 'Pam & Paul' }, { id: 'ben', name: 'Ben & Brenda' },
 ];
 
 function emptyActivity() {
@@ -167,7 +170,9 @@ export default function Planner() {
   const [manualIdx, setManualIdx] = useState(null);
 
   const key = `${courseId}|Story ${storyNumber}|${dayNumber}`;
-  const corsoName = COURSES.find((c) => c.id === courseId)?.name;
+  const selectedCourse = COURSES.find((c) => c.id === courseId);
+  const corsoName = selectedCourse?.name;
+  const audioCorsoName = selectedCourse?.audioCourse || corsoName;
 
   useEffect(() => {
     if (mode !== 'live' && mode !== 'light') return;
@@ -179,7 +184,7 @@ export default function Planner() {
     setLoading(true);
     const [{ data: lesson }, { data: songs }, { data: guide }] = await Promise.all([
       supabase.from('lessons').select('data').eq('key', key).maybeSingle(),
-      supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', corsoName),
+      supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', audioCorsoName),
       supabase.from('guide_days').select('materials, bonus_materials, preparation').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
     ]);
     setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
