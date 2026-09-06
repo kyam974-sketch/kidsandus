@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
-import { SCHOOL_YEAR, closureForDate, officialCourseStartForWeekday, scheduledLessonForDate } from '../lib/schoolCalendar';
+import { SCHOOL_YEAR, closureForDate, isNurseryCourse, officialCourseStartForWeekday, scheduledLessonForDate } from '../lib/schoolCalendar';
 import styles from '../styles/Calendar.module.css';
 
 const DAYS = [
   { value: 1, label: 'Monday' }, { value: 2, label: 'Tuesday' }, { value: 3, label: 'Wednesday' },
   { value: 4, label: 'Thursday' }, { value: 5, label: 'Friday' }, { value: 6, label: 'Saturday' },
 ];
-const COURSE_IDS = { Mousy: 'mousy', Linda: 'linda', Sam: 'sam', Emma: 'emma', Oliver: 'oliver', Marcia: 'marcia', 'Pam & Paul': 'pam' };
+const COURSE_IDS = {
+  Mousy: 'mousy',
+  'Mousy Nursery': 'mousy_nursery',
+  Linda: 'linda',
+  'Linda Nursery': 'linda_nursery',
+  Sam: 'sam', Emma: 'emma', Oliver: 'oliver', Marcia: 'marcia', 'Pam & Paul': 'pam', 'Ben & Brenda': 'ben',
+};
 
 function addMinutes(time, minutes) {
   const [h, m] = String(time).slice(0, 5).split(':').map(Number);
@@ -97,6 +103,8 @@ export default function CalendarPage() {
     setEditing({
       id: item.id,
       name: item.name,
+      course: item.course,
+      schedule_mode: item.schedule_mode || (isNurseryCourse(item.course) ? 'relative' : 'official'),
       weekday: item.weekday,
       start_time: String(item.start_time).slice(0, 5),
       start_date: item.start_date || officialCourseStartForWeekday(item.weekday),
@@ -108,7 +116,7 @@ export default function CalendarPage() {
     setEditing((current) => ({
       ...current,
       weekday: value,
-      start_date: officialCourseStartForWeekday(value),
+      start_date: isNurseryCourse(current.course) ? current.start_date : officialCourseStartForWeekday(value),
     }));
   }
 
@@ -116,11 +124,13 @@ export default function CalendarPage() {
     if (!editing) return;
     setSaving(true);
     setError('');
+    const nursery = isNurseryCourse(editing.course);
     const { error: updateError } = await supabase.from('classes').update({
       name: editing.name.trim(),
       weekday: Number(editing.weekday),
       start_time: editing.start_time,
-      start_date: officialCourseStartForWeekday(editing.weekday),
+      start_date: nursery ? editing.start_date : officialCourseStartForWeekday(editing.weekday),
+      schedule_mode: nursery ? 'relative' : 'official',
       story_number: 1,
       day_number: 1,
     }).eq('id', editing.id);
@@ -134,7 +144,7 @@ export default function CalendarPage() {
     <Layout>
       <div className="page-eyebrow">2026/27 · Classes + Apple Calendar</div>
       <h1 className="page-title">📅 Teaching week</h1>
-      <p className="page-desc">Le classi dell’Hub e gli impegni Exchange che il tuo dispositivo vede in Apple Calendar, nello stesso posto. Il Planner avanza solo nei giorni di lezione previsti dal calendario Kids&Us.</p>
+      <p className="page-desc">Le classi dell’Hub e gli impegni Exchange che il tuo dispositivo vede in Apple Calendar, nello stesso posto. Le classi standard seguono il calendario Kids&Us; le Nursery avanzano dalla propria prima lezione, saltando le chiusure.</p>
 
       <div className={styles.toolbar}>
         <button className="btn secondary" onClick={() => setWeekOffset((v) => v - 1)}>←</button>
@@ -156,7 +166,14 @@ export default function CalendarPage() {
         <label>Class<input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></label>
         <label>Day<select value={editing.weekday} onChange={(e) => changeEditingWeekday(e.target.value)}>{DAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
         <label>Start<input type="time" value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} /></label>
-        <label>First lesson · Kids&Us calendar<input type="date" value={editing.start_date} readOnly /></label>
+        <label>{isNurseryCourse(editing.course) ? 'First lesson · Nursery' : 'First lesson · Kids&Us calendar'}
+          <input
+            type="date"
+            value={editing.start_date}
+            readOnly={!isNurseryCourse(editing.course)}
+            onChange={(e) => isNurseryCourse(editing.course) && setEditing({ ...editing, start_date: e.target.value })}
+          />
+        </label>
         <button className="btn" disabled={saving} onClick={saveEdit}>{saving ? 'Saving…' : 'Save'}</button>
         <button className="btn secondary" onClick={() => setEditing(null)}>Cancel</button>
       </div>}
@@ -208,7 +225,7 @@ export default function CalendarPage() {
 
                 const start = String(item.start_time).slice(0, 5);
                 const end = addMinutes(start, item.duration_minutes);
-                const courseId = COURSE_IDS[item.course] || item.course.toLowerCase();
+                const courseId = COURSE_IDS[item.course] || item.course.toLowerCase().replace(/\s+/g, '_');
                 const story = item.occurrence.story;
                 const lessonDay = item.occurrence.day;
                 return <article className={styles.lesson} key={`${item.id}-${day.date.toISOString().slice(0, 10)}`}>
@@ -229,7 +246,7 @@ export default function CalendarPage() {
         })}
       </div>}
 
-      <div className={styles.note}>La progressione non è più “un Day ogni settimana”. Ogni classe segue le quattro finestre ufficiali Kids&Us 2026/27 e salta automaticamente le chiusure scolastiche. Le Story ripartono da Day 1 all’inizio di ogni Part; in base al giorno della settimana ogni Part contiene 8 o 9 lezioni. I propedeutici restano separati come Special Lessons. 🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria.</div>
+      <div className={styles.note}>Le classi standard seguono le quattro finestre ufficiali Kids&Us 2026/27 e saltano automaticamente le chiusure scolastiche. Le Nursery sono indipendenti dalle finestre delle Story: la loro prima data è sempre Story 1 · Day 1 e ogni Story contiene 8 lezioni effettive. I propedeutici restano separati come Special Lessons. 🍎 <strong>Calendario</strong> ha priorità 1. <strong>Giorgia Fini</strong> è una sorgente secondaria.</div>
     </Layout>
   );
 }
