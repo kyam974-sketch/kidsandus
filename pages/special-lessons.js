@@ -4,7 +4,9 @@ import { supabase } from '../lib/supabaseClient';
 
 const COURSES = [
   { id: 'mousy', name: 'Mousy', duration: 45 },
+  { id: 'mousy_nursery', name: 'Mousy Nursery', duration: 30 },
   { id: 'linda', name: 'Linda', duration: 45 },
+  { id: 'linda_nursery', name: 'Linda Nursery', duration: 30 },
   { id: 'sam', name: 'Sam', duration: 60 },
   { id: 'emma', name: 'Emma', duration: 60 },
   { id: 'oliver', name: 'Oliver', duration: 60 },
@@ -15,14 +17,41 @@ const COURSES = [
 
 const TYPES = [
   { id: 'makeup', label: 'Recupero / Makeup', help: 'Per chi ha saltato una o più lezioni: recupera i contenuti necessari del Day perso.' },
-  { id: 'demo', label: 'Demo', help: 'Lezione dimostrativa per far conoscere corso e metodo. Non presuppone materiali già acquistati.' },
-  { id: 'propedeutica', label: 'Propedeutica', help: 'Una delle lezioni ponte prima dell’inizio ufficiale del calendario.' },
-  { id: 'other', label: 'Altro', help: 'Lezione speciale costruita manualmente.' },
+  { id: 'demo', label: 'Demo', help: 'Lezione dimostrativa costruita scegliendo attività già note, in base a materiali e obiettivi.' },
+  { id: 'propedeutica', label: 'Propedeutica', help: 'Lezione ponte prima dell’inizio ufficiale del calendario. Può usare attività richiamate dalla banca senza anticipare la Story.' },
+  { id: 'other', label: 'Altro', help: 'Lezione speciale costruita liberamente dalla banca attività o a mano.' },
 ];
 
 function minutes(value) {
   const n = parseInt(String(value || '').replace(/[^0-9]/g, ''), 10);
   return Number.isNaN(n) ? 0 : n;
+}
+
+function normalizeName(value) {
+  return String(value || '')
+    .replace(/^Optional:\s*/i, '')
+    .trim()
+    .toLocaleLowerCase('en')
+    .replace(/[’']/g, "'")
+    .replace(/\s+/g, ' ');
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+function parseLessonKey(key) {
+  const parts = String(key || '').split('|');
+  const storyMatch = String(parts[1] || '').match(/Story\s+(\d+)/i);
+  const day = Number(parts[2]);
+  return {
+    story: storyMatch ? Number(storyMatch[1]) : null,
+    day: Number.isFinite(day) ? day : null,
+  };
 }
 
 function parseSavedKey(key) {
@@ -34,6 +63,86 @@ function parseSavedKey(key) {
     contextB: parts[4] || '',
     title: (parts[5] || 'Special lesson').replace(/_/g, ' '),
   };
+}
+
+function activityFingerprint(activity) {
+  return [
+    normalizeText(activity?.notes),
+    normalizeText(activity?.materials),
+    normalizeText(activity?.audio),
+  ].join('\n---\n');
+}
+
+function buildActivityBank(rows) {
+  const occurrences = [];
+
+  (rows || []).forEach((row) => {
+    const source = parseLessonKey(row.key);
+    if (!Array.isArray(row.data)) return;
+    row.data.forEach((activity, index) => {
+      const cleanName = String(activity?.name || '').replace(/^Optional:\s*/i, '').trim();
+      if (!cleanName) return;
+      occurrences.push({
+        activity,
+        cleanName,
+        normalizedName: normalizeName(cleanName),
+        story: source.story,
+        day: source.day,
+        sourceIndex: index + 1,
+      });
+    });
+  });
+
+  const nameGroups = new Map();
+  occurrences.forEach((item) => {
+    if (!nameGroups.has(item.normalizedName)) nameGroups.set(item.normalizedName, []);
+    nameGroups.get(item.normalizedName).push(item);
+  });
+
+  const bank = [];
+  nameGroups.forEach((items) => {
+    const variants = new Map();
+    items.forEach((item) => {
+      const fingerprint = activityFingerprint(item.activity);
+      if (!variants.has(fingerprint)) variants.set(fingerprint, []);
+      variants.get(fingerprint).push(item);
+    });
+
+    const variantCount = variants.size;
+    let variantIndex = 0;
+    variants.forEach((variantItems) => {
+      variantIndex += 1;
+      const representative = variantItems[0].activity;
+      const durations = [...new Set(variantItems.map((item) => String(item.activity?.duration || '').trim()).filter(Boolean))];
+      const origins = variantItems
+        .map((item) => ({ story: item.story, day: item.day, index: item.sourceIndex }))
+        .filter((origin) => origin.story && origin.day)
+        .sort((a, b) => a.story - b.story || a.day - b.day || a.index - b.index);
+      bank.push({
+        id: `${items[0].normalizedName}|${variantIndex}|${activityFingerprint(representative)}`,
+        name: variantItems[0].cleanName,
+        variantIndex,
+        variantCount,
+        representative,
+        durations,
+        origins,
+        occurrenceCount: variantItems.length,
+        searchable: [
+          variantItems[0].cleanName,
+          representative?.materials,
+          representative?.audio,
+          representative?.notes,
+          origins.map((origin) => `Story ${origin.story} Day ${origin.day}`).join(' '),
+        ].filter(Boolean).join(' ').toLocaleLowerCase('en'),
+      });
+    });
+  });
+
+  return bank.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) || a.variantIndex - b.variantIndex);
+}
+
+function originLabel(origin) {
+  return `S${origin.story} D${origin.day}`;
 }
 
 export default function SpecialLessons() {
@@ -49,12 +158,29 @@ export default function SpecialLessons() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [savedLessons, setSavedLessons] = useState([]);
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankRows, setBankRows] = useState([]);
+  const [bankMessage, setBankMessage] = useState('');
+  const [bankQuery, setBankQuery] = useState('');
+  const [bankStory, setBankStory] = useState('all');
+  const [bankDay, setBankDay] = useState('all');
 
   const course = useMemo(() => COURSES.find((c) => c.id === courseId), [courseId]);
   const sourceKey = `${courseId}|Story ${story}|${sourceDay}`;
   const includedActivities = activities.filter((a) => a.included !== false);
   const coreMinutes = includedActivities.filter((a) => !a.is_bonus).reduce((sum, a) => sum + minutes(a.duration), 0);
   const typeInfo = TYPES.find((t) => t.id === type);
+
+  const filteredBankRows = useMemo(() => {
+    const query = bankQuery.trim().toLocaleLowerCase('en');
+    return bankRows.filter((item) => {
+      if (query && !item.searchable.includes(query)) return false;
+      if (bankStory !== 'all' && !item.origins.some((origin) => String(origin.story) === String(bankStory))) return false;
+      if (bankDay !== 'all' && !item.origins.some((origin) => String(origin.day) === String(bankDay) && (bankStory === 'all' || String(origin.story) === String(bankStory)))) return false;
+      return true;
+    });
+  }, [bankRows, bankQuery, bankStory, bankDay]);
 
   useEffect(() => {
     if (course) setDuration(course.duration);
@@ -67,6 +193,15 @@ export default function SpecialLessons() {
     setMessage('');
     setTitle('');
   }, [type]);
+
+  useEffect(() => {
+    setBankOpen(false);
+    setBankRows([]);
+    setBankMessage('');
+    setBankQuery('');
+    setBankStory('all');
+    setBankDay('all');
+  }, [courseId]);
 
   async function loadSavedLessons() {
     const { data } = await supabase.from('lessons').select('id,key,created_at').like('key', 'special|%').order('created_at', { ascending: false }).limit(50);
@@ -89,7 +224,48 @@ export default function SpecialLessons() {
       return;
     }
     setActivities(data.data.map((a) => ({ ...a, included: !a.is_bonus, source_is_bonus: !!a.is_bonus })));
-    setMessage('Attività del Day caricate come banca per il recupero. Togli la spunta a ciò che non serve; i bonus partono esclusi.');
+    setMessage('Attività del Day caricate per il recupero. Togli la spunta a ciò che non serve; poi puoi aggiungere altre attività con Recall activity.');
+  }
+
+  async function openActivityBank() {
+    if (bankOpen && bankRows.length) {
+      setBankOpen(false);
+      return;
+    }
+    setBankOpen(true);
+    if (bankRows.length) return;
+
+    setBankLoading(true);
+    setBankMessage('');
+    const { data, error } = await supabase
+      .from('lessons')
+      .select('key,data')
+      .like('key', `${courseId}|Story %|%`)
+      .order('key');
+    setBankLoading(false);
+
+    if (error) {
+      setBankMessage(`Errore nel caricamento: ${error.message}`);
+      return;
+    }
+
+    const bank = buildActivityBank(data || []);
+    setBankRows(bank);
+    setBankMessage(bank.length
+      ? `${bank.length} attività/varianti disponibili per ${course?.name || courseId}. Le attività identiche sono raggruppate; le versioni realmente diverse restano separate.`
+      : 'Nessuna attività disponibile nel Planner per questo corso.');
+  }
+
+  function addFromBank(item) {
+    const source = item.representative || {};
+    const next = {
+      ...source,
+      name: String(source.name || item.name || '').replace(/^Optional:\s*/i, '').trim(),
+      included: true,
+      recalled_from: item.origins.map(originLabel).join(', '),
+    };
+    setActivities((current) => [...current, next]);
+    setMessage(`Aggiunta “${item.name}” al flow. Puoi modificarla liberamente senza cambiare l’attività originale del Planner.`);
   }
 
   function updateActivity(index, field, value) {
@@ -144,7 +320,7 @@ export default function SpecialLessons() {
       <div className="planner-screen">
         <div className="page-eyebrow">Teaching tools</div>
         <h1 className="page-title">Special Lessons</h1>
-        <p className="page-desc">Demo, propedeutiche e recuperi hanno scopi diversi: qui vengono costruiti e salvati separatamente.</p>
+        <p className="page-desc">Costruisci demo, recuperi, propedeutiche e altre lezioni richiamando attività già presenti nel Planner oppure aggiungendole a mano.</p>
 
         <div className="section-block" style={{ display: 'grid', gap: 18 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
@@ -152,7 +328,7 @@ export default function SpecialLessons() {
             <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => setCourseId(e.target.value)}>{COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             {type === 'makeup' && <><div className="field"><label>Story</label><select value={story} onChange={(e) => setStory(Number(e.target.value))}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div><div className="field"><label>Day perso</label><select value={sourceDay} onChange={(e) => setSourceDay(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div></>}
             {type === 'propedeutica' && <div className="field"><label>Lezione propedeutica</label><select value={prepNumber} onChange={(e) => setPrepNumber(Number(e.target.value))}>{[1,2,3].map((n) => <option key={n} value={n}>Lezione {n}</option>)}</select></div>}
-            <div className="field"><label>Durata</label><select value={duration} onChange={(e) => setDuration(Number(e.target.value))}><option value={45}>45 min</option><option value={60}>60 min</option></select></div>
+            <div className="field"><label>Durata</label><select value={duration} onChange={(e) => setDuration(Number(e.target.value))}><option value={30}>30 min</option><option value={45}>45 min</option><option value={60}>60 min</option></select></div>
           </div>
 
           <div className="ready-note"><strong>{typeInfo?.label}</strong><div style={{ marginTop: 6 }}>{typeInfo?.help}</div></div>
@@ -160,6 +336,7 @@ export default function SpecialLessons() {
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {type === 'makeup' && <button className="btn" onClick={loadRecoveryDay} disabled={loading}>{loading ? 'Loading…' : 'Carica attività del Day perso'}</button>}
+            <button className="btn" onClick={openActivityBank} disabled={bankLoading}>{bankLoading ? 'Loading…' : bankOpen ? 'Chiudi Recall activity' : '↩ Recall activity'}</button>
             <button className="btn secondary" onClick={addActivity}>＋ Aggiungi attività</button>
             <button className="btn secondary" onClick={saveLesson} disabled={saving || !includedActivities.length}>{saving ? 'Saving…' : 'Salva lezione'}</button>
           </div>
@@ -168,9 +345,56 @@ export default function SpecialLessons() {
           {message && <div className="ready-note">{message}</div>}
         </div>
 
+        {bankOpen && (
+          <div className="section-block" style={{ border: '2px solid var(--blue, #5278c7)' }}>
+            <div className="page-eyebrow">Activity Library · {course?.name}</div>
+            <h2 style={{ marginTop: 4 }}>↩ Recall activity</h2>
+            <p style={{ marginTop: 0 }}>Cerca per nome, materiale, teaching notes, track oppure provenienza. Le attività uguali vengono mostrate una volta sola; se lo stesso nome ha meccaniche o materiali diversi, trovi varianti separate.</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 2fr) repeat(2, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
+              <div className="field"><label>Cerca</label><input type="search" value={bankQuery} onChange={(e) => setBankQuery(e.target.value)} placeholder="Es. scarves, balloons, TR#25, body parts…" /></div>
+              <div className="field"><label>Story</label><select value={bankStory} onChange={(e) => { setBankStory(e.target.value); setBankDay('all'); }}><option value="all">Tutte</option>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
+              <div className="field"><label>Day</label><select value={bankDay} onChange={(e) => setBankDay(e.target.value)}><option value="all">Tutti</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div>
+            </div>
+
+            {bankMessage && <div className="planner-help" style={{ marginTop: 10 }}>{bankMessage}</div>}
+            <div className="planner-help" style={{ marginTop: 6 }}>{filteredBankRows.length} risultati</div>
+
+            <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
+              {filteredBankRows.map((item) => {
+                const a = item.representative || {};
+                const originPreview = item.origins.slice(0, 8).map(originLabel).join(' · ');
+                const extraOrigins = item.origins.length > 8 ? ` · +${item.origins.length - 8}` : '';
+                return (
+                  <div key={item.id} className="act-edit-card" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 420px' }}>
+                        <div style={{ fontSize: '1.08rem', fontWeight: 800 }}>
+                          {item.name}
+                          {item.variantCount > 1 && <span className="planner-help"> · Variant {item.variantIndex}/{item.variantCount}</span>}
+                        </div>
+                        <div className="planner-help" style={{ marginTop: 5 }}>
+                          {item.durations.length ? `Duration: ${item.durations.join(' / ')}` : 'Duration: —'}
+                          {a.audio ? ` · Audio: ${a.audio}` : ''}
+                          {item.occurrenceCount > 1 ? ` · Used ${item.occurrenceCount} times` : ''}
+                        </div>
+                        {item.origins.length > 0 && <div className="planner-help" style={{ marginTop: 4 }}>From: {originPreview}{extraOrigins}</div>}
+                        {a.materials && <div style={{ marginTop: 8 }}><strong>Materials:</strong> {a.materials}</div>}
+                        {a.notes && <details style={{ marginTop: 8 }}><summary style={{ cursor: 'pointer', fontWeight: 700 }}>Teaching notes</summary><div style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{a.notes}</div></details>}
+                      </div>
+                      <button className="btn" onClick={() => addFromBank(item)}>＋ Add to lesson</button>
+                    </div>
+                  </div>
+                );
+              })}
+              {!bankLoading && !filteredBankRows.length && <p>Nessuna attività corrisponde ai filtri.</p>}
+            </div>
+          </div>
+        )}
+
         <div className="section-block">
           <h2 style={{ marginTop: 0 }}>Flow della lezione</h2>
-          {(type === 'demo' || type === 'propedeutica') && !activities.length && <p>Questa lezione non viene clonata da un Day del TG. Aggiungi le attività che devono comporre il flow; la generazione automatica verrà costruita con regole specifiche per questo tipo.</p>}
+          {(type === 'demo' || type === 'propedeutica' || type === 'other') && !activities.length && <p>Parti vuota: usa <strong>Recall activity</strong> per richiamare attività già esistenti oppure aggiungine una manualmente.</p>}
           {!activities.length ? <p>Nessuna attività caricata.</p> : activities.map((a, i) => (
             <div key={i} className={a.is_bonus ? 'act-edit-card bonus' : 'act-edit-card'} style={{ opacity: a.included === false ? .48 : 1 }}>
               <div className="act-edit-head">
@@ -187,6 +411,7 @@ export default function SpecialLessons() {
                 <input className="audio-input" value={a.audio || ''} onChange={(e) => updateActivity(i, 'audio', e.target.value)} placeholder="Track #" />
                 <label className="bonus-check"><input type="checkbox" checked={!!a.is_bonus} onChange={(e) => updateActivity(i, 'is_bonus', e.target.checked)} /> Bonus</label>
               </div>
+              {a.recalled_from && <div className="planner-help" style={{ marginTop: 7 }}>Recalled from: {a.recalled_from}</div>}
               <textarea value={a.notes || ''} onChange={(e) => updateActivity(i, 'notes', e.target.value)} rows={5} style={{ width: '100%', marginTop: 10 }} placeholder="Teaching notes" />
               <input className="materials-input" value={a.materials || ''} onChange={(e) => updateActivity(i, 'materials', e.target.value)} placeholder="Materials" />
             </div>
