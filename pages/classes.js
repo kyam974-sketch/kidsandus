@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
-import { SCHOOL_YEAR, officialCourseStartForWeekday, officialPlanForWeekday } from '../lib/schoolCalendar';
+import {
+  SCHOOL_YEAR,
+  NURSERY_SESSIONS_PER_STORY,
+  NURSERY_STORIES,
+  isNurseryCourse,
+  nurseryPlanFromStart,
+  officialCourseStartForWeekday,
+  officialPlanForWeekday,
+} from '../lib/schoolCalendar';
 import styles from '../styles/Roster.module.css';
 
 const DAYS = [
@@ -13,7 +21,7 @@ const DAYS = [
   { value: 6, label: 'Saturday' },
 ];
 
-const COURSE_ORDER = ['mousy', 'linda', 'sam', 'emma', 'oliver', 'marcia', 'pam'];
+const COURSE_ORDER = ['mousy', 'mousy_nursery', 'linda', 'linda_nursery', 'sam', 'emma', 'oliver', 'marcia', 'pam', 'ben'];
 
 function makeEmptyForm(weekday = 1) {
   return {
@@ -29,14 +37,15 @@ function makeEmptyForm(weekday = 1) {
 }
 
 function makeEditForm(item) {
+  const weekday = Number(item.weekday) || 1;
   return {
     id: item.id,
     name: item.name || '',
     course: item.course || '',
-    weekday: Number(item.weekday) || 1,
+    weekday,
     start_time: String(item.start_time || '').slice(0, 5),
     duration_minutes: Number(item.duration_minutes) || 60,
-    start_date: officialCourseStartForWeekday(Number(item.weekday) || 1),
+    start_date: item.start_date || officialCourseStartForWeekday(weekday),
     location: item.location || 'Grosseto',
   };
 }
@@ -56,6 +65,19 @@ function timeShort(value) {
 function dateShort(value) {
   if (!value) return '';
   return new Date(`${value}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function nurseryPlan(weekday, startDate) {
+  const dates = nurseryPlanFromStart(weekday, startDate);
+  return Array.from({ length: NURSERY_STORIES }, (_, index) => {
+    const storyDates = dates.slice(index * NURSERY_SESSIONS_PER_STORY, (index + 1) * NURSERY_SESSIONS_PER_STORY);
+    return {
+      story: index + 1,
+      sessions: NURSERY_SESSIONS_PER_STORY,
+      start: storyDates[0] || null,
+      end: storyDates[storyDates.length - 1] || null,
+    };
+  });
 }
 
 export default function ClassesPage() {
@@ -84,14 +106,22 @@ export default function ClassesPage() {
     setClasses(c || []);
     setStudents(sortStudents(s || []));
     setMemberships(m || []);
-    setCourses((cr || []).slice().sort((a, b) => COURSE_ORDER.indexOf(a.id) - COURSE_ORDER.indexOf(b.id)));
+    setCourses((cr || []).slice().sort((a, b) => {
+      const ai = COURSE_ORDER.indexOf(a.id);
+      const bi = COURSE_ORDER.indexOf(b.id);
+      return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+    }));
     setLoading(false);
   }
 
   useEffect(() => { loadData(); }, []);
 
   const courseMap = useMemo(() => Object.fromEntries(courses.map((c) => [c.label, c])), [courses]);
-  const selectedPlan = useMemo(() => officialPlanForWeekday(form.weekday), [form.weekday]);
+  const formIsNursery = isNurseryCourse(form.course);
+  const selectedPlan = useMemo(
+    () => formIsNursery ? nurseryPlan(form.weekday, form.start_date) : officialPlanForWeekday(form.weekday),
+    [formIsNursery, form.weekday, form.start_date]
+  );
 
   function rosterFor(classId) {
     const ids = memberships.filter((m) => m.class_id === classId).map((m) => m.student_id);
@@ -120,7 +150,7 @@ export default function ClassesPage() {
     setForm((f) => ({
       ...f,
       weekday: value,
-      start_date: officialCourseStartForWeekday(value),
+      start_date: isNurseryCourse(f.course) ? f.start_date : officialCourseStartForWeekday(value),
     }));
   }
 
@@ -132,7 +162,12 @@ export default function ClassesPage() {
 
   function setEditingCourse(course) {
     const duration = courseMap[course]?.expected_minutes || editing?.duration_minutes || 60;
-    setEditing((current) => ({ ...current, course, duration_minutes: duration }));
+    setEditing((current) => ({
+      ...current,
+      course,
+      duration_minutes: duration,
+      start_date: isNurseryCourse(course) ? current.start_date : officialCourseStartForWeekday(current.weekday),
+    }));
   }
 
   function setEditingWeekday(weekday) {
@@ -140,7 +175,7 @@ export default function ClassesPage() {
     setEditing((current) => ({
       ...current,
       weekday: value,
-      start_date: officialCourseStartForWeekday(value),
+      start_date: isNurseryCourse(current.course) ? current.start_date : officialCourseStartForWeekday(value),
     }));
   }
 
@@ -150,6 +185,8 @@ export default function ClassesPage() {
     setNotice('');
     if (!form.course) { setError('Scegli un corso.'); return; }
     if (!form.start_time) { setError('Inserisci l’orario.'); return; }
+    if (formIsNursery && !form.start_date) { setError('Inserisci la data della prima lezione Nursery.'); return; }
+
     const day = DAYS.find((d) => d.value === Number(form.weekday))?.label || '';
     const generatedName = `${form.course} · ${day} ${timeShort(form.start_time)}`;
     const payload = {
@@ -158,14 +195,16 @@ export default function ClassesPage() {
       weekday: Number(form.weekday),
       start_time: form.start_time,
       duration_minutes: Number(form.duration_minutes),
-      start_date: officialCourseStartForWeekday(form.weekday),
+      start_date: formIsNursery ? form.start_date : officialCourseStartForWeekday(form.weekday),
       location: form.location.trim() || 'Grosseto',
       school_year: SCHOOL_YEAR,
       story_number: 1,
       day_number: 1,
+      schedule_mode: formIsNursery ? 'relative' : 'official',
       calendar_source: 'hub',
       active: true,
     };
+
     setSaving(true);
     const { error: insertError } = await supabase.from('classes').insert(payload);
     setSaving(false);
@@ -174,7 +213,9 @@ export default function ClassesPage() {
       return;
     }
     setForm(makeEmptyForm());
-    setNotice('Classe creata. Il planning Story/Day seguirà automaticamente il calendario Kids&Us 2026/27. Ora puoi assegnare gli studenti.');
+    setNotice(formIsNursery
+      ? 'Classe Nursery creata. La prima lezione è Story 1 · Day 1; ogni Story avanza per 8 lezioni effettive, saltando le chiusure.'
+      : 'Classe creata. Il planning Story/Day seguirà automaticamente il calendario Kids&Us 2026/27. Ora puoi assegnare gli studenti.');
     await loadData();
   }
 
@@ -186,6 +227,8 @@ export default function ClassesPage() {
     if (!editing.course) { setError('Scegli un corso.'); return; }
     if (!editing.start_time) { setError('Inserisci l’orario.'); return; }
 
+    const editingIsNursery = isNurseryCourse(editing.course);
+    if (editingIsNursery && !editing.start_date) { setError('Inserisci la data della prima lezione Nursery.'); return; }
     const day = DAYS.find((d) => d.value === Number(editing.weekday))?.label || '';
     const generatedName = `${editing.course} · ${day} ${timeShort(editing.start_time)}`;
     const payload = {
@@ -194,11 +237,12 @@ export default function ClassesPage() {
       weekday: Number(editing.weekday),
       start_time: editing.start_time,
       duration_minutes: Number(editing.duration_minutes),
-      start_date: officialCourseStartForWeekday(editing.weekday),
+      start_date: editingIsNursery ? editing.start_date : officialCourseStartForWeekday(editing.weekday),
       location: editing.location.trim() || 'Grosseto',
       school_year: SCHOOL_YEAR,
       story_number: 1,
       day_number: 1,
+      schedule_mode: editingIsNursery ? 'relative' : 'official',
     };
 
     setSaving(true);
@@ -210,7 +254,9 @@ export default function ClassesPage() {
     }
 
     setEditing(null);
-    setNotice('Classe modificata. Il Calendar è stato riallineato automaticamente al giorno scelto.');
+    setNotice(editingIsNursery
+      ? 'Classe Nursery modificata. La progressione riparte dalla sua data effettiva e mantiene 8 lezioni per Story.'
+      : 'Classe modificata. Il Calendar è stato riallineato automaticamente al giorno scelto.');
     await loadData();
   }
 
@@ -262,7 +308,7 @@ export default function ClassesPage() {
     <Layout>
       <div className="page-eyebrow">Roster · Schedule base</div>
       <h1 className="page-title">Classes</h1>
-      <p className="page-desc">Crea le classi reali e assegna gli studenti. Le date e la progressione Story/Day seguono automaticamente il planning Kids&Us 2026/27, saltando festività e vacanze scolastiche.</p>
+      <p className="page-desc">Crea le classi reali e assegna gli studenti. Le classi standard seguono il planning Kids&Us 2026/27; le Nursery partono dalla loro prima data effettiva e fanno 8 lezioni per Story, saltando le chiusure.</p>
 
       <section className={styles.panel}>
         <h2>Nuova classe</h2>
@@ -295,8 +341,13 @@ export default function ClassesPage() {
             <input type="number" min="15" max="180" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
           </div>
           <div className={styles.field}>
-            <label>Prima lezione · calendario Kids&Us</label>
-            <input type="date" value={form.start_date} readOnly />
+            <label>{formIsNursery ? 'Prima lezione · data effettiva Nursery' : 'Prima lezione · calendario Kids&Us'}</label>
+            <input
+              type="date"
+              value={form.start_date}
+              readOnly={!formIsNursery}
+              onChange={(e) => formIsNursery && setForm({ ...form, start_date: e.target.value })}
+            />
           </div>
           <div className={styles.field}>
             <label>Sede</label>
@@ -308,9 +359,10 @@ export default function ClassesPage() {
           </div>
 
           <div className={`${styles.full} ${styles.muted}`}>
+            {formIsNursery && <div style={{ marginBottom: 6 }}><strong>Nursery:</strong> Story 1 parte dalla prima lezione scelta; ogni Story contiene esattamente {NURSERY_SESSIONS_PER_STORY} lezioni.</div>}
             {selectedPlan.map((part) => (
               <span key={part.story} style={{ display: 'inline-block', marginRight: '14px', marginBottom: '4px' }}>
-                Story {part.story}: {part.sessions} lezioni · {dateShort(part.start)} → {dateShort(part.end)}
+                Story {part.story}: {part.sessions} lezioni{part.start ? ` · ${dateShort(part.start)} → ${dateShort(part.end)}` : ''}
               </span>
             ))}
           </div>
@@ -331,6 +383,7 @@ export default function ClassesPage() {
             const available = availableFor(item.id);
             const filteredAvailable = filteredAvailableFor(item.id);
             const isEditing = editing?.id === item.id;
+            const editingIsNursery = isEditing && isNurseryCourse(editing.course);
             return (
               <section key={item.id} className={styles.classCard}>
                 <div className={styles.classTop}>
@@ -373,14 +426,20 @@ export default function ClassesPage() {
                         <input type="number" min="15" max="180" value={editing.duration_minutes} onChange={(e) => setEditing({ ...editing, duration_minutes: Number(e.target.value) })} />
                       </div>
                       <div className={styles.field}>
-                        <label>Prima lezione · calendario Kids&Us</label>
-                        <input type="date" value={editing.start_date} readOnly />
+                        <label>{editingIsNursery ? 'Prima lezione · data effettiva Nursery' : 'Prima lezione · calendario Kids&Us'}</label>
+                        <input
+                          type="date"
+                          value={editing.start_date}
+                          readOnly={!editingIsNursery}
+                          onChange={(e) => editingIsNursery && setEditing({ ...editing, start_date: e.target.value })}
+                        />
                       </div>
                       <div className={styles.field}>
                         <label>Sede</label>
                         <input value={editing.location} onChange={(e) => setEditing({ ...editing, location: e.target.value })} />
                       </div>
                     </div>
+                    {editingIsNursery && <div className={styles.muted} style={{ marginTop: 8 }}>La data scelta è Story 1 · Day 1. La progressione avanza ogni 8 lezioni effettive e salta le chiusure.</div>}
                     <div className={styles.actions}>
                       <button className={styles.primary} disabled={saving}>{saving ? 'Salvataggio…' : 'Salva modifiche'}</button>
                       <button type="button" className={styles.secondary} onClick={() => setEditing(null)}>Annulla</button>
