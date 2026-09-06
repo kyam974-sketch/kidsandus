@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
 
-const CORSI = ['Mousy', 'Linda', 'Sam', 'Emma', 'Oliver', 'Marcia', 'Pam & Paul', 'Ben & Brenda'];
+const CORSI = ['Mousy', 'Mousy Nursery', 'Linda', 'Linda Nursery', 'Sam', 'Emma', 'Oliver', 'Marcia', 'Pam & Paul', 'Ben & Brenda'];
 
 function emptyDayForm() {
   return { lesson_goals: '', materials: '', bonus_materials: '', preparation: '', lesson_plan: '' };
