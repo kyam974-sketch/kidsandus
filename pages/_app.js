@@ -73,14 +73,14 @@ function PrintReadyGuard() {
     const nativePrint = window.print.bind(window);
     let printing = false;
 
-    window.print = async () => {
+    // Keep the native print call synchronous with the tap/click. iOS/iPadOS
+    // may block a print dialog if the user gesture is lost after awaits/frames.
+    window.print = () => {
       if (printing) return;
       printing = true;
       try {
-        if (document.fonts?.ready) await document.fonts.ready;
         const sheet = document.querySelector('.print-sheet');
         if (sheet) void sheet.getBoundingClientRect().height;
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         nativePrint();
       } finally {
         window.setTimeout(() => { printing = false; }, 250);
