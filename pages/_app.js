@@ -120,12 +120,11 @@ function AppleStandalonePrintBridge() {
       const css = collectPrintCss();
 
       // Printing from an iOS Home Screen web app can silently do nothing.
-      // Post the already-rendered audit sheet to the project's normal web
-      // origin so iOS opens a regular Safari document. That document uses
-      // the exact print CSS and Short Stack font, then invokes native print.
+      // Post the already-rendered audit sheet to the public production alias
+      // so iOS opens a regular Safari document without Vercel deployment auth.
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://kidsandus-kyam974-sketchs-projects.vercel.app/api/audit-print';
+      form.action = 'https://kidsandus.vercel.app/api/audit-print';
       form.target = '_blank';
       form.style.display = 'none';
 
