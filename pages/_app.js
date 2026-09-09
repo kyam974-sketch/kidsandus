@@ -68,6 +68,31 @@ function PrintFontPreloader() {
   );
 }
 
+function collectPrintCss() {
+  let css = '';
+
+  const walk = (rules) => {
+    Array.from(rules || []).forEach((rule) => {
+      if (rule.type === CSSRule.MEDIA_RULE) {
+        const mediaText = rule.media?.mediaText || '';
+        if (mediaText.includes('print')) {
+          css += Array.from(rule.cssRules || []).map((nested) => nested.cssText).join('\n') + '\n';
+        }
+        return;
+      }
+      if (rule.type === CSSRule.IMPORT_RULE) {
+        try { walk(rule.styleSheet?.cssRules); } catch {}
+      }
+    });
+  };
+
+  Array.from(document.styleSheets || []).forEach((sheet) => {
+    try { walk(sheet.cssRules); } catch {}
+  });
+
+  return css;
+}
+
 function AppleStandalonePrintBridge() {
   const router = useRouter();
 
@@ -91,10 +116,6 @@ function AppleStandalonePrintBridge() {
         return;
       }
 
-      // iOS standalone web apps can silently ignore window.print(). Instead,
-      // clone the already-rendered audit sheet into a fresh browser window.
-      // This preserves the exact print markup, fonts and CSS that the Planner
-      // uses, without rebuilding or changing the audit layout.
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         nativePrint();
@@ -104,6 +125,7 @@ function AppleStandalonePrintBridge() {
       const headAssets = Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'))
         .map((node) => node.outerHTML)
         .join('\n');
+      const previewPrintCss = collectPrintCss();
       const fontValue = window.getComputedStyle(sheet).getPropertyValue('--font-handwriting').trim();
       const title = sheet.querySelector('.print-header h1')?.textContent?.trim() || 'Kids&Us Audit Notes';
       const fontStyle = fontValue ? `--font-handwriting:${fontValue};` : '';
@@ -118,31 +140,35 @@ function AppleStandalonePrintBridge() {
 <title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>
 ${headAssets}
 <style>
-  @media screen {
-    html, body { background: #fff !important; color: #24324a !important; }
-    body { margin: 0; padding: 16px; ${fontStyle} }
-    .print-only { display: block !important; }
-    .audit-print-toolbar {
-      display: flex !important;
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      justify-content: center;
-      padding: 10px 0 14px;
-      background: rgba(255,255,255,.96);
-    }
-    .audit-print-toolbar button {
-      appearance: none;
-      border: 0;
-      border-radius: 12px;
-      padding: 12px 18px;
-      font: inherit;
-      font-weight: 700;
-      background: #315aa8;
-      color: #fff;
-    }
+  /* The audit layout was intentionally designed inside @media print.
+     Mirror those exact rules on screen in this clean Safari preview so
+     the user sees the same notebook sheet that will actually be printed. */
+  ${previewPrintCss}
+
+  html, body { background: #fff !important; color: #24324a !important; }
+  body { margin: 0 !important; padding: 16px !important; ${fontStyle} }
+  .print-only, .print-sheet { display: block !important; }
+  .audit-print-toolbar {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    justify-content: center;
+    padding: 10px 0 14px;
+    background: rgba(255,255,255,.96);
+  }
+  .audit-print-toolbar button {
+    appearance: none;
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font: inherit;
+    font-weight: 700;
+    background: #315aa8;
+    color: #fff;
   }
   @media print {
+    body { padding: 0 !important; }
     .audit-print-toolbar { display: none !important; }
   }
 </style>
@@ -150,11 +176,6 @@ ${headAssets}
 <body style="${fontStyle}">
   <div class="audit-print-toolbar"><button type="button" onclick="window.print()">🖨️ Print audit notes</button></div>
   ${sheet.outerHTML}
-<script>
-  window.addEventListener('load', function () {
-    setTimeout(function () { window.print(); }, 300);
-  });
-<\/script>
 </body>
 </html>`);
       printWindow.document.close();
