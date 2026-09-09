@@ -116,69 +116,34 @@ function AppleStandalonePrintBridge() {
         return;
       }
 
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        nativePrint();
-        return;
-      }
-
-      const headAssets = Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'))
-        .map((node) => node.outerHTML)
-        .join('\n');
-      const previewPrintCss = collectPrintCss();
-      const fontValue = window.getComputedStyle(sheet).getPropertyValue('--font-handwriting').trim();
       const title = sheet.querySelector('.print-header h1')?.textContent?.trim() || 'Kids&Us Audit Notes';
-      const fontStyle = fontValue ? `--font-handwriting:${fontValue};` : '';
+      const css = collectPrintCss();
 
-      printWindow.document.open();
-      printWindow.document.write(`<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<base href="${window.location.origin}/" />
-<title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>
-${headAssets}
-<style>
-  /* The audit layout was intentionally designed inside @media print.
-     Mirror those exact rules on screen in this clean Safari preview so
-     the user sees the same notebook sheet that will actually be printed. */
-  ${previewPrintCss}
+      // Printing from an iOS Home Screen web app can silently do nothing.
+      // Post the already-rendered audit sheet to the project's normal web
+      // origin so iOS opens a regular Safari document. That document uses
+      // the exact print CSS and Short Stack font, then invokes native print.
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://kidsandus-kyam974-sketchs-projects.vercel.app/api/audit-print';
+      form.target = '_blank';
+      form.style.display = 'none';
 
-  html, body { background: #fff !important; color: #24324a !important; }
-  body { margin: 0 !important; padding: 16px !important; ${fontStyle} }
-  .print-only, .print-sheet { display: block !important; }
-  .audit-print-toolbar {
-    display: flex !important;
-    position: sticky;
-    top: 0;
-    z-index: 9999;
-    justify-content: center;
-    padding: 10px 0 14px;
-    background: rgba(255,255,255,.96);
-  }
-  .audit-print-toolbar button {
-    appearance: none;
-    border: 0;
-    border-radius: 12px;
-    padding: 12px 18px;
-    font: inherit;
-    font-weight: 700;
-    background: #315aa8;
-    color: #fff;
-  }
-  @media print {
-    body { padding: 0 !important; }
-    .audit-print-toolbar { display: none !important; }
-  }
-</style>
-</head>
-<body style="${fontStyle}">
-  <div class="audit-print-toolbar"><button type="button" onclick="window.print()">🖨️ Print audit notes</button></div>
-  ${sheet.outerHTML}
-</body>
-</html>`);
-      printWindow.document.close();
+      const addField = (name, value) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      };
+
+      addField('title', title);
+      addField('markup', sheet.outerHTML);
+      addField('css', css);
+
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
     };
 
     return () => {
