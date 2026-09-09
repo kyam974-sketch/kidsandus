@@ -68,91 +68,6 @@ function PrintFontPreloader() {
   );
 }
 
-function collectPrintCss() {
-  let css = '';
-
-  const walk = (rules) => {
-    Array.from(rules || []).forEach((rule) => {
-      if (rule.type === CSSRule.MEDIA_RULE) {
-        const mediaText = rule.media?.mediaText || '';
-        if (mediaText.includes('print')) {
-          css += Array.from(rule.cssRules || []).map((nested) => nested.cssText).join('\n') + '\n';
-        }
-        return;
-      }
-      if (rule.type === CSSRule.IMPORT_RULE) {
-        try { walk(rule.styleSheet?.cssRules); } catch {}
-      }
-    });
-  };
-
-  Array.from(document.styleSheets || []).forEach((sheet) => {
-    try { walk(sheet.cssRules); } catch {}
-  });
-
-  return css;
-}
-
-function AppleStandalonePrintBridge() {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!router.isReady || router.pathname !== '/planner') return;
-
-    const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const standalone = window.navigator.standalone === true
-      || window.matchMedia?.('(display-mode: standalone)').matches
-      || window.matchMedia?.('(display-mode: fullscreen)').matches;
-
-    if (!appleMobile || !standalone) return;
-
-    const nativePrint = window.print.bind(window);
-
-    window.print = () => {
-      const sheet = document.querySelector('.print-sheet');
-      if (!sheet) {
-        nativePrint();
-        return;
-      }
-
-      const title = sheet.querySelector('.print-header h1')?.textContent?.trim() || 'Kids&Us Audit Notes';
-      const css = collectPrintCss();
-
-      // Printing from an iOS Home Screen web app can silently do nothing.
-      // Post the already-rendered audit sheet to the public production alias
-      // so iOS opens a regular Safari document without Vercel deployment auth.
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://kidsandus.vercel.app/api/audit-print';
-      form.target = '_blank';
-      form.style.display = 'none';
-
-      const addField = (name, value) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      };
-
-      addField('title', title);
-      addField('markup', sheet.outerHTML);
-      addField('css', css);
-
-      document.body.appendChild(form);
-      form.submit();
-      form.remove();
-    };
-
-    return () => {
-      window.print = nativePrint;
-    };
-  }, [router.isReady, router.pathname]);
-
-  return null;
-}
-
 function PwaSetup() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -183,7 +98,6 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
-        <AppleStandalonePrintBridge />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
