@@ -29,24 +29,91 @@ function CalendarPlannerBridge() {
 
   useEffect(() => {
     if (!router.isReady || router.pathname !== '/planner') return;
-    const { course, story, day } = router.query;
-    if (!course && !story && !day) return;
+    const { course, story, day, start, audit } = router.query;
+    if (!course && !story && !day && !start && audit !== '1') return;
 
     let tries = 0;
     const apply = () => {
       const selectors = document.querySelectorAll('.planner-selectors select');
       if (selectors.length < 3) {
         tries += 1;
-        if (tries < 30) window.setTimeout(apply, 50);
+        if (tries < 40) window.setTimeout(apply, 50);
         return;
       }
+
       if (course) setReactField(selectors[0], course);
       if (story) setReactField(selectors[1], story);
       if (day) setReactField(selectors[2], day);
+
+      if (audit === '1') {
+        const liveButton = Array.from(document.querySelectorAll('.mode-buttons button'))
+          .find((button) => button.textContent?.trim() === 'Live');
+        liveButton?.click();
+      }
+
+      if (start) {
+        let startTries = 0;
+        const applyStart = () => {
+          const startInput = document.querySelector('.live-tools input[type="time"]');
+          if (startInput) {
+            setReactField(startInput, start);
+            return;
+          }
+          startTries += 1;
+          if (startTries < 40) window.setTimeout(applyStart, 50);
+        };
+        applyStart();
+      }
     };
 
     apply();
-  }, [router.isReady, router.pathname, router.query.course, router.query.story, router.query.day]);
+  }, [router.isReady, router.pathname, router.query.course, router.query.story, router.query.day, router.query.start, router.query.audit]);
+
+  return null;
+}
+
+function StandaloneAuditPrintBridge() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady || router.pathname !== '/planner') return;
+
+    const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.navigator.standalone === true
+      || window.matchMedia?.('(display-mode: standalone)').matches
+      || window.matchMedia?.('(display-mode: fullscreen)').matches;
+
+    if (!appleMobile || !standalone) return;
+
+    const nativePrint = window.print.bind(window);
+
+    window.print = () => {
+      const selectors = document.querySelectorAll('.planner-selectors select');
+      const startInput = document.querySelector('.live-tools input[type="time"]');
+      const course = selectors[0]?.value || 'mousy';
+      const story = selectors[1]?.value || '1';
+      const day = selectors[2]?.value || '1';
+      const start = startInput?.value || '16:00';
+      const params = new URLSearchParams({ course, story, day, start, audit: '1' });
+      const href = `https://kidsandus.vercel.app/planner?${params.toString()}`;
+
+      // iPad Home Screen web apps can ignore window.print(). Opening the same
+      // Planner in a new browsing context hands printing back to normal Safari.
+      const link = document.createElement('a');
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    };
+
+    return () => {
+      window.print = nativePrint;
+    };
+  }, [router.isReady, router.pathname]);
 
   return null;
 }
@@ -98,6 +165,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
+        <StandaloneAuditPrintBridge />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
