@@ -68,6 +68,33 @@ function PrintFontPreloader() {
   );
 }
 
+function AppleStandalonePrintBridge() {
+  useEffect(() => {
+    const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.navigator.standalone === true
+      || window.matchMedia?.('(display-mode: standalone)').matches
+      || window.matchMedia?.('(display-mode: fullscreen)').matches;
+
+    if (!appleMobile || !standalone || typeof document.execCommand !== 'function') return;
+
+    const nativePrint = window.print.bind(window);
+    window.print = () => {
+      try {
+        document.execCommand('print', false, null);
+      } catch {
+        nativePrint();
+      }
+    };
+
+    return () => {
+      window.print = nativePrint;
+    };
+  }, []);
+
+  return null;
+}
+
 function PwaSetup() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -98,6 +125,7 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
+        <AppleStandalonePrintBridge />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
