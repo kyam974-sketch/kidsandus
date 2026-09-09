@@ -68,33 +68,6 @@ function PrintFontPreloader() {
   );
 }
 
-function PrintReadyGuard() {
-  useEffect(() => {
-    const nativePrint = window.print.bind(window);
-    let printing = false;
-
-    // Keep the native print call synchronous with the tap/click. iOS/iPadOS
-    // may block a print dialog if the user gesture is lost after awaits/frames.
-    window.print = () => {
-      if (printing) return;
-      printing = true;
-      try {
-        const sheet = document.querySelector('.print-sheet');
-        if (sheet) void sheet.getBoundingClientRect().height;
-        nativePrint();
-      } finally {
-        window.setTimeout(() => { printing = false; }, 250);
-      }
-    };
-
-    return () => {
-      window.print = nativePrint;
-    };
-  }, []);
-
-  return null;
-}
-
 function PwaSetup() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -125,7 +98,6 @@ export default function App({ Component, pageProps }) {
       </Head>
       <div className={printHandwriting.variable}>
         <PwaSetup />
-        <PrintReadyGuard />
         <PrintFontPreloader />
         <CalendarPlannerBridge />
         <Component {...pageProps} />
