@@ -72,11 +72,21 @@ function CalendarPlannerBridge() {
   return null;
 }
 
+function encodeBase64Url(text) {
+  const bytes = new TextEncoder().encode(String(text || ''));
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
 function StandaloneAuditPrintBridge() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!router.isReady || router.pathname !== '/planner') return;
+    if (!router.isReady || router.pathname !== '/planner') return undefined;
 
     const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -84,26 +94,28 @@ function StandaloneAuditPrintBridge() {
       || window.matchMedia?.('(display-mode: standalone)').matches
       || window.matchMedia?.('(display-mode: fullscreen)').matches;
 
-    if (!appleMobile || !standalone) return;
+    if (!appleMobile || !standalone) return undefined;
 
     const nativePrint = window.print.bind(window);
 
     window.print = () => {
-      const selectors = document.querySelectorAll('.planner-selectors select');
-      const startInput = document.querySelector('.live-tools input[type="time"]');
-      const course = selectors[0]?.value || 'mousy';
-      const story = selectors[1]?.value || '1';
-      const day = selectors[2]?.value || '1';
-      const start = startInput?.value || '16:00';
-      const params = new URLSearchParams({ course, story, day, start, audit: '1' });
-      const href = `https://kidsandus.vercel.app/planner?${params.toString()}`;
+      const sheet = document.querySelector('.print-sheet');
+      if (!sheet) {
+        nativePrint();
+        return;
+      }
 
-      // iPad Home Screen web apps can ignore window.print(). Opening the same
-      // Planner in a new browsing context hands printing back to normal Safari.
+      const payload = encodeBase64Url(sheet.outerHTML);
+      const href = `https://kidsandus-kyam974-sketchs-projects.vercel.app/audit-print#${payload}`;
+
+      // This hostname is intentionally different from the installed PWA origin.
+      // iPadOS therefore hands the link to the normal browser instead of
+      // navigating inside the Home Screen web app. The print sheet itself is
+      // carried in the URL fragment, so the Safari page does not need Hub auth.
       const link = document.createElement('a');
       link.href = href;
       link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.rel = 'noopener noreferrer external';
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
