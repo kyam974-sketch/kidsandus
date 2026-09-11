@@ -117,6 +117,18 @@ function metaFromKey(key) {
   };
 }
 
+function readyMaterialsFromActivities(activities) {
+  const seen = new Set();
+  const materials = [];
+  (activities || []).forEach((activity) => {
+    const value = String(activity?.materials || '').trim();
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    materials.push(value);
+  });
+  return materials;
+}
+
 export default function SpecialLessonLive() {
   const router = useRouter();
   const [lesson, setLesson] = useState(null);
@@ -161,6 +173,8 @@ export default function SpecialLessonLive() {
 
   const meta = useMemo(() => metaFromKey(lesson?.key), [lesson]);
   const activities = Array.isArray(lesson?.data) ? lesson.data.filter((a) => a.included !== false) : [];
+  const readyMaterials = readyMaterialsFromActivities(activities);
+  const readyMaterialsText = readyMaterials.length ? readyMaterials.join('\n') : 'No materials listed.';
   const [sh, sm] = startTime.split(':').map(Number);
   let cumulative = 0;
   const timed = activities.map((a) => {
@@ -228,6 +242,11 @@ export default function SpecialLessonLive() {
         </div>
         {loading ? <p className="no-print">Loading…</p> : !lesson ? <div className="section-block no-print">Lezione non trovata.</div> : (
           <div className="live-stage no-print">
+            <div className="ready-note">
+              <div className="ready-title">🎒 Get Ready for the Class</div>
+              <div className="ready-subtitle">Materials</div>
+              <pre className="ready-list">{readyMaterialsText}</pre>
+            </div>
             {timed.map((a, i) => (
               <div key={i} className={i === currentIndex ? 'live-card current' : 'live-card'}>
                 <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration || '—'}</span>{i === currentIndex && <span className="live-timer">⏱ {fmtCountdown(remainingSecs)}</span>}</div>
@@ -251,6 +270,11 @@ export default function SpecialLessonLive() {
             </div>
             <div className="print-time">Start {startTime}</div>
           </header>
+          <div className="print-ready">
+            <strong>Get Ready for the Class</strong>
+            <strong>Materials</strong>
+            <pre>{readyMaterialsText}</pre>
+          </div>
           <div className="print-plan">
             {timed.map((a, i) => (
               <article className="print-activity" key={i}>
