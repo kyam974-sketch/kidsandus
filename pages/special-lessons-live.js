@@ -210,20 +210,23 @@ export default function SpecialLessonLive() {
     );
   }
 
+  const courseName = COURSE_NAMES[meta.course] || meta.course;
+
   return (
     <Layout>
       <div className="planner-screen">
-        <div className="page-eyebrow">Special lesson · Live</div>
-        <h1 className="page-title">{meta.title}</h1>
-        <p className="page-desc">{meta.type} · {COURSE_NAMES[meta.course] || meta.course}{meta.story ? ` · ${meta.story}` : ''}{meta.day ? ` · ${meta.day}` : ''}</p>
+        <div className="page-eyebrow no-print">Special lesson · Live</div>
+        <h1 className="page-title no-print">{meta.title}</h1>
+        <p className="page-desc no-print">{meta.type} · {courseName}{meta.story ? ` · ${meta.story}` : ''}{meta.day ? ` · ${meta.day}` : ''}</p>
         <div className="section-block no-print">
           <div className="live-tools" style={{ flexWrap: 'wrap', gap: 10 }}>
             <div className="field compact"><label>Start time</label><input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
+            <button className="btn secondary" onClick={() => window.print()} disabled={loading || !lesson}>🖨️ Print audit notes</button>
             <button className="btn secondary" onClick={() => { setMode('light'); setManualIdx(null); }}>Extra Light</button>
             <a className="btn secondary" href="/special-lessons">← Special Lessons</a>
           </div>
         </div>
-        {loading ? <p>Loading…</p> : !lesson ? <div className="section-block">Lezione non trovata.</div> : (
+        {loading ? <p className="no-print">Loading…</p> : !lesson ? <div className="section-block no-print">Lezione non trovata.</div> : (
           <div className="live-stage no-print">
             {timed.map((a, i) => (
               <div key={i} className={i === currentIndex ? 'live-card current' : 'live-card'}>
@@ -237,6 +240,32 @@ export default function SpecialLessonLive() {
           </div>
         )}
       </div>
+
+      {lesson && (
+        <section className="print-sheet print-only">
+          <header className="print-header">
+            <div>
+              <div className="print-kicker">Special lesson · 2026/27</div>
+              <h1>{meta.title}</h1>
+              <div>{courseName} · {meta.type}</div>
+            </div>
+            <div className="print-time">Start {startTime}</div>
+          </header>
+          <div className="print-plan">
+            {timed.map((a, i) => (
+              <article className="print-activity" key={i}>
+                <div className="print-clock"><strong>{a.startClock}</strong><span>{a.endClock}</span></div>
+                <div className="print-body">
+                  <div className="print-act-title"><span>{i + 1}. {a.is_bonus ? 'Bonus: ' : ''}{a.name}</span><small>{a.duration}</small></div>
+                  {a.audio && <div className="print-audio">🎵 {a.audio}</div>}
+                  {a.materials && <div className="print-materials">Materials: {a.materials}</div>}
+                  <div className="print-notes">{renderNotes(a.notes || a.desc)}</div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </Layout>
   );
 }
