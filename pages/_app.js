@@ -86,7 +86,8 @@ function StandaloneAuditPrintBridge() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!router.isReady || router.pathname !== '/planner') return undefined;
+    const printablePath = router.pathname === '/planner' || router.pathname === '/special-lessons-live';
+    if (!router.isReady || !printablePath) return undefined;
 
     const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
