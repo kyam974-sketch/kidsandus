@@ -62,40 +62,15 @@ function AudioBadges({ audioText, songsMap, big = false }) {
           <div key={n} className="audio-badge" style={{ fontSize: big ? 16 : 13 }}>
             <span>🎵 TR#{n}{song ? ` ${song.title}` : ''}</span>
             {song?.audio_url ? (
-              <audio
-                controls
-                src={song.audio_url}
-                preload="none"
-                onPlay={() => hasLyrics && setOpenLyrics(n)}
-                onEnded={() => setOpenLyrics(null)}
-              />
+              <audio controls src={song.audio_url} preload="none" onPlay={() => hasLyrics && setOpenLyrics(n)} onEnded={() => setOpenLyrics(null)} />
             ) : <em>(no audio yet)</em>}
             {hasLyrics && (
-              <button
-                type="button"
-                className="link-btn"
-                onClick={() => setOpenLyrics((current) => current === n ? null : n)}
-                style={{ marginLeft: 8 }}
-              >
+              <button type="button" className="link-btn" onClick={() => setOpenLyrics((current) => current === n ? null : n)} style={{ marginLeft: 8 }}>
                 {lyricsOpen ? 'Lyrics ▴' : 'Lyrics ▾'}
               </button>
             )}
             {lyricsOpen && (
-              <div
-                className="lyrics-panel"
-                style={{
-                  width: '100%',
-                  marginTop: 10,
-                  padding: big ? 18 : 14,
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,.82)',
-                  whiteSpace: 'pre-wrap',
-                  lineHeight: 1.55,
-                  maxHeight: big ? '38vh' : 260,
-                  overflowY: 'auto',
-                  fontSize: big ? 20 : 16,
-                }}
-              >
+              <div className="lyrics-panel" style={{ width: '100%', marginTop: 10, padding: big ? 18 : 14, borderRadius: 14, background: 'rgba(255,255,255,.82)', whiteSpace: 'pre-wrap', lineHeight: 1.55, maxHeight: big ? '38vh' : 260, overflowY: 'auto', fontSize: big ? 20 : 16 }}>
                 {song.lyrics}
               </div>
             )}
@@ -127,6 +102,20 @@ function readyMaterialsFromActivities(activities) {
     materials.push(value);
   });
   return materials;
+}
+
+function PrintActivity({ activity, index }) {
+  return (
+    <article className="print-activity">
+      <div className="print-clock"><strong>{activity.startClock}</strong><span>{activity.endClock}</span></div>
+      <div className="print-body">
+        <div className="print-act-title"><span>{index + 1}. {activity.is_bonus ? 'Bonus: ' : ''}{activity.name}</span><small>{activity.duration}</small></div>
+        {activity.audio && <div className="print-audio">🎵 {activity.audio}</div>}
+        {activity.materials && <div className="print-materials">Materials: {activity.materials}</div>}
+        <div className="print-notes">{renderNotes(activity.notes || activity.desc)}</div>
+      </div>
+    </article>
+  );
 }
 
 export default function SpecialLessonLive() {
@@ -185,6 +174,10 @@ export default function SpecialLessonLive() {
     const fmt = (m) => `${String(Math.floor((m / 60) % 24)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
     return { ...a, startClock: fmt(start), endClock: fmt(end), durationMinutes: dur };
   });
+
+  const isPropedeutica = meta.type === 'propedeutica';
+  const printMainTimed = isPropedeutica && timed.length > 1 ? timed.slice(0, -1) : timed;
+  const printFinalActivity = isPropedeutica && timed.length ? timed[timed.length - 1] : null;
 
   const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const currentIndex = timed.findIndex((a) => nowSecs >= clockToSeconds(a.startClock) && nowSecs < clockToSeconds(a.endClock));
@@ -276,18 +269,13 @@ export default function SpecialLessonLive() {
             <pre>{readyMaterialsText}</pre>
           </div>
           <div className="print-plan">
-            {timed.map((a, i) => (
-              <article className="print-activity" key={i}>
-                <div className="print-clock"><strong>{a.startClock}</strong><span>{a.endClock}</span></div>
-                <div className="print-body">
-                  <div className="print-act-title"><span>{i + 1}. {a.is_bonus ? 'Bonus: ' : ''}{a.name}</span><small>{a.duration}</small></div>
-                  {a.audio && <div className="print-audio">🎵 {a.audio}</div>}
-                  {a.materials && <div className="print-materials">Materials: {a.materials}</div>}
-                  <div className="print-notes">{renderNotes(a.notes || a.desc)}</div>
-                </div>
-              </article>
-            ))}
+            {printMainTimed.map((a, i) => <PrintActivity key={i} activity={a} index={i} />)}
           </div>
+          {printFinalActivity && (
+            <div style={{ breakBefore: 'page', pageBreakBefore: 'always', paddingTop: 8 }}>
+              <PrintActivity activity={printFinalActivity} index={timed.length - 1} />
+            </div>
+          )}
         </section>
       )}
     </Layout>
