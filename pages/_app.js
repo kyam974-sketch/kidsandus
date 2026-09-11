@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Short_Stack } from 'next/font/google';
+import LZString from 'lz-string';
 import '../styles/globals.css';
 import '../styles/print-safari.css';
 import '../styles/print-font.css';
@@ -72,14 +73,8 @@ function CalendarPlannerBridge() {
   return null;
 }
 
-function encodeBase64Url(text) {
-  const bytes = new TextEncoder().encode(String(text || ''));
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+function encodePrintPayload(text) {
+  return `lz.${LZString.compressToEncodedURIComponent(String(text || ''))}`;
 }
 
 function StandaloneAuditPrintBridge() {
@@ -100,19 +95,20 @@ function StandaloneAuditPrintBridge() {
     const nativePrint = window.print.bind(window);
 
     window.print = () => {
-      const sheet = document.querySelector('.print-sheet');
-      if (!sheet) {
+      const sheets = Array.from(document.querySelectorAll('.print-sheet'));
+      if (!sheets.length) {
         nativePrint();
         return;
       }
 
-      const payload = encodeBase64Url(sheet.outerHTML);
+      const sheetHtml = sheets.map((sheet) => sheet.outerHTML).join('');
+      const payload = encodePrintPayload(sheetHtml);
       const href = `https://kidsandus-kyam974-sketchs-projects.vercel.app/audit-print#${payload}`;
 
-      // This hostname is intentionally different from the installed PWA origin.
-      // iPadOS therefore hands the link to the normal browser instead of
-      // navigating inside the Home Screen web app. The print sheet itself is
-      // carried in the URL fragment, so the Safari page does not need Hub auth.
+      // Use a different hostname from the installed PWA so iPadOS hands the
+      // print view to normal Safari. Compress the complete print sheet before
+      // putting it in the fragment: long Special Lessons can otherwise exceed
+      // the fragment length Safari reliably preserves and lose the final rows.
       const link = document.createElement('a');
       link.href = href;
       link.target = '_blank';
