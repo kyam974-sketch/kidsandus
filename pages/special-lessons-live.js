@@ -160,6 +160,7 @@ export default function SpecialLessonLive() {
   }, [router.isReady, router.query.id]);
 
   const meta = useMemo(() => metaFromKey(lesson?.key), [lesson]);
+  const isPropedeutica = meta.type === 'propedeutica';
   const activities = Array.isArray(lesson?.data) ? lesson.data.filter((a) => a.included !== false) : [];
   const [sh, sm] = startTime.split(':').map(Number);
   let cumulative = 0;
@@ -221,7 +222,7 @@ export default function SpecialLessonLive() {
         <div className="section-block no-print">
           <div className="live-tools" style={{ flexWrap: 'wrap', gap: 10 }}>
             <div className="field compact"><label>Start time</label><input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
-            <button className="btn secondary" onClick={() => window.print()} disabled={loading || !lesson}>🖨️ Print audit notes</button>
+            {isPropedeutica && <button className="btn secondary" onClick={() => window.print()} disabled={loading || !lesson}>🖨️ Print audit notes</button>}
             <button className="btn secondary" onClick={() => { setMode('light'); setManualIdx(null); }}>Extra Light</button>
             <a className="btn secondary" href="/special-lessons">← Special Lessons</a>
           </div>
@@ -241,13 +242,13 @@ export default function SpecialLessonLive() {
         )}
       </div>
 
-      {lesson && (
+      {lesson && isPropedeutica && (
         <section className="print-sheet print-only">
           <header className="print-header">
             <div>
-              <div className="print-kicker">Special lesson · 2026/27</div>
+              <div className="print-kicker">Propedeutica · 2026/27</div>
               <h1>{meta.title}</h1>
-              <div>{courseName} · {meta.type}</div>
+              <div>{courseName}</div>
             </div>
             <div className="print-time">Start {startTime}</div>
           </header>
