@@ -16,6 +16,16 @@ const RATING_FIELDS = ['motivation', 'learning', 'behaviour'];
 const RATING_LABELS = { motivation: 'Motivation', learning: 'Learning', behaviour: 'Behaviour' };
 const SEDI = ['Grosseto', 'Esterna'];
 const CORSI = ['Mousy', 'Linda', 'Sam', 'Emma', 'Oliver', 'Marcia', 'Pam & Paul', 'Ben & Brenda'];
+const CORSO_IDS = {
+  Mousy: 'mousy',
+  Linda: 'linda',
+  Sam: 'sam',
+  Emma: 'emma',
+  Oliver: 'oliver',
+  Marcia: 'marcia',
+  'Pam & Paul': 'pam',
+  'Ben & Brenda': 'ben',
+};
 const CORSO_INFO = {
   Mousy: 'Mousy (12-36 months, with a parent). IMPORTANT: verbal production is NOT expected. Assess reactivity, attention, simple command response, name recognition, emotional participation. Fussiness/distraction is normal, not a behaviour issue.',
   Linda: 'Linda (2-3 years, parents present early on then independent). First words and short phrases emerging. Assess greetings, age, simple instructions, colours/numbers, counting to 10. Egocentrism/sharing difficulty is normal.',
@@ -31,6 +41,26 @@ const CURRENT_YEAR = '2026-2027';
 
 function emptyEntry() {
   return { teacher_note: '', note: '', motivation: null, learning: null, behaviour: null };
+}
+
+function activityLabel(activity) {
+  const bits = [activity?.name || 'Activity'];
+  if (activity?.materials) bits.push(`materials: ${activity.materials}`);
+  return bits.join(' · ');
+}
+
+function activityContext(activities) {
+  return (activities || []).map((activity, index) => {
+    const details = String(activity?.notes || activity?.desc || '').trim();
+    const materials = String(activity?.materials || '').trim();
+    const audio = String(activity?.audio || '').trim();
+    return [
+      `${index + 1}. ${activity?.name || 'Activity'}`,
+      materials ? `Materials/props: ${materials}` : '',
+      audio ? `Audio: ${audio}` : '',
+      details ? `What the class did: ${details}` : '',
+    ].filter(Boolean).join('\n');
+  }).join('\n\n');
 }
 
 export default function FollowUp() {
@@ -62,7 +92,8 @@ export default function FollowUp() {
   const [yearFilter, setYearFilter] = useState(CURRENT_YEAR);
 
   const [guideDay, setGuideDay] = useState(null);
-  const [guideLoading, setGuideLoading] = useState(false);
+  const [lessonActivities, setLessonActivities] = useState([]);
+  const [lessonContextLoading, setLessonContextLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState('');
 
@@ -89,6 +120,10 @@ export default function FollowUp() {
     ? allSessions.filter((s) => (s.entries || []).some((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase())).sort((a, b) => new Date(a.session_date) - new Date(b.session_date))
     : [];
 
+  const hasExactLessonActivities = lessonActivities.length > 0;
+  const hasFallbackLessonPlan = !!guideDay?.lesson_plan?.trim();
+  const hasLessonContext = hasExactLessonActivities || hasFallbackLessonPlan;
+
   async function loadData() {
     setLoading(true);
     const [{ data: g }, { data: s }, { data: all }] = await Promise.all([
@@ -106,20 +141,37 @@ export default function FollowUp() {
   useEffect(() => { setPresentStudents(groupStudents); setEntries({}); }, [form.group_id]);
 
   useEffect(() => {
-    async function loadGuideDay() {
-      if (!selectedGroup?.corso || !form.story || !form.day) { setGuideDay(null); return; }
-      setGuideLoading(true);
-      const { data, error } = await supabase
-        .from('guide_days')
-        .select('lesson_goals, lesson_plan, preparation, materials')
-        .eq('corso', selectedGroup.corso)
-        .eq('story_number', Number(form.story))
-        .eq('day_number', Number(form.day))
-        .maybeSingle();
-      setGuideDay(error ? null : (data || null));
-      setGuideLoading(false);
+    async function loadLessonContext() {
+      if (!selectedGroup?.corso || !form.story || !form.day) {
+        setGuideDay(null);
+        setLessonActivities([]);
+        return;
+      }
+
+      setLessonContextLoading(true);
+      const courseId = CORSO_IDS[selectedGroup.corso];
+      const lessonKey = courseId ? `${courseId}|Story ${Number(form.story)}|${Number(form.day)}` : null;
+
+      const [guideResult, lessonResult] = await Promise.all([
+        supabase
+          .from('guide_days')
+          .select('lesson_plan, preparation, materials')
+          .eq('corso', selectedGroup.corso)
+          .eq('story_number', Number(form.story))
+          .eq('day_number', Number(form.day))
+          .maybeSingle(),
+        lessonKey
+          ? supabase.from('lessons').select('data').eq('key', lessonKey).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      setGuideDay(guideResult.error ? null : (guideResult.data || null));
+      const rawActivities = Array.isArray(lessonResult?.data?.data) ? lessonResult.data.data : [];
+      setLessonActivities(rawActivities.filter((activity) => activity?.included !== false && !activity?.is_bonus));
+      setLessonContextLoading(false);
     }
-    loadGuideDay();
+
+    loadLessonContext();
   }, [selectedGroup?.corso, form.story, form.day]);
 
   function getEntry(name) { return entries[name] || emptyEntry(); }
@@ -241,8 +293,8 @@ export default function FollowUp() {
 
   function buildPrompt() {
     const corsoContext = (selectedGroup && CORSO_INFO[selectedGroup.corso]) || `Corso: ${selectedGroup?.corso || ''}`;
-    const goals = guideDay?.lesson_goals || '(Teacher Guide goals not available for this day)';
-    const lessonContext = guideDay?.lesson_plan || '';
+    const exactActivities = hasExactLessonActivities ? activityContext(lessonActivities) : '';
+    const fallbackLessonPlan = !hasExactLessonActivities ? (guideDay?.lesson_plan || '') : '';
     const groupObservation = form.group_note.trim() || '(none)';
 
     const studentEvidence = presentStudents.map((name) => {
@@ -256,14 +308,11 @@ export default function FollowUp() {
 
     return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up judgments that will later support term reports.
 
-SOURCE OF TRUTH — TEACHER GUIDE
-Course profile:
+COURSE DEVELOPMENTAL CONTEXT
 ${corsoContext}
 
-Teacher Guide — Story ${form.story}, Day ${form.day}
-Lesson goals:
-${goals}
-${lessonContext ? `\nLesson plan actually taught / available for this Day:\n${lessonContext}` : ''}
+EXACT LESSON — Story ${form.story}, Day ${form.day}
+${hasExactLessonActivities ? `These are the CORE activities actually loaded in the Planner for this exact lesson. Treat them as the primary lesson context:\n${exactActivities}` : `Planner activities were not available. Use this exact Teacher Guide Day plan as the fallback lesson context:\n${fallbackLessonPlan}`}
 
 TEACHER GROUP OBSERVATION
 ${groupObservation}
@@ -275,12 +324,15 @@ TASK
 For EACH student present, write one concise individualized judgment in Italian, 2-3 sentences, suitable as an internal follow-up note and useful later for a term report.
 
 STRICT RULES
-- Use the Teacher Guide for this exact Story/Day as the learning context. Do not use Planner summaries as a source.
+- Ground the judgment in what was concretely done in THIS exact lesson, not in generic lesson goals.
+- Prefer concrete references to the day's real activities, games, materials, props or sensory experiences (for example flowers, sand, bubbles, cards, story, songs, building blocks, etc.) when those elements are actually present in the lesson context above.
+- When natural, include at least one concrete lesson element in each judgment so the note says what the child worked or played with that day rather than only describing broad skills.
+- Do NOT use bonus/optional activities as if they happened unless the teacher observation explicitly says they were done. Planner context above contains core activities only.
 - The selected Motivation/Learning/Behaviour ratings are teacher evidence. Respect them; do not change or reinterpret them into different ratings.
 - Use each student's individual teacher observation when present.
 - The group observation is context only: do NOT automatically attribute a group event or behaviour to every student.
 - Do not invent incidents, answers, vocabulary produced, behaviours, achievements or difficulties that the teacher did not report or that are not supported by the selected ratings.
-- Do not claim that a child achieved a specific lesson goal merely because it appears in the Teacher Guide. Connect the judgment to lesson goals only when the teacher evidence supports that connection.
+- A concrete activity may be named because it was part of the lesson, but do not claim that the child mastered specific vocabulary or structures merely because the activity was present.
 - If evidence for one dimension is absent, simply avoid making a claim about that dimension instead of guessing.
 - Keep developmental expectations appropriate to the course profile, especially for Mousy and Linda.
 - Do not mention numeric ratings, emojis, the AI, the prompt, or lack of evidence in the final judgment.
@@ -294,8 +346,8 @@ Return ONLY valid JSON exactly in this form:
     setGenerateError('');
     if (!presentStudents.length) { setGenerateError('Segna almeno un allievo come presente.'); return; }
     if (!selectedGroup) { setGenerateError('Seleziona prima il gruppo.'); return; }
-    if (guideLoading) { setGenerateError('Sto ancora caricando la Teacher Guide del giorno.'); return; }
-    if (!guideDay) { setGenerateError(`Non trovo la Teacher Guide per ${selectedGroup.corso}, Story ${form.story}, Day ${form.day}.`); return; }
+    if (lessonContextLoading) { setGenerateError('Sto ancora caricando le attività della lezione.'); return; }
+    if (!hasLessonContext) { setGenerateError(`Non trovo le attività per ${selectedGroup.corso}, Story ${form.story}, Day ${form.day}.`); return; }
 
     const withoutEvidence = presentStudents.filter((name) => {
       const e = getEntry(name);
@@ -331,7 +383,7 @@ Return ONLY valid JSON exactly in this form:
     <Layout>
       <div className="page-eyebrow">Active module</div>
       <h1 className="page-title">Follow-up</h1>
-      <p className="page-desc">Record teacher evidence, then generate individual judgments grounded in the exact Teacher Guide Story and Day.</p>
+      <p className="page-desc">Record teacher evidence, then generate individual judgments grounded in the concrete activities of the exact Story and Day.</p>
 
       <div className="section-block">
         <h2>New follow-up</h2>
@@ -363,9 +415,24 @@ Return ONLY valid JSON exactly in this form:
           </div>
 
           {selectedGroup && (
-            <div style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 10, background: guideDay ? '#eef8f0' : '#fff5e8', fontSize: 13.5 }}>
-              {guideLoading ? 'Loading Teacher Guide…' : guideDay ? `✓ Teacher Guide loaded: ${selectedGroup.corso} · Story ${form.story} · Day ${form.day}` : `Teacher Guide not found for ${selectedGroup.corso} · Story ${form.story} · Day ${form.day}`}
-              {guideDay?.lesson_goals && <div style={{ marginTop: 6, color: 'var(--ink-soft)' }}><strong>Goals:</strong> {guideDay.lesson_goals}</div>}
+            <div style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 10, background: hasLessonContext ? '#eef8f0' : '#fff5e8', fontSize: 13.5 }}>
+              {lessonContextLoading
+                ? 'Loading exact lesson activities…'
+                : hasExactLessonActivities
+                  ? `✓ Exact lesson activities loaded: ${selectedGroup.corso} · Story ${form.story} · Day ${form.day}`
+                  : hasFallbackLessonPlan
+                    ? `✓ Teacher Guide Day plan loaded as fallback: ${selectedGroup.corso} · Story ${form.story} · Day ${form.day}`
+                    : `Lesson activities not found for ${selectedGroup.corso} · Story ${form.story} · Day ${form.day}`}
+              {hasExactLessonActivities && (
+                <div style={{ marginTop: 8, color: 'var(--ink-soft)' }}>
+                  <strong>What was done:</strong>
+                  <div style={{ marginTop: 5, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {lessonActivities.map((activity, index) => (
+                      <span key={`${activity?.name || 'activity'}-${index}`} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 8px' }}>{activityLabel(activity)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -415,8 +482,8 @@ Return ONLY valid JSON exactly in this form:
             <div className="field">
               <label>Generate with AI</label>
               <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, background: '#fff' }}>
-                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses the exact Teacher Guide Day, your selected emojis, the optional group note and each optional individual observation. It generates the written judgment only; your ratings stay exactly as you selected them.</p>
-                <button type="button" className="btn" disabled={generating || !guideDay} onClick={handleGenerate} style={{ width: '100%' }}>{generating ? 'Generating judgments…' : 'Generate individual judgments'}</button>
+                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses the concrete activities of the exact Story/Day, your selected emojis, the optional group note and each optional individual observation. The judgment can therefore mention what the children actually played or worked with that day, instead of relying on generic lesson goals.</p>
+                <button type="button" className="btn" disabled={generating || !hasLessonContext} onClick={handleGenerate} style={{ width: '100%' }}>{generating ? 'Generating judgments…' : 'Generate individual judgments'}</button>
                 {generateError && <div className="error-text" style={{ marginTop: 10 }}>{generateError}</div>}
               </div>
             </div>
