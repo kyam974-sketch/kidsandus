@@ -182,8 +182,16 @@ export default function SpecialLessonLive() {
   const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const currentIndex = timed.findIndex((a) => nowSecs >= clockToSeconds(a.startClock) && nowSecs < clockToSeconds(a.endClock));
   const currentAct = currentIndex >= 0 ? timed[currentIndex] : null;
+  let currentProgress = 0;
   let remainingSecs = 0;
-  if (currentAct) remainingSecs = Math.max(0, clockToSeconds(currentAct.endClock) - nowSecs);
+  if (currentAct) {
+    const startSecs = clockToSeconds(currentAct.startClock);
+    const endSecs = clockToSeconds(currentAct.endClock);
+    const total = Math.max(1, endSecs - startSecs);
+    const elapsed = Math.max(0, Math.min(total, nowSecs - startSecs));
+    currentProgress = (elapsed / total) * 100;
+    remainingSecs = Math.max(0, total - elapsed);
+  }
 
   const autoDisplayIdx = currentIndex >= 0 ? currentIndex : 0;
   const displayIdx = manualIdx !== null ? manualIdx : autoDisplayIdx;
@@ -205,7 +213,17 @@ export default function SpecialLessonLive() {
           <div className="light-counter">{timed.length ? `${displayIdx + 1} / ${timed.length}` : '0 / 0'}</div>
           <div className="light-title">{displayAct?.name || '—'}</div>
           {(displayAct?.notes || displayAct?.desc) && <div className="light-note">{renderNotes(displayAct.notes || displayAct.desc)}</div>}
-          <AudioBadges key={`light-${displayIdx}`} audioText={displayAct?.audio} songsMap={songsMap} big />
+          <div style={{ position: 'relative', width: '100%' }}>
+            {timed.map((activity, i) => activity?.audio ? (
+              <div
+                key={`light-audio-${i}`}
+                style={i === displayIdx ? undefined : { position: 'absolute', left: '-10000px', top: 0, width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}
+                aria-hidden={i === displayIdx ? undefined : true}
+              >
+                <AudioBadges audioText={activity.audio} songsMap={songsMap} big={i === displayIdx} />
+              </div>
+            ) : null)}
+          </div>
           {displayAct?.materials && <div className="light-materials">🎒 {displayAct.materials}</div>}
           <div className="light-controls">
             <button className="btn secondary dark-btn" disabled={!timed.length || displayIdx <= 0} onClick={() => setManualIdx(Math.max(0, displayIdx - 1))}>◀</button>
@@ -240,15 +258,19 @@ export default function SpecialLessonLive() {
               <div className="ready-subtitle">Materials</div>
               <pre className="ready-list">{readyMaterialsText}</pre>
             </div>
-            {timed.map((a, i) => (
-              <div key={i} className={i === currentIndex ? 'live-card current' : 'live-card'}>
-                <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration || '—'}</span>{i === currentIndex && <span className="live-timer">⏱ {fmtCountdown(remainingSecs)}</span>}</div>
-                <div className="live-card-name">{i === currentIndex ? '▶ ' : ''}{a.name}</div>
-                <AudioBadges key={`live-${i}-${currentIndex}`} audioText={a.audio} songsMap={songsMap} big={i === currentIndex} />
-                {a.materials && <div className="live-materials">🎒 {a.materials}</div>}
-                <div className="live-notes">{renderNotes(a.notes || a.desc)}</div>
-              </div>
-            ))}
+            {timed.map((a, i) => {
+              const isCurrent = i === currentIndex;
+              const style = isCurrent ? { '--progress': `${currentProgress}%` } : undefined;
+              return (
+                <div key={i} className={isCurrent ? 'live-card current progress-card' : 'live-card'} style={style}>
+                  <div className="live-card-top"><span>{a.startClock} – {a.endClock} · {a.duration || '—'}</span>{isCurrent && <span className="live-timer">⏱ {fmtCountdown(remainingSecs)}</span>}</div>
+                  <div className="live-card-name">{isCurrent ? '▶ ' : ''}{a.name}</div>
+                  <AudioBadges key={`live-${i}`} audioText={a.audio} songsMap={songsMap} big={isCurrent} />
+                  {a.materials && <div className="live-materials">🎒 {a.materials}</div>}
+                  <div className="live-notes">{renderNotes(a.notes || a.desc)}</div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
