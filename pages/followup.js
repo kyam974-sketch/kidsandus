@@ -49,6 +49,19 @@ function activityLabel(activity) {
   return bits.join(' · ');
 }
 
+function operationalCue(activity, maxLength = 260) {
+  const raw = String(activity?.notes || activity?.desc || '').trim();
+  if (!raw) return '';
+  const compact = raw
+    .replace(/\*\*/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (compact.length <= maxLength) return compact;
+  const clipped = compact.slice(0, maxLength - 1);
+  const lastSpace = clipped.lastIndexOf(' ');
+  return `${(lastSpace > maxLength * 0.7 ? clipped.slice(0, lastSpace) : clipped).trim()}…`;
+}
+
 function activityContext(activities) {
   return (activities || []).map((activity, index) => {
     const details = String(activity?.notes || activity?.desc || '').trim();
@@ -325,6 +338,7 @@ For EACH student present, write one concise individualized judgment in Italian, 
 
 STRICT RULES
 - Ground the judgment in what was concretely done in THIS exact lesson, not in generic lesson goals.
+- Use the operational notes under each activity to understand what the children actually had to do, say, choose, count, point to, mime, move, answer or manipulate during the lesson.
 - Prefer concrete references to the day's real activities, games, materials, props or sensory experiences (for example flowers, sand, bubbles, cards, story, songs, building blocks, etc.) when those elements are actually present in the lesson context above.
 - When natural, include at least one concrete lesson element in each judgment so the note says what the child worked or played with that day rather than only describing broad skills.
 - Do NOT use bonus/optional activities as if they happened unless the teacher observation explicitly says they were done. Planner context above contains core activities only.
@@ -426,10 +440,16 @@ Return ONLY valid JSON exactly in this form:
               {hasExactLessonActivities && (
                 <div style={{ marginTop: 8, color: 'var(--ink-soft)' }}>
                   <strong>What was done:</strong>
-                  <div style={{ marginTop: 5, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {lessonActivities.map((activity, index) => (
-                      <span key={`${activity?.name || 'activity'}-${index}`} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 8px' }}>{activityLabel(activity)}</span>
-                    ))}
+                  <div style={{ marginTop: 7, display: 'grid', gap: 7 }}>
+                    {lessonActivities.map((activity, index) => {
+                      const cue = operationalCue(activity);
+                      return (
+                        <div key={`${activity?.name || 'activity'}-${index}`} style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 12, padding: '7px 10px' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--ink)' }}>{activityLabel(activity)}</div>
+                          {cue && <div style={{ marginTop: 3, lineHeight: 1.35 }}><strong>How:</strong> {cue}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -482,7 +502,7 @@ Return ONLY valid JSON exactly in this form:
             <div className="field">
               <label>Generate with AI</label>
               <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, background: '#fff' }}>
-                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses the concrete activities of the exact Story/Day, your selected emojis, the optional group note and each optional individual observation. The judgment can therefore mention what the children actually played or worked with that day, instead of relying on generic lesson goals.</p>
+                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses each activity's operational notes as well as its concrete materials/props, together with your selected emojis, the optional group note and each optional individual observation. The judgment can therefore refer to what children actually had to do in the exact Story/Day, rather than relying on generic lesson goals.</p>
                 <button type="button" className="btn" disabled={generating || !hasLessonContext} onClick={handleGenerate} style={{ width: '100%' }}>{generating ? 'Generating judgments…' : 'Generate individual judgments'}</button>
                 {generateError && <div className="error-text" style={{ marginTop: 10 }}>{generateError}</div>}
               </div>
