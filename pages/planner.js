@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
 
@@ -154,6 +155,7 @@ function fmtCountdown(seconds) {
 }
 
 export default function Planner() {
+  const router = useRouter();
   const [courseId, setCourseId] = useState('mousy');
   const [storyNumber, setStoryNumber] = useState(1);
   const [dayNumber, setDayNumber] = useState(1);
@@ -168,6 +170,7 @@ export default function Planner() {
   const [startTime, setStartTime] = useState('16:00');
   const [now, setNow] = useState(new Date());
   const [manualIdx, setManualIdx] = useState(null);
+  const [routeReady, setRouteReady] = useState(false);
 
   const key = `${courseId}|Story ${storyNumber}|${dayNumber}`;
   const selectedCourse = COURSES.find((c) => c.id === courseId);
@@ -175,29 +178,60 @@ export default function Planner() {
   const audioCorsoName = selectedCourse?.audioCourse || corsoName;
 
   useEffect(() => {
+    if (!router.isReady) return;
+
+    const requestedCourse = typeof router.query.course === 'string' ? router.query.course : '';
+    const requestedStory = Number(router.query.story);
+    const requestedDay = Number(router.query.day);
+    const requestedStart = typeof router.query.start === 'string' ? router.query.start : '';
+
+    if (requestedCourse && COURSES.some((course) => course.id === requestedCourse)) {
+      setCourseId(requestedCourse);
+    }
+    if (Number.isInteger(requestedStory) && requestedStory >= 1 && requestedStory <= 6) {
+      setStoryNumber(requestedStory);
+    }
+    if (Number.isInteger(requestedDay) && requestedDay >= 1 && requestedDay <= 10) {
+      setDayNumber(requestedDay);
+    }
+    if (/^\d{2}:\d{2}$/.test(requestedStart)) {
+      setStartTime(requestedStart);
+    }
+
+    setRouteReady(true);
+  }, [router.isReady, router.query.course, router.query.story, router.query.day, router.query.start]);
+
+  useEffect(() => {
     if (mode !== 'live' && mode !== 'light') return;
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, [mode]);
 
-  async function loadAll() {
-    setLoading(true);
-    const [{ data: lesson }, { data: songs }, { data: guide }] = await Promise.all([
-      supabase.from('lessons').select('data').eq('key', key).maybeSingle(),
-      supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', audioCorsoName),
-      supabase.from('guide_days').select('materials, bonus_materials, preparation').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
-    ]);
-    setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
-    setHistory([]);
-    const map = {};
-    (songs || []).forEach((s) => { map[s.track_number] = s; });
-    setSongsMap(map);
-    setDayGuide(guide || null);
-    setManualIdx(null);
-    setLoading(false);
-  }
+  useEffect(() => {
+    if (!routeReady) return;
+    let cancelled = false;
 
-  useEffect(() => { loadAll(); }, [courseId, storyNumber, dayNumber]);
+    async function loadAll() {
+      setLoading(true);
+      const [{ data: lesson }, { data: songs }, { data: guide }] = await Promise.all([
+        supabase.from('lessons').select('data').eq('key', key).maybeSingle(),
+        supabase.from('songs').select('track_number, title, audio_url, lyrics').eq('corso', audioCorsoName),
+        supabase.from('guide_days').select('materials, bonus_materials, preparation').eq('corso', corsoName).eq('story_number', storyNumber).eq('day_number', dayNumber).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setActivities(Array.isArray(lesson?.data) ? lesson.data : []);
+      setHistory([]);
+      const map = {};
+      (songs || []).forEach((s) => { map[s.track_number] = s; });
+      setSongsMap(map);
+      setDayGuide(guide || null);
+      setManualIdx(null);
+      setLoading(false);
+    }
+
+    loadAll();
+    return () => { cancelled = true; };
+  }, [routeReady, courseId, storyNumber, dayNumber]);
 
   async function persistActivities(next) {
     setActivities(next);
