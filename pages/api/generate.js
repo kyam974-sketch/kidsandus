@@ -40,9 +40,6 @@ function normalizeJsonForPrompt(jsonText, promptText) {
     return jsonText;
   }
 
-  // The Planner explicitly asks for a JSON array. Models sometimes wrap the
-  // array in { activities: [...] } / { data: [...] }. Unwrap only for calls
-  // that clearly request an array, so Follow-up object responses are untouched.
   const expectsArray = /json\s+array|array\s+of\s+(activities|objects|strings)|return\s+only\s+a\s+json\s+array/i.test(promptText || '');
   if (!expectsArray || Array.isArray(parsed)) return JSON.stringify(parsed);
 
@@ -52,8 +49,6 @@ function normalizeJsonForPrompt(jsonText, promptText) {
       if (Array.isArray(parsed[key])) return JSON.stringify(parsed[key]);
     }
 
-    // Last-resort normalization: if exactly one object property is an array,
-    // use it. This avoids rejecting harmless wrapper objects.
     const arrays = Object.values(parsed).filter(Array.isArray);
     if (arrays.length === 1) return JSON.stringify(arrays[0]);
   }
@@ -61,13 +56,41 @@ function normalizeJsonForPrompt(jsonText, promptText) {
   return JSON.stringify(parsed);
 }
 
+function textFromMessages(messages) {
+  return (messages || []).map((message) => {
+    const role = message?.role || 'user';
+    const content = message?.content;
+    if (typeof content === 'string') return `${role.toUpperCase()}:\n${content}`;
+    if (Array.isArray(content)) {
+      const text = content
+        .filter((part) => part?.type === 'text' && part?.text)
+        .map((part) => part.text)
+        .join('\n');
+      return text ? `${role.toUpperCase()}:\n${text}` : '';
+    }
+    return '';
+  }).filter(Boolean).join('\n\n');
+}
+
+function openAIOutputText(data) {
+  if (typeof data?.output_text === 'string' && data.output_text.trim()) return data.output_text.trim();
+  return (data?.output || [])
+    .flatMap((item) => item?.content || [])
+    .map((part) => part?.text || part?.output_text || '')
+    .join('')
+    .trim();
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+  const requestedModel = req.body?.model || 'claude-sonnet-4-6';
+  const useOpenAI = /^gpt-/i.test(requestedModel);
 
   const callAnthropic = async (body) => {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error('Anthropic API key not configured');
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -83,12 +106,45 @@ export default async function handler(req, res) {
       const message = data?.error?.message || `Anthropic error ${response.status}`;
       throw new Error(message);
     }
-    return data;
+    return { data, text: (data.content || []).map((b) => b.text || '').join('').trim() };
   };
 
+  const callOpenAI = async (body) => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OpenAI API key not configured');
+
+    const input = textFromMessages(body?.messages);
+    if (!input) throw new Error('OpenAI request has no text input');
+
+    const requestBody = {
+      model: body?.model || 'gpt-5.6-terra',
+      input,
+      max_output_tokens: Math.min(Number(body?.max_tokens) || 4000, 12000),
+    };
+    if (body?.reasoning_effort) requestBody.reasoning = { effort: body.reasoning_effort };
+
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      const message = data?.error?.message || `OpenAI error ${response.status}`;
+      throw new Error(message);
+    }
+    return { data, text: openAIOutputText(data) };
+  };
+
+  const callProvider = useOpenAI ? callOpenAI : callAnthropic;
+
   try {
-    const data = await callAnthropic(req.body);
-    const originalText = (data.content || []).map((b) => b.text || '').join('').trim();
+    const first = await callProvider(req.body);
+    const originalText = first.text;
     const promptText = JSON.stringify(req.body?.messages || '');
     const expectsJson = /json/i.test(promptText);
     let validJson = extractJson(originalText);
@@ -97,8 +153,9 @@ export default async function handler(req, res) {
       if (!validJson && originalText) {
         const wantsArray = /json\s+array|return\s+only\s+a\s+json\s+array/i.test(promptText);
         const repairBody = {
-          model: req.body?.model || 'claude-sonnet-4-6',
+          model: requestedModel,
           max_tokens: Math.min(Number(req.body?.max_tokens) || 8000, 8000),
+          reasoning_effort: req.body?.reasoning_effort || 'low',
           messages: [
             {
               role: 'user',
@@ -107,9 +164,8 @@ export default async function handler(req, res) {
           ],
         };
 
-        const repaired = await callAnthropic(repairBody);
-        const repairedText = (repaired.content || []).map((b) => b.text || '').join('').trim();
-        validJson = extractJson(repairedText);
+        const repaired = await callProvider(repairBody);
+        validJson = extractJson(repaired.text);
 
         if (!validJson) {
           return res.status(502).json({ error: 'AI returned invalid JSON after automatic repair.' });
@@ -118,12 +174,20 @@ export default async function handler(req, res) {
 
       if (validJson) {
         const normalized = normalizeJsonForPrompt(validJson, promptText);
-        data.content = [{ type: 'text', text: normalized }];
+        return res.status(200).json({
+          provider: useOpenAI ? 'openai' : 'anthropic',
+          model: requestedModel,
+          content: [{ type: 'text', text: normalized }],
+        });
       }
     }
 
-    res.status(200).json(data);
+    return res.status(200).json({
+      provider: useOpenAI ? 'openai' : 'anthropic',
+      model: requestedModel,
+      content: [{ type: 'text', text: originalText }],
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: { message: e.message } });
   }
 }
