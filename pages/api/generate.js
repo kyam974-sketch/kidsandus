@@ -81,11 +81,27 @@ function openAIOutputText(data) {
     .trim();
 }
 
+const FOLLOWUP_STYLE = `\n\nITALIAN STYLE OVERRIDE — IMPORTANT\nWrite the judgments in idiomatic, natural Italian as if I, the teacher, had written them myself. When an observation is attributed to the teacher, use first-person singular (for example “ho notato…”, “ho visto…”, “durante l’attività ho osservato…”) and NEVER detached formulas such as “l’insegnante segnala/osserva/rileva”. Avoid bureaucratic or translated-sounding Italian. When referring to songs used in class, normally say “le canzoni”, “cantare”, “seguire la canzone”, etc.; do not use “il canto” as an artificial substitute for “songs”. Prefer simple classroom language over nominalisations. Do not overuse “ha dimostrato”, “evidenzia”, “mostra” or similar report clichés. Keep the result warm, professional, concrete and believable.`;
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
+  const originalPromptText = JSON.stringify(req.body?.messages || '');
+  const isFollowUp = /INTERNAL follow-up judgments|individual judgments grounded in the concrete activities/i.test(originalPromptText);
   const requestedModel = req.body?.model || 'claude-sonnet-4-6';
-  const useOpenAI = /^gpt-/i.test(requestedModel);
+  const effectiveModel = isFollowUp ? 'gpt-5.6-terra' : requestedModel;
+  const useOpenAI = /^gpt-/i.test(effectiveModel);
+  const effectiveBody = isFollowUp
+    ? {
+        ...req.body,
+        model: effectiveModel,
+        reasoning_effort: req.body?.reasoning_effort || 'low',
+        messages: [
+          ...(req.body?.messages || []),
+          { role: 'user', content: FOLLOWUP_STYLE },
+        ],
+      }
+    : { ...req.body, model: effectiveModel };
 
   const callAnthropic = async (body) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -143,9 +159,9 @@ export default async function handler(req, res) {
   const callProvider = useOpenAI ? callOpenAI : callAnthropic;
 
   try {
-    const first = await callProvider(req.body);
+    const first = await callProvider(effectiveBody);
     const originalText = first.text;
-    const promptText = JSON.stringify(req.body?.messages || '');
+    const promptText = JSON.stringify(effectiveBody?.messages || '');
     const expectsJson = /json/i.test(promptText);
     let validJson = extractJson(originalText);
 
@@ -153,9 +169,9 @@ export default async function handler(req, res) {
       if (!validJson && originalText) {
         const wantsArray = /json\s+array|return\s+only\s+a\s+json\s+array/i.test(promptText);
         const repairBody = {
-          model: requestedModel,
-          max_tokens: Math.min(Number(req.body?.max_tokens) || 8000, 8000),
-          reasoning_effort: req.body?.reasoning_effort || 'low',
+          model: effectiveModel,
+          max_tokens: Math.min(Number(effectiveBody?.max_tokens) || 8000, 8000),
+          reasoning_effort: effectiveBody?.reasoning_effort || 'low',
           messages: [
             {
               role: 'user',
@@ -176,7 +192,7 @@ export default async function handler(req, res) {
         const normalized = normalizeJsonForPrompt(validJson, promptText);
         return res.status(200).json({
           provider: useOpenAI ? 'openai' : 'anthropic',
-          model: requestedModel,
+          model: effectiveModel,
           content: [{ type: 'text', text: normalized }],
         });
       }
@@ -184,7 +200,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       provider: useOpenAI ? 'openai' : 'anthropic',
-      model: requestedModel,
+      model: effectiveModel,
       content: [{ type: 'text', text: originalText }],
     });
   } catch (e) {
