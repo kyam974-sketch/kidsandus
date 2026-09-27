@@ -89,19 +89,22 @@ export default async function handler(req, res) {
   const originalPromptText = JSON.stringify(req.body?.messages || '');
   const isFollowUp = /INTERNAL follow-up judgments|individual judgments grounded in the concrete activities/i.test(originalPromptText);
   const requestedModel = req.body?.model || 'claude-sonnet-4-6';
-  const effectiveModel = isFollowUp ? 'gpt-5.6-terra' : requestedModel;
-  const useOpenAI = /^gpt-/i.test(effectiveModel);
-  const effectiveBody = isFollowUp
-    ? {
-        ...req.body,
-        model: effectiveModel,
-        reasoning_effort: req.body?.reasoning_effort || 'low',
-        messages: [
-          ...(req.body?.messages || []),
-          { role: 'user', content: FOLLOWUP_STYLE },
-        ],
-      }
-    : { ...req.body, model: effectiveModel };
+  const wantsOpenAI = isFollowUp || /^gpt-/i.test(requestedModel);
+  const openAIConfigured = Boolean(process.env.OPENAI_API_KEY);
+  const useOpenAI = wantsOpenAI && openAIConfigured;
+  const effectiveModel = useOpenAI
+    ? (isFollowUp ? 'gpt-5.6-terra' : requestedModel)
+    : (wantsOpenAI ? 'claude-sonnet-4-6' : requestedModel);
+
+  const baseMessages = req.body?.messages || [];
+  const effectiveBody = {
+    ...req.body,
+    model: effectiveModel,
+    ...(useOpenAI ? { reasoning_effort: req.body?.reasoning_effort || (isFollowUp ? 'low' : undefined) } : {}),
+    messages: isFollowUp
+      ? [...baseMessages, { role: 'user', content: FOLLOWUP_STYLE }]
+      : baseMessages,
+  };
 
   const callAnthropic = async (body) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -171,7 +174,7 @@ export default async function handler(req, res) {
         const repairBody = {
           model: effectiveModel,
           max_tokens: Math.min(Number(effectiveBody?.max_tokens) || 8000, 8000),
-          reasoning_effort: effectiveBody?.reasoning_effort || 'low',
+          ...(useOpenAI ? { reasoning_effort: effectiveBody?.reasoning_effort || 'low' } : {}),
           messages: [
             {
               role: 'user',
