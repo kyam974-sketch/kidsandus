@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import ResponsiveTable from '../components/ResponsiveTable';
+import { findStudentProfile, continuityContext } from '../lib/studentContinuity';
 import { supabase } from '../lib/supabaseClient';
 import { EMOJI_SCALE, RATING_LABELS, hasMyWay, ratingFieldsForCourse, ratingSummary } from '../lib/followupRatings';
 
@@ -88,6 +89,8 @@ export default function FollowUp() {
 
   const [presentStudents, setPresentStudents] = useState([]);
   const [entries, setEntries] = useState({});
+  const [studentProfiles, setStudentProfiles] = useState([]);
+  const [continuityError, setContinuityError] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
   const [addingStudent, setAddingStudent] = useState(false);
   const [showAddSuggestions, setShowAddSuggestions] = useState(false);
@@ -136,11 +139,24 @@ export default function FollowUp() {
 
   async function loadData() {
     setLoading(true);
-    const [{ data: g }, { data: s }, { data: all }] = await Promise.all([
+    setContinuityError('');
+    const [{ data: g }, { data: s }, historyResult, profileResult] = await Promise.all([
       supabase.from('group_students').select('*').order('sede'),
       supabase.from('followup_sessions').select('*').order('created_at', { ascending: false }).limit(15),
-      supabase.from('followup_sessions').select('*').order('session_date', { ascending: false }).limit(2000),
+      supabase.from('followup_sessions').select('*').order('session_date', { ascending: false }).order('id').range(0, 999),
+      supabase.from('students').select('*'),
     ]);
+    const all = historyResult.data || [];
+    let historyError = historyResult.error;
+    if (!historyError) {
+      for (let offset = 1000; all.length === offset; offset += 1000) {
+        const page = await supabase.from('followup_sessions').select('*').order('session_date', { ascending: false }).order('id').range(offset, offset + 999);
+        if (page.error) { historyError = page.error; break; }
+        all.push(...(page.data || []));
+      }
+    }
+    if (historyError || profileResult.error) setContinuityError('Non riesco a caricare lo storico o le schede studenti. Ricarica prima di generare il giudizio.');
+    setStudentProfiles(profileResult.data || []);
     setGroups(g || []);
     setSessions(s || []);
     setAllSessions(all || []);
@@ -193,7 +209,14 @@ export default function FollowUp() {
     }
     return '';
   }
-  function getEntry(name) { return { ...emptyEntry(selectedGroup?.corso), pronouns: rememberedPronouns(name), ...entries[name] }; }
+  function getEntry(name) {
+    const profile = findStudentProfile(name, studentProfiles);
+    const pronouns = { male: 'he/him', female: 'she/her', neutral: 'they/them' }[profile?.gender];
+    return { ...emptyEntry(selectedGroup?.corso), ...entries[name],
+      student_id: profile?.id || null,
+      pronouns: pronouns || (profile ? '' : rememberedPronouns(name)),
+    };
+  }
   function setEntryPatch(name, patch) { setEntries((prev) => ({ ...prev, [name]: { ...(prev[name] || emptyEntry(selectedGroup?.corso)), ...patch } })); }
   function togglePresent(name) { setPresentStudents((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name])); }
 
@@ -335,7 +358,8 @@ export default function FollowUp() {
         const selected = EMOJI_SCALE.find((x) => x.value === e[field]);
         return `${RATING_LABELS[field]}: ${selected ? `${selected.label} (${selected.value}/5)` : 'not selected'}`;
       }).join('; ');
-      return `${name}\nPronouns: ${e.pronouns || 'use the gender indicated by teacher language or an unambiguous familiar given name; if unclear avoid pronouns, not singular they'}\n${ratings}\nTeacher individual observation: ${e.teacher_note?.trim() || '(none)'}`;
+      const profile = findStudentProfile(name, studentProfiles);
+      return `${name}\nPronouns from student profile: ${e.pronouns || 'use the gender indicated by teacher language or an unambiguous familiar given name; if unclear avoid pronouns, not singular they'}\n${ratings}\nTeacher individual observation TODAY: ${e.teacher_note?.trim() || '(none)'}\nPERSONAL CONTINUITY — context before/current date ${form.session_date}\n${continuityContext(name, profile, allSessions, form.session_date)}`;
     }).join('\n\n');
 
     return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up judgments that will later support term reports.
@@ -356,6 +380,12 @@ TASK
 For EACH student present, write a concise individualized judgment in natural, idiomatic British English, suitable as an internal follow-up note and useful later for a term report. Cover EACH assessed dimension separately, in this order: Motivation & Participation, Learning, Behaviour${showMyWay ? ', My Way' : ''}. Aim for around 60-100 words overall, usually 3-5 flowing sentences, with enough detail to make the note useful when revisiting the lesson. This is a flexible guide, not a word quota: do not pad sparse evidence. Each dimension field should contain a complete, grammatical sentence that flows naturally into the next; do not omit the subject of a verb or attach a clause to the wrong subject. Concise means focused, not reduced to rating labels. Brevity must never remove an assessed dimension. Return separate text fields so no criterion is lost; the application will join them into a natural paragraph.
 
 STRICT RULES
+- Read this child's dated personal history and profile notes before writing. The note is about TODAY, informed by that child's evolving baseline, not an isolated snapshot or a term report.
+- Explicit teacher observations are primary evidence. Previous generated judgments are secondary and may contain invented claims: NEVER use them to establish speaking ability, mastered vocabulary, counting or other concrete achievements unsupported by raw teacher evidence. Lesson plans describe opportunities, not proof that the child performed them.
+- Preserve explicit developmental facts (for example not speaking yet, including in the home language) until a later teacher observation changes them. High Learning ratings do NOT imply speech. For a child not yet speaking, describe receptive understanding, engagement or non-verbal participation only when supported; never invent repetition, spoken answers, singing words or verbal counting.
+- Read changes chronologically: "first word today" updates "not speaking yet"; "starting to say words" is emerging speech, not fluent speech. Never let older information override the newest explicit evidence.
+- Interpret "better", "more manageable", "still" or "again" against documented earlier teacher observations. Explain a supported change gently (for example more settled than in previous lessons), without labelling a child "unmanageable" or inventing earlier incidents. If no baseline exists, mention today's observation without inventing a comparison.
+- Context can change: use historical behaviour as a dated baseline, not a permanent trait. Do not diagnose, compare with classmates or repeat every old difficulty. Mention only history relevant to today's note.
 - Ground the judgment in what was concretely done in THIS exact lesson, not in generic lesson goals.
 - Use the operational notes under each activity to understand what the children actually had to do, say, choose, count, point to, mime, move, answer or manipulate during the lesson.
 - Prefer concrete references to the day's real activities, games, materials, props or sensory experiences (for example flowers, sand, bubbles, cards, story, songs, building blocks, etc.) when those elements are actually present in the lesson context above.
@@ -392,6 +422,7 @@ Return ONLY valid JSON exactly in this form:
 
   async function handleGenerate() {
     setGenerateError('');
+    if (loading || continuityError) { setGenerateError(continuityError || 'Sto caricando lo storico e le schede studenti.'); return; }
     if (!presentStudents.length) { setGenerateError('Segna almeno un allievo come presente.'); return; }
     if (!selectedGroup) { setGenerateError('Seleziona prima il gruppo.'); return; }
     if (lessonContextLoading) { setGenerateError('Sto ancora caricando le attività della lezione.'); return; }
@@ -537,7 +568,6 @@ Return ONLY valid JSON exactly in this form:
                     <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
                   {ratingFields.map((field) => <div key={field} className="rating-row" role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div className="rating-options">{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
-                  <div className="field" style={{ marginTop: 10 }}><label htmlFor={`pronouns-${name}`}>Pronouns (optional override, remembered after saving)</label><select id={`pronouns-${name}`} value={entry.pronouns || ''} onChange={(e) => setEntryPatch(name, { pronouns: e.target.value })}><option value="">Automatic (gender from name / notes)</option><option value="he/him">He / him</option><option value="she/her">She / her</option><option value="they/them">They / them (neutral requested)</option></select></div>
                   <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
                   {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
@@ -549,7 +579,7 @@ Return ONLY valid JSON exactly in this form:
             <div className="field">
               <label>Generate with AI</label>
               <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, background: '#fff' }}>
-                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses each activity's operational notes as well as its concrete materials/props, together with your selected emojis, the optional group note and each optional individual observation. The judgment can therefore refer to what children actually had to do in the exact Story/Day, rather than relying on generic lesson goals.</p>
+                <p className="page-desc" style={{ margin: '0 0 10px', fontSize: 13 }}>Uses the student profile and dated follow-up history, together with today's ratings, teacher observations and exact lesson activities. The judgment can therefore refer to what children actually had to do in the exact Story/Day, rather than relying on generic lesson goals.</p>
                 <button type="button" className="btn" disabled={generating || !hasLessonContext} onClick={handleGenerate} style={{ width: '100%' }}>{generating ? 'Generating judgments…' : 'Generate individual judgments'}</button>
                 {generateError && <div className="error-text" style={{ marginTop: 10 }}>{generateError}</div>}
               </div>

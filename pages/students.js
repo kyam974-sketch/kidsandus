@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
 import styles from '../styles/Roster.module.css';
 
-const EMPTY = { first_name: '', last_name: '', preferred_name: '', birth_date: '', notes: '' };
+const EMPTY = { first_name: '', last_name: '', preferred_name: '', birth_date: '', gender: '', notes: '' };
 
 function displayName(student) {
   return student.preferred_name?.trim() || [student.first_name, student.last_name].filter(Boolean).join(' ');
@@ -58,6 +58,7 @@ export default function StudentsPage() {
       last_name: student.last_name || '',
       preferred_name: student.preferred_name || '',
       birth_date: student.birth_date || '',
+      gender: student.gender || '',
       notes: student.notes || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +80,7 @@ export default function StudentsPage() {
       last_name: form.last_name.trim(),
       preferred_name: form.preferred_name.trim() || null,
       birth_date: form.birth_date || null,
+      gender: form.gender || null,
       notes: form.notes.trim(),
       active: true,
     };
@@ -125,6 +127,15 @@ export default function StudentsPage() {
           <div className={styles.field}>
             <label>Data di nascita</label>
             <input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="student-gender">Genere</label>
+            <select id="student-gender" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+              <option value="">Automatico dal nome / annotazioni</option>
+              <option value="male">Maschile — he/him</option>
+              <option value="female">Femminile — she/her</option>
+              <option value="neutral">Neutro richiesto — they/them</option>
+            </select>
           </div>
           <div className={`${styles.field} ${styles.full}`}>
             <label>Note interne</label>
