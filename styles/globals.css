@@ -325,3 +325,5 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
   .history-assessments, .history-note { flex-basis: 100%; }
   .responsive-table td { overflow-wrap: anywhere; }
 }
+
+.history-copy { margin-left: auto; padding: 8px 12px; font-size: 13px; }

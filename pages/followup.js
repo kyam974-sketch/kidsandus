@@ -108,6 +108,8 @@ export default function FollowUp() {
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedStudent, setCopiedStudent] = useState('');
+  const [copiedHistory, setCopiedHistory] = useState('');
+  const [historyCopyError, setHistoryCopyError] = useState('');
 
   const availableYears = Array.from(new Set(groups.map((g) => g.anno_scolastico).filter(Boolean))).sort((a, b) => b.localeCompare(a));
   if (!availableYears.includes(CURRENT_YEAR)) availableYears.unshift(CURRENT_YEAR);
@@ -125,7 +127,7 @@ export default function FollowUp() {
     ? studentList.filter((n) => n.toLowerCase().includes(studentQuery.trim().toLowerCase()) && n !== studentQuery).slice(0, 6)
     : [];
   const studentHistory = selectedStudent
-    ? allSessions.filter((s) => (s.entries || []).some((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase())).sort((a, b) => new Date(a.session_date) - new Date(b.session_date))
+    ? allSessions.filter((s) => (s.entries || []).some((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase())).sort((a, b) => new Date(b.session_date) - new Date(a.session_date) || new Date(b.created_at || 0) - new Date(a.created_at || 0))
     : [];
 
   const hasExactLessonActivities = lessonActivities.length > 0;
@@ -254,6 +256,17 @@ export default function FollowUp() {
     setTimeout(() => setCopiedStudent(''), 1800);
   }
 
+  async function copyHistoryNote(sessionId, note) {
+    setHistoryCopyError('');
+    try {
+      await navigator.clipboard.writeText(note);
+      setCopiedHistory(sessionId);
+      setTimeout(() => setCopiedHistory((current) => current === sessionId ? '' : current), 2000);
+    } catch {
+      setHistoryCopyError('Non riesco a copiare la nota. Seleziona il testo e copialo manualmente.');
+    }
+  }
+
   function selectedGroupLabel() {
     return selectedGroup ? `${selectedGroup.sede} · ${selectedGroup.corso} · ${selectedGroup.giorno}` : '';
   }
@@ -331,7 +344,7 @@ INDIVIDUAL TEACHER EVIDENCE
 ${studentEvidence}
 
 TASK
-For EACH student present, write one concise individualized judgment in Italian, 2-3 sentences, suitable as an internal follow-up note and useful later for a term report.
+For EACH student present, write a concise individualized judgment in Italian, suitable as an internal follow-up note and useful later for a term report. Cover EACH assessed dimension separately, in this order: Motivation & Participation, Learning, Behaviour${showMyWay ? ', My Way' : ''}. Write one short sentence per assessed dimension (normally 3${showMyWay ? '-4' : ''} sentences in total). Brevity must never remove an assessed dimension. Return separate text fields so no criterion is lost; the application will join them into a natural paragraph.
 
 STRICT RULES
 - Ground the judgment in what was concretely done in THIS exact lesson, not in generic lesson goals.
@@ -339,19 +352,21 @@ STRICT RULES
 - Prefer concrete references to the day's real activities, games, materials, props or sensory experiences (for example flowers, sand, bubbles, cards, story, songs, building blocks, etc.) when those elements are actually present in the lesson context above.
 - When natural, include at least one concrete lesson element in each judgment so the note says what the child worked or played with that day rather than only describing broad skills.
 - Do NOT use bonus/optional activities as if they happened unless the teacher observation explicitly says they were done. Planner context above contains core activities only.
-- The selected Motivation & Participation/Learning/Behaviour ratings are teacher evidence. Respect them; do not change or reinterpret them into different ratings.
-${showMyWay ? '- My Way is a separate teacher-selected assessment of home platform use, based on audio listening and Mission progress. It is NOT classroom participation, learning performance or behaviour. Mention it only if selected or explicitly supported by an individual teacher observation. Never infer listening counts, completed games or missed Missions from an emoji. Missions are optional; do not penalize their absence or invent a numeric grading threshold.' : ''}
+- Every selected rating MUST have a corresponding sentence. Motivation & Participation describes engagement and willingness to participate; Learning describes understanding and progress; Behaviour describes conduct, attention to rules and interactions. These are distinct dimensions: do not combine them into a generic positive or negative conclusion.
+- The selected ratings ARE sufficient evidence for a measured qualitative sentence about their own dimension. Respect the exact level: Poor = difficoltà marcate, Satisfactory = livello sufficiente, Good = buon livello, Very good = livello molto buono, Excellent = livello ottimo. Do not make every rating sound excellent or infer a need for support from the rating alone.
+- Refer to a concrete lesson activity naturally, without repeating the whole lesson plan or forcing an activity into every sentence.
+${showMyWay ? '- My Way is a separate teacher-selected assessment of home platform use, based on audio listening and Mission progress. It is NOT classroom participation, learning performance or behaviour. Always write a separate My Way sentence when its rating is selected, expressing the assessed level of home platform use without claiming specific listening frequency or Mission completion. Mention it only if selected or explicitly supported by an individual teacher observation. Never infer listening counts, completed games or missed Missions from an emoji. Missions are optional; do not penalize their absence or invent a numeric grading threshold.' : ''}
 - Use each student's individual teacher observation when present.
 - The group observation is context only: do NOT automatically attribute a group event or behaviour to every student.
 - Do not invent incidents, answers, vocabulary produced, behaviours, achievements or difficulties that the teacher did not report or that are not supported by the selected ratings.
 - A concrete activity may be named because it was part of the lesson, but do not claim that the child mastered specific vocabulary or structures merely because the activity was present.
-- If evidence for one dimension is absent, simply avoid making a claim about that dimension instead of guessing.
+- If a rating is not selected and no individual observation supports that dimension, return an empty string for its field. Do not invent a missing assessment. Put other relevant individual observations in the observation field without repeating the dimension sentences.
 - Keep developmental expectations appropriate to the course profile, especially for Mousy and Linda.
 - Do not mention numeric ratings, emojis, the AI, the prompt, or lack of evidence in the final judgment.
 - Tone: professional, natural, concise, factual, not inflated.
 
 Return ONLY valid JSON exactly in this form:
-{"Student Name":"judgment text"}`;
+{"Student Name":{"motivation":"short Italian sentence","learning":"short Italian sentence","behaviour":"short Italian sentence"${showMyWay ? ',"my_way":"short Italian sentence"' : ''},"observation":"optional short sentence, otherwise empty string"}}`;
   }
 
   async function handleGenerate() {
@@ -381,10 +396,22 @@ Return ONLY valid JSON exactly in this form:
       const raw = (data.content || []).map((b) => b.text || '').join('').replace(/```json|```/g, '').trim();
       if (!raw) throw new Error(data.error?.message || 'Empty AI response');
       const parsed = JSON.parse(raw);
-      presentStudents.forEach((name) => {
+      const judgments = presentStudents.map((name) => {
         const judgment = parsed[name];
-        if (judgment) setEntryPatch(name, { note: typeof judgment === 'string' ? judgment : String(judgment.note || '') });
+        if (!judgment || typeof judgment !== 'object' || Array.isArray(judgment)) {
+          throw new Error(`Risposta incompleta per ${name}. Riprova la generazione.`);
+        }
+        const entry = getEntry(name);
+        const parts = ratingFields.map((field) => {
+          const text = typeof judgment[field] === 'string' ? judgment[field].trim() : '';
+          if (entry[field] && !text) throw new Error(`Manca ${RATING_LABELS[field]} per ${name}. Riprova la generazione.`);
+          return text;
+        }).filter(Boolean);
+        if (typeof judgment.observation === 'string' && judgment.observation.trim()) parts.push(judgment.observation.trim());
+        if (!parts.length) throw new Error(`Giudizio vuoto per ${name}. Riprova la generazione.`);
+        return { name, note: parts.join(' ') };
       });
+      judgments.forEach(({ name, note }) => setEntryPatch(name, { note }));
     } catch (e) {
       setGenerateError('Generation error: ' + e.message);
     }
@@ -521,12 +548,14 @@ Return ONLY valid JSON exactly in this form:
           <input placeholder="Start typing a name…" value={studentQuery} onChange={(e) => { setStudentQuery(e.target.value); setShowSearchSuggestions(true); const exact = studentList.find((n) => n.toLowerCase() === e.target.value.toLowerCase()); setSelectedStudent(exact || ''); }} onFocus={() => setShowSearchSuggestions(true)} onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 150)} />
           {showSearchSuggestions && searchSuggestions.length > 0 && <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10 }}>{searchSuggestions.map((n) => <div key={n} onMouseDown={() => { setStudentQuery(n); setSelectedStudent(n); setShowSearchSuggestions(false); }} style={{ padding: '10px 12px', cursor: 'pointer' }}>{n}</div>)}</div>}
         </div>
+        {historyCopyError && <p className="error-text" role="alert">{historyCopyError}</p>}
         {selectedStudent && <><div className="section-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <div className="student-history" role="list" aria-label="Student history">{studentHistory.map((s) => {
               const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase());
               return <article className="history-entry" role="listitem" key={s.id}>
                 <header className="history-entry-header">
                   <time dateTime={s.session_date}>{fmtDate(s.session_date)}</time>
                   <span>{s.corso} · {s.giorno}</span>
+                  <button className="btn secondary history-copy" type="button" disabled={!entry?.note?.trim()} onClick={() => copyHistoryNote(s.id, entry.note)} aria-label={`Copia nota del ${fmtDate(s.session_date)}`}>{copiedHistory === s.id ? 'Copiata ✓' : 'Copia nota'}</button>
                 </header>
                 <div className="history-entry-body">
                   <dl className="history-assessments" aria-label="Assessments">{ratingFieldsForCourse(s.corso).map((field) => {
