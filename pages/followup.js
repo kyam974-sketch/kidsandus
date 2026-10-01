@@ -344,7 +344,7 @@ INDIVIDUAL TEACHER EVIDENCE
 ${studentEvidence}
 
 TASK
-For EACH student present, write a concise individualized judgment in Italian, suitable as an internal follow-up note and useful later for a term report. Cover EACH assessed dimension separately, in this order: Motivation & Participation, Learning, Behaviour${showMyWay ? ', My Way' : ''}. Write one short sentence per assessed dimension (normally 3${showMyWay ? '-4' : ''} sentences in total). Brevity must never remove an assessed dimension. Return separate text fields so no criterion is lost; the application will join them into a natural paragraph.
+For EACH student present, write a concise individualized judgment in natural, idiomatic British English, suitable as an internal follow-up note and useful later for a term report. Cover EACH assessed dimension separately, in this order: Motivation & Participation, Learning, Behaviour${showMyWay ? ', My Way' : ''}. Write one short sentence per assessed dimension (normally 3${showMyWay ? '-4' : ''} sentences in total). Brevity must never remove an assessed dimension. Return separate text fields so no criterion is lost; the application will join them into a natural paragraph.
 
 STRICT RULES
 - Ground the judgment in what was concretely done in THIS exact lesson, not in generic lesson goals.
@@ -353,7 +353,7 @@ STRICT RULES
 - When natural, include at least one concrete lesson element in each judgment so the note says what the child worked or played with that day rather than only describing broad skills.
 - Do NOT use bonus/optional activities as if they happened unless the teacher observation explicitly says they were done. Planner context above contains core activities only.
 - Every selected rating MUST have a corresponding sentence. Motivation & Participation describes engagement and willingness to participate; Learning describes understanding and progress; Behaviour describes conduct, attention to rules and interactions. These are distinct dimensions: do not combine them into a generic positive or negative conclusion.
-- The selected ratings ARE sufficient evidence for a measured qualitative sentence about their own dimension. Respect the exact level: Poor = difficoltà marcate, Satisfactory = livello sufficiente, Good = buon livello, Very good = livello molto buono, Excellent = livello ottimo. Do not make every rating sound excellent or infer a need for support from the rating alone.
+- The selected ratings ARE sufficient evidence for a measured qualitative sentence about their own dimension. Respect the exact level: Poor = significant difficulty, Satisfactory = satisfactory, Good = good, Very good = very good, Excellent = excellent. Do not make every rating sound excellent or infer a need for support from the rating alone.
 - Refer to a concrete lesson activity naturally, without repeating the whole lesson plan or forcing an activity into every sentence.
 ${showMyWay ? '- My Way is a separate teacher-selected assessment of home platform use, based on audio listening and Mission progress. It is NOT classroom participation, learning performance or behaviour. Always write a separate My Way sentence when its rating is selected, expressing the assessed level of home platform use without claiming specific listening frequency or Mission completion. Mention it only if selected or explicitly supported by an individual teacher observation. Never infer listening counts, completed games or missed Missions from an emoji. Missions are optional; do not penalize their absence or invent a numeric grading threshold.' : ''}
 - Use each student's individual teacher observation when present.
@@ -363,10 +363,14 @@ ${showMyWay ? '- My Way is a separate teacher-selected assessment of home platfo
 - If a rating is not selected and no individual observation supports that dimension, return an empty string for its field. Do not invent a missing assessment. Put other relevant individual observations in the observation field without repeating the dimension sentences.
 - Keep developmental expectations appropriate to the course profile, especially for Mousy and Linda.
 - Do not mention numeric ratings, emojis, the AI, the prompt, or lack of evidence in the final judgment.
+- Write the separate fields as consecutive sentences of ONE fluent paragraph, not as standalone mini-reports. Use the child’s name ONCE ONLY, at the beginning of the motivation sentence (or the first non-empty field). Never repeat the name in any later field, including observation.
+- In later sentences use natural pronouns only when the teacher evidence establishes them; otherwise use constructions such as "Understanding was good", "Classroom behaviour was very good", or "Engagement with My Way was excellent". Never guess gender from a name.
+- Use simple, idiomatic classroom English. Avoid literal translations, inflated praise, bureaucratic phrases, repetitive sentence openings and repeating the same idea across criteria. Vary the phrasing naturally while preserving the selected rating levels.
+- This English note is internal evidence only. Term Reports are generated separately in Italian.
 - Tone: professional, natural, concise, factual, not inflated.
 
 Return ONLY valid JSON exactly in this form:
-{"Student Name":{"motivation":"short Italian sentence","learning":"short Italian sentence","behaviour":"short Italian sentence"${showMyWay ? ',"my_way":"short Italian sentence"' : ''},"observation":"optional short sentence, otherwise empty string"}}`;
+{"Student Name":{"motivation":"short English sentence","learning":"short English sentence","behaviour":"short English sentence"${showMyWay ? ',"my_way":"short English sentence"' : ''},"observation":"optional short sentence, otherwise empty string"}}`;
   }
 
   async function handleGenerate() {
