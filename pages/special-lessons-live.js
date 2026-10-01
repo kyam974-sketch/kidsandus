@@ -205,7 +205,7 @@ export default function SpecialLessonLive() {
     return (
       <Layout>
         <div className="light-stage">
-          <div style={{ position: 'absolute', top: 24, left: 28, right: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, fontSize: 18, fontWeight: 800 }}>
+          <div className="light-status">
             <span>🕒 {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             <span>{displayAct ? `${displayAct.startClock} – ${displayAct.endClock}` : '—'}</span>
             <span>{displayAct ? `⏱ ${lightCountdownLabel} ${fmtCountdown(lightCountdown)}` : ''}</span>

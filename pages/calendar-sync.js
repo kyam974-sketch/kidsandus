@@ -129,7 +129,7 @@ export default function CalendarSyncSetup() {
         </p>
         <div className="field">
           <label>URL pronto per il nuovo Shortcut</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="input-action-row">
             <input readOnly value={loading ? 'Loading…' : shortcutFeedUrl} style={{ flex: 1 }} />
             <button className="btn" disabled={!shortcutFeedUrl} onClick={() => copy(shortcutFeedUrl, 'shortcut-feed')}>
               {copied === 'shortcut-feed' ? 'Copied' : 'Copy URL'}
@@ -156,14 +156,14 @@ export default function CalendarSyncSetup() {
         <h2>Connection data</h2>
         <div className="field">
           <label>Inbound Shortcut endpoint</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="input-action-row">
             <input readOnly value={ENDPOINT} style={{ flex: 1 }} />
             <button className="btn secondary" onClick={() => copy(ENDPOINT, 'endpoint')}>{copied === 'endpoint' ? 'Copied' : 'Copy'}</button>
           </div>
         </div>
         <div className="field">
           <label>Sync token</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="input-action-row">
             <input readOnly value={loading ? 'Loading…' : token} style={{ flex: 1 }} />
             <button className="btn secondary" disabled={!token} onClick={() => copy(token, 'token')}>{copied === 'token' ? 'Copied' : 'Copy'}</button>
           </div>

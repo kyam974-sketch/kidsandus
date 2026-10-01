@@ -161,6 +161,7 @@ export default function App({ Component, pageProps }) {
     <>
       <Head>
         <title>Kids&amp;Us Hub</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="application-name" content="Kids&Us Hub" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />

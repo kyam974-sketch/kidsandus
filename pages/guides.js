@@ -121,7 +121,7 @@ export default function Guides() {
             <label htmlFor="corso-select-guide">Course</label>
             <select id="corso-select-guide" value={corso} onChange={(e) => setCorso(e.target.value)}>{CORSI.map((c) => <option key={c} value={c}>{c}</option>)}</select>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <div className="section-actions" style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button type="button" className={view === 'course' ? 'btn' : 'btn secondary'} onClick={() => setView('course')}>Course Info</button>
             <button type="button" className={view === 'story' ? 'btn' : 'btn secondary'} onClick={() => setView('story')}>Stories</button>
           </div>
@@ -132,7 +132,7 @@ export default function Guides() {
           sections.length === 0 ? <p className="page-desc">No course info added yet for {corso}.</p> : <div>{sections.map((s) => { const isOpen = openSection === s.id; return <div key={s.id} className="collapse-card"><div className="collapse-head" onClick={() => setOpenSection(isOpen ? null : s.id)}><span style={{ fontSize: 14 }}><span className="collapse-num">{s.section_order}</span><strong>{s.title}</strong></span><span className="collapse-chevron">{isOpen ? '▲' : '▼'}</span></div>{isOpen && <div className="collapse-body"><pre className="pre-text">{s.content || '(no content yet)'}</pre></div>}</div>; })}</div>
         ) : !story && days.length === 0 ? <p className="page-desc">No content added yet for Story {storyNumber}.</p> : (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}><button type="button" className={storyTab === 'routines' ? 'btn' : 'btn secondary'} onClick={() => setStoryTab('routines')}>Story Info & Routines</button><button type="button" className={storyTab === 'days' ? 'btn' : 'btn secondary'} onClick={() => setStoryTab('days')}>Days ({days.length})</button></div>
+            <div className="section-actions" style={{ display: 'flex', gap: 8, marginBottom: 16 }}><button type="button" className={storyTab === 'routines' ? 'btn' : 'btn secondary'} onClick={() => setStoryTab('routines')}>Story Info & Routines</button><button type="button" className={storyTab === 'days' ? 'btn' : 'btn secondary'} onClick={() => setStoryTab('days')}>Days ({days.length})</button></div>
             {storyTab === 'routines' && <div>{story && <h2 style={{ marginBottom: 14 }}>{story.title}</h2>}{infoBlocks.map((b) => { const isOpen = openInfoBlock === b.key; return <div key={b.key} className="collapse-card"><div className="collapse-head" onClick={() => setOpenInfoBlock(isOpen ? null : b.key)}><strong style={{ fontSize: 14 }}>{b.label}</strong><span className="collapse-chevron">{isOpen ? '▲' : '▼'}</span></div>{isOpen && <div className="collapse-body"><pre className="pre-text">{b.content || '(no content yet)'}</pre></div>}</div>; })}</div>}
             {storyTab === 'days' && <div>
               {editingDay === null && <button type="button" className="btn secondary" style={{ marginBottom: 14 }} onClick={startNewDay}>+ New Day</button>}

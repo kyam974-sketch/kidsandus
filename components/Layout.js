@@ -28,7 +28,12 @@ export default function Layout({ children }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isAppleMobile, setIsAppleMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const active = todayIndex();
+  const currentPage = NAV.find((item) => item.href === router.pathname)?.label.replace(/^\S+\s/, '')
+    || (router.pathname === '/calendar-sync' ? 'Calendar sync' : 'Special lesson');
+
+  useEffect(() => { setMenuOpen(false); }, [router.pathname]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -81,15 +86,20 @@ export default function Layout({ children }) {
 
   return (
     <div className="app-shell">
-      <aside className="rail">
-        <div className="rail-brand">Kids&amp;Us Hub</div>
+      <a className="skip-link" href="#hub-main">Skip to content</a>
+      <aside className={`rail${menuOpen ? ' menu-open' : ''}`}>
+        <div className="rail-header">
+          <div><div className="rail-brand">Kids&amp;Us Hub</div><div className="rail-current">{currentPage}</div></div>
+          <button type="button" className="rail-menu" aria-expanded={menuOpen} aria-controls="hub-navigation" onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? 'Close' : 'Menu'}</button>
+        </div>
+        <div id="hub-navigation" className="rail-content">
         <div className="rail-sub">TEACHING TOOLS</div>
         <div className="day-strip">{DAYS.map((d, i) => <span key={i} className={i === active ? 'active' : ''} title={d} />)}</div>
-        <nav className="rail-nav">
+        <nav className="rail-nav" aria-label="Hub navigation">
           {NAV.map((item) => {
             const isActive = router.pathname === item.href;
             if (!item.live) return <span key={item.label} className="rail-link disabled">{item.label}{item.sub && <small>{item.sub}</small>}</span>;
-            return <a key={item.label} href={item.href} className={`rail-link${isActive ? ' active' : ''}`}>{item.label}{item.sub && <small>{item.sub}</small>}</a>;
+            return <a key={item.label} href={item.href} aria-current={isActive ? 'page' : undefined} className={`rail-link${isActive ? ' active' : ''}`}>{item.label}{item.sub && <small>{item.sub}</small>}</a>;
           })}
         </nav>
         {!isStandalone && (installPrompt || isAppleMobile) && (
@@ -102,8 +112,9 @@ export default function Layout({ children }) {
           </button>
         )}
         <button className="rail-logout" onClick={async () => { await supabase.auth.signOut(); router.replace('/login'); }}>Log out</button>
+        </div>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main" id="hub-main" tabIndex={-1}>{children}</main>
     </div>
   );
 }

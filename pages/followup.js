@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
+import ResponsiveTable from '../components/ResponsiveTable';
 import { supabase } from '../lib/supabaseClient';
 import { EMOJI_SCALE, RATING_LABELS, hasMyWay, ratingFieldsForCourse, ratingSummary } from '../lib/followupRatings';
 
@@ -419,7 +420,7 @@ Return ONLY valid JSON exactly in this form:
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="followup-lesson-fields">
             <div className="field"><label>Date</label><input type="date" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} /></div>
             <div className="field"><label>Story</label><select value={form.story} onChange={(e) => setForm({ ...form, story: Number(e.target.value) })}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
             <div className="field"><label>Day</label><input type="number" min="1" value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) || 1 })} /></div>
@@ -466,7 +467,7 @@ Return ONLY valid JSON exactly in this form:
                 })}
               </div>
               <div style={{ position: 'relative' }}>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="input-action-row">
                   <input placeholder="New student name…" value={newStudentName} onChange={(e) => { setNewStudentName(e.target.value); setShowAddSuggestions(true); }} onFocus={() => setShowAddSuggestions(true)} onBlur={() => setTimeout(() => setShowAddSuggestions(false), 150)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddStudent(); } }} />
                   <button type="button" className="btn secondary" onClick={handleAddStudent} disabled={addingStudent}>+ Add</button>
                 </div>
@@ -483,12 +484,12 @@ Return ONLY valid JSON exactly in this form:
               {showMyWay && <p style={{ fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 12px' }}>My Way: assess audio listening and Mission progress in the Teacher’s Dashboard. Aim for daily audio (7/week); 4 Mission activities/week are recommended and optional. Choose the emoji manually.</p>}
               {presentStudents.map((name) => {
                 const entry = getEntry(name);
-                return <div key={name} style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 10, background: '#fff' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                return <div key={name} className="assessment-card" style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 10, background: '#fff' }}>
+                  <div className="assessment-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <strong>{name}</strong>
                     <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
-                  {ratingFields.map((field) => <div key={field} role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div style={{ display: 'flex', gap: 6 }}>{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
+                  {ratingFields.map((field) => <div key={field} className="rating-row" role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div className="rating-options">{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
                   <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
                   {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
@@ -520,17 +521,17 @@ Return ONLY valid JSON exactly in this form:
           <input placeholder="Start typing a name…" value={studentQuery} onChange={(e) => { setStudentQuery(e.target.value); setShowSearchSuggestions(true); const exact = studentList.find((n) => n.toLowerCase() === e.target.value.toLowerCase()); setSelectedStudent(exact || ''); }} onFocus={() => setShowSearchSuggestions(true)} onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 150)} />
           {showSearchSuggestions && searchSuggestions.length > 0 && <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10 }}>{searchSuggestions.map((n) => <div key={n} onMouseDown={() => { setStudentQuery(n); setSelectedStudent(n); setShowSearchSuggestions(false); }} style={{ padding: '10px 12px', cursor: 'pointer' }}>{n}</div>)}</div>}
         </div>
-        {selectedStudent && <><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <table className="simple-table"><thead><tr><th>Date</th><th>Group</th><th>Assessments</th><th>Note</th></tr></thead><tbody>{studentHistory.map((s) => { const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase()); return <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.corso} · {s.giorno}</td><td>{ratingSummary(entry, s.corso, true)}</td><td>{entry?.note || '—'}</td></tr>; })}</tbody></table>}</>}
+        {selectedStudent && <><div className="section-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <ResponsiveTable label="Student history"><thead><tr><th>Date</th><th>Group</th><th>Assessments</th><th>Note</th></tr></thead><tbody>{studentHistory.map((s) => { const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase()); return <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.corso} · {s.giorno}</td><td>{ratingSummary(entry, s.corso, true)}</td><td>{entry?.note || '—'}</td></tr>; })}</tbody></ResponsiveTable>}</>}
       </div>
 
       <div className="section-block">
         <h2>Your groups</h2>
-        {loading ? <p>Loading…</p> : <table className="simple-table"><thead><tr><th>Location</th><th>Course</th><th>Day</th><th>Time</th><th>Year</th><th>Students</th><th></th></tr></thead><tbody>{groups.map((g) => <tr key={g.id}><td>{g.sede}</td><td>{g.corso}</td><td>{g.giorno}</td><td>{g.orario || '—'}</td><td>{g.anno_scolastico}</td><td>{Array.isArray(g.students) ? g.students.length : 0}</td><td><button type="button" onClick={() => handleDeleteGroup(g)} className="link-btn danger">Delete</button></td></tr>)}</tbody></table>}
+        {loading ? <p>Loading…</p> : <ResponsiveTable label="Your groups"><thead><tr><th>Location</th><th>Course</th><th>Day</th><th>Time</th><th>Year</th><th>Students</th><th></th></tr></thead><tbody>{groups.map((g) => <tr key={g.id}><td>{g.sede}</td><td>{g.corso}</td><td>{g.giorno}</td><td>{g.orario || '—'}</td><td>{g.anno_scolastico}</td><td>{Array.isArray(g.students) ? g.students.length : 0}</td><td><button type="button" onClick={() => handleDeleteGroup(g)} className="link-btn danger">Delete</button></td></tr>)}</tbody></ResponsiveTable>}
       </div>
 
       <div className="section-block">
         <h2>Recent follow-ups</h2>
-        {loading ? <p>Loading…</p> : sessions.length === 0 ? <p>No follow-up registered yet.</p> : <table className="simple-table"><thead><tr><th>Date</th><th>Group</th><th>Story/Day</th><th>Students assessed</th><th></th></tr></thead><tbody>{sessions.map((s) => <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.group_name}</td><td>{s.story || '—'}</td><td>{Array.isArray(s.entries) ? s.entries.length : 0}</td><td><button type="button" onClick={() => handleDeleteSession(s)} className="link-btn danger">Delete</button></td></tr>)}</tbody></table>}
+        {loading ? <p>Loading…</p> : sessions.length === 0 ? <p>No follow-up registered yet.</p> : <ResponsiveTable label="Recent follow-ups"><thead><tr><th>Date</th><th>Group</th><th>Story/Day</th><th>Students assessed</th><th></th></tr></thead><tbody>{sessions.map((s) => <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.group_name}</td><td>{s.story || '—'}</td><td>{Array.isArray(s.entries) ? s.entries.length : 0}</td><td><button type="button" onClick={() => handleDeleteSession(s)} className="link-btn danger">Delete</button></td></tr>)}</tbody></ResponsiveTable>}
       </div>
     </Layout>
   );

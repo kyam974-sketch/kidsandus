@@ -474,7 +474,7 @@ export default function SpecialLessons() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
+          <div className="special-lesson-fields">
             <div className="field"><label>Tipo lezione</label><select value={type} onChange={(e) => changeType(e.target.value)}>{TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
             <div className="field"><label>Corso</label><select value={courseId} onChange={(e) => changeCourse(e.target.value)}>{availableCourses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             {type === 'makeup' && <><div className="field"><label>Story</label><select value={story} onChange={(e) => setStory(Number(e.target.value))}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div><div className="field"><label>Day perso</label><select value={sourceDay} onChange={(e) => setSourceDay(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div></>}
@@ -527,7 +527,7 @@ export default function SpecialLessons() {
             <h2 style={{ marginTop: 4 }}>↩ Recall activity</h2>
             <p style={{ marginTop: 0 }}>Cerca per nome, materiale, teaching notes, track oppure provenienza. Nessuna attività viene mostrata finché non la richiami con una ricerca o un filtro.</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 2fr) repeat(2, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
+            <div className="activity-bank-filters">
               <div className="field"><label>Cerca</label><input type="search" value={bankQuery} onChange={(e) => setBankQuery(e.target.value)} placeholder="Es. scarves, balloons, TR#25, body parts…" /></div>
               <div className="field"><label>Story</label><select value={bankStory} onChange={(e) => { setBankStory(e.target.value); setBankDay('all'); }}><option value="all">Tutte</option>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
               <div className="field"><label>Day</label><select value={bankDay} onChange={(e) => setBankDay(e.target.value)}><option value="all">Tutti</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Day {n}</option>)}</select></div>
