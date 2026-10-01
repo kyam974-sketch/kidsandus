@@ -521,7 +521,22 @@ Return ONLY valid JSON exactly in this form:
           <input placeholder="Start typing a name…" value={studentQuery} onChange={(e) => { setStudentQuery(e.target.value); setShowSearchSuggestions(true); const exact = studentList.find((n) => n.toLowerCase() === e.target.value.toLowerCase()); setSelectedStudent(exact || ''); }} onFocus={() => setShowSearchSuggestions(true)} onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 150)} />
           {showSearchSuggestions && searchSuggestions.length > 0 && <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10 }}>{searchSuggestions.map((n) => <div key={n} onMouseDown={() => { setStudentQuery(n); setSelectedStudent(n); setShowSearchSuggestions(false); }} style={{ padding: '10px 12px', cursor: 'pointer' }}>{n}</div>)}</div>}
         </div>
-        {selectedStudent && <><div className="section-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <ResponsiveTable label="Student history"><thead><tr><th>Date</th><th>Group</th><th>Assessments</th><th>Note</th></tr></thead><tbody>{studentHistory.map((s) => { const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase()); return <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.corso} · {s.giorno}</td><td>{ratingSummary(entry, s.corso, true)}</td><td>{entry?.note || '—'}</td></tr>; })}</tbody></ResponsiveTable>}</>}
+        {selectedStudent && <><div className="section-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <div className="student-history" role="list" aria-label="Student history">{studentHistory.map((s) => {
+              const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase());
+              return <article className="history-entry" role="listitem" key={s.id}>
+                <header className="history-entry-header">
+                  <time dateTime={s.session_date}>{fmtDate(s.session_date)}</time>
+                  <span>{s.corso} · {s.giorno}</span>
+                </header>
+                <div className="history-entry-body">
+                  <dl className="history-assessments" aria-label="Assessments">{ratingFieldsForCourse(s.corso).map((field) => {
+                    const rating = EMOJI_SCALE.find((item) => item.value === entry?.[field]);
+                    return <div key={field}><dt>{RATING_LABELS[field]}:</dt><dd><span aria-label={rating?.label || 'Not assessed'}>{rating?.emoji || '—'}</span></dd></div>;
+                  })}</dl>
+                  <div className="history-note"><strong>Note</strong><p>{entry?.note || '—'}</p></div>
+                </div>
+              </article>;
+            })}</div>}</>}
       </div>
 
       <div className="section-block">

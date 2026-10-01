@@ -302,3 +302,26 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
   .print-bonus h2 { font-size: 13pt; margin: 12px 0 4px; }
   audio { display: none !important; }
 }
+
+/* History keeps metadata and assessments readable independently of note length. */
+.student-history { display: grid; gap: 16px; }
+.history-entry { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.history-entry-header { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 14px 18px; background: #f5f7fa; overflow-wrap: normal; }
+.history-entry-header time { white-space: nowrap; font-weight: 700; }
+.history-entry-header span { line-height: 1.5; }
+.history-entry-body { display: flex; flex-wrap: wrap; gap: 20px 28px; padding: 18px; }
+.history-assessments { flex: 1 1 235px; margin: 0; overflow-wrap: normal; }
+.history-assessments > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 5px 0; }
+.history-assessments dt { font-size: 14px; line-height: 1.5; }
+.history-assessments dd { flex-shrink: 0; margin: 0; font-size: 20px; line-height: 1.3; }
+.history-note { flex: 3 1 340px; }
+.history-note > strong { font-size: 13px; color: var(--ink-soft); }
+.history-note p { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.65; }
+.simple-table th, .simple-table td { overflow-wrap: normal; word-break: normal; }
+.simple-table th { white-space: nowrap; }
+@media screen and (max-width: 600px) {
+  .history-entry-header { padding: 12px; }
+  .history-entry-body { padding: 12px; gap: 16px; }
+  .history-assessments, .history-note { flex-basis: 100%; }
+  .responsive-table td { overflow-wrap: anywhere; }
+}
