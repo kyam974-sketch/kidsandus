@@ -56,6 +56,55 @@ function normalizeJsonForPrompt(jsonText, promptText) {
   return JSON.stringify(parsed);
 }
 
+function ensureFollowUpStartsWithName(jsonText) {
+  if (!jsonText) return jsonText;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (_) {
+    return jsonText;
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return jsonText;
+
+  const startWithName = (studentKey, rawText) => {
+    const text = String(rawText || '').trim();
+    if (!text) return text;
+
+    const firstName = String(studentKey || '').trim().split(/\s+/)[0] || String(studentKey || '').trim();
+    const lowerText = text.toLocaleLowerCase('it-IT');
+    const lowerFirstName = firstName.toLocaleLowerCase('it-IT');
+    const lowerFullName = String(studentKey || '').trim().toLocaleLowerCase('it-IT');
+
+    if (lowerText === lowerFirstName || lowerText.startsWith(`${lowerFirstName} `) || lowerText.startsWith(`${lowerFirstName},`) || lowerText.startsWith(`${lowerFirstName}:`) ||
+        lowerText === lowerFullName || lowerText.startsWith(`${lowerFullName} `) || lowerText.startsWith(`${lowerFullName},`) || lowerText.startsWith(`${lowerFullName}:`)) {
+      return text;
+    }
+
+    const firstChar = text.charAt(0);
+    const naturalContinuation = firstChar ? firstChar.toLocaleLowerCase('it-IT') + text.slice(1) : text;
+    return `${firstName} ${naturalContinuation}`.trim();
+  };
+
+  const fixed = {};
+  for (const [studentName, value] of Object.entries(parsed)) {
+    if (typeof value === 'string') {
+      fixed[studentName] = startWithName(studentName, value);
+      continue;
+    }
+
+    if (value && typeof value === 'object' && !Array.isArray(value) && typeof value.note === 'string') {
+      fixed[studentName] = { ...value, note: startWithName(studentName, value.note) };
+      continue;
+    }
+
+    fixed[studentName] = value;
+  }
+
+  return JSON.stringify(fixed);
+}
+
 function textFromMessages(messages) {
   return (messages || []).map((message) => {
     const role = message?.role || 'user';
@@ -81,7 +130,7 @@ function openAIOutputText(data) {
     .trim();
 }
 
-const FOLLOWUP_STYLE = `\n\nITALIAN STYLE OVERRIDE — IMPORTANT\nWrite the judgments in idiomatic, natural Italian as if I, the teacher, had written them myself. When an observation is attributed to the teacher, use first-person singular (for example “ho notato…”, “ho visto…”, “durante l’attività ho osservato…”) and NEVER detached formulas such as “l’insegnante segnala/osserva/rileva”. Avoid bureaucratic or translated-sounding Italian. When referring to songs used in class, normally say “le canzoni”, “cantare”, “seguire la canzone”, etc.; do not use “il canto” as an artificial substitute for “songs”. Prefer simple classroom language over nominalisations. Do not overuse “ha dimostrato”, “evidenzia”, “mostra” or similar report clichés. Keep the result warm, professional, concrete and believable.`;
+const FOLLOWUP_STYLE = `\n\nITALIAN STYLE OVERRIDE — IMPORTANT\nWrite the judgments in idiomatic, natural Italian as if I, the teacher, had written them myself. EVERY individual judgment MUST begin with that student's first name as the very first word, followed immediately by a natural sentence: for example “Alice oggi è stata molto partecipe…” or “Marco ha seguito con interesse…”. Never begin a judgment with “Oggi”, “Ha…”, “Durante…”, a pronoun, or any wording before the student's name. When an observation is attributed to the teacher, use first-person singular (for example “ho notato…”, “ho visto…”, “durante l’attività ho osservato…”) and NEVER detached formulas such as “l’insegnante segnala/osserva/rileva”. Avoid bureaucratic or translated-sounding Italian. When referring to songs used in class, normally say “le canzoni”, “cantare”, “seguire la canzone”, etc.; do not use “il canto” as an artificial substitute for “songs”. Prefer simple classroom language over nominalisations. Do not overuse “ha dimostrato”, “evidenzia”, “mostra” or similar report clichés. Keep the result warm, professional, concrete and believable.`;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -192,7 +241,8 @@ export default async function handler(req, res) {
       }
 
       if (validJson) {
-        const normalized = normalizeJsonForPrompt(validJson, promptText);
+        let normalized = normalizeJsonForPrompt(validJson, promptText);
+        if (isFollowUp) normalized = ensureFollowUpStartsWithName(normalized);
         return res.status(200).json({
           provider: useOpenAI ? 'openai' : 'anthropic',
           model: effectiveModel,
