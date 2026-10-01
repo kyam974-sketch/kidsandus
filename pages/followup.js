@@ -139,7 +139,7 @@ export default function FollowUp() {
     const [{ data: g }, { data: s }, { data: all }] = await Promise.all([
       supabase.from('group_students').select('*').order('sede'),
       supabase.from('followup_sessions').select('*').order('created_at', { ascending: false }).limit(15),
-      supabase.from('followup_sessions').select('*').order('session_date', { ascending: true }).limit(2000),
+      supabase.from('followup_sessions').select('*').order('session_date', { ascending: false }).limit(2000),
     ]);
     setGroups(g || []);
     setSessions(s || []);
@@ -184,7 +184,16 @@ export default function FollowUp() {
     loadLessonContext();
   }, [selectedGroup?.corso, form.story, form.day]);
 
-  function getEntry(name) { return entries[name] || emptyEntry(selectedGroup?.corso); }
+  function rememberedPronouns(name) {
+    const key = name.trim().toLowerCase();
+    const latest = [...allSessions].sort((a, b) => new Date(b.created_at || b.session_date) - new Date(a.created_at || a.session_date));
+    for (const session of latest) {
+      const previous = (session.entries || []).find((entry) => entry.name?.trim().toLowerCase() === key);
+      if (previous && typeof previous.pronouns === 'string') return previous.pronouns;
+    }
+    return '';
+  }
+  function getEntry(name) { return { ...emptyEntry(selectedGroup?.corso), pronouns: rememberedPronouns(name), ...entries[name] }; }
   function setEntryPatch(name, patch) { setEntries((prev) => ({ ...prev, [name]: { ...(prev[name] || emptyEntry(selectedGroup?.corso)), ...patch } })); }
   function togglePresent(name) { setPresentStudents((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name])); }
 
@@ -528,7 +537,7 @@ Return ONLY valid JSON exactly in this form:
                     <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
                   {ratingFields.map((field) => <div key={field} className="rating-row" role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div className="rating-options">{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
-                  <div className="field" style={{ marginTop: 10 }}><label htmlFor={`pronouns-${name}`}>Pronouns</label><select id={`pronouns-${name}`} value={entry.pronouns || ''} onChange={(e) => setEntryPatch(name, { pronouns: e.target.value })}><option value="">Automatic (gender from name / notes)</option><option value="he/him">He / him</option><option value="she/her">She / her</option><option value="they/them">They / them (neutral requested)</option></select></div>
+                  <div className="field" style={{ marginTop: 10 }}><label htmlFor={`pronouns-${name}`}>Pronouns (optional override, remembered after saving)</label><select id={`pronouns-${name}`} value={entry.pronouns || ''} onChange={(e) => setEntryPatch(name, { pronouns: e.target.value })}><option value="">Automatic (gender from name / notes)</option><option value="he/him">He / him</option><option value="she/her">She / her</option><option value="they/them">They / them (neutral requested)</option></select></div>
                   <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
                   {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
