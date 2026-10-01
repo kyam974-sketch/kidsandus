@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabaseClient';
+import { EMOJI_SCALE, RATING_LABELS, hasMyWay, ratingFieldsForCourse, ratingSummary } from '../lib/followupRatings';
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function fmtDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
 
-const EMOJI_SCALE = [
-  { value: 1, emoji: '😟', label: 'Poor' },
-  { value: 2, emoji: '😐', label: 'Satisfactory' },
-  { value: 3, emoji: '🙂', label: 'Good' },
-  { value: 4, emoji: '😊', label: 'Very good' },
-  { value: 5, emoji: '😄', label: 'Excellent' },
-];
-const RATING_FIELDS = ['motivation', 'learning', 'behaviour'];
-const RATING_LABELS = { motivation: 'Motivation', learning: 'Learning', behaviour: 'Behaviour' };
 const SEDI = ['Grosseto', 'Esterna'];
 const CORSI = ['Mousy', 'Linda', 'Sam', 'Emma', 'Oliver', 'Marcia', 'Pam & Paul', 'Ben & Brenda'];
 const CORSO_IDS = {
@@ -39,8 +31,8 @@ const CORSO_INFO = {
 const GIORNI = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const CURRENT_YEAR = '2026-2027';
 
-function emptyEntry() {
-  return { teacher_note: '', note: '', motivation: null, learning: null, behaviour: null };
+function emptyEntry(course) {
+  return { teacher_note: '', note: '', ...Object.fromEntries(ratingFieldsForCourse(course).map((field) => [field, null])) };
 }
 
 function activityLabel(activity) {
@@ -120,6 +112,8 @@ export default function FollowUp() {
   if (!availableYears.includes(CURRENT_YEAR)) availableYears.unshift(CURRENT_YEAR);
   const groupsForYear = groups.filter((g) => g.anno_scolastico === yearFilter);
   const selectedGroup = groups.find((g) => g.id === form.group_id) || null;
+  const ratingFields = ratingFieldsForCourse(selectedGroup?.corso);
+  const showMyWay = hasMyWay(selectedGroup?.corso);
   const groupStudents = selectedGroup && Array.isArray(selectedGroup.students) ? selectedGroup.students : [];
 
   const studentList = Array.from(new Set(groups.flatMap((g) => (Array.isArray(g.students) ? g.students : [])))).sort((a, b) => a.localeCompare(b, 'it'));
@@ -187,8 +181,8 @@ export default function FollowUp() {
     loadLessonContext();
   }, [selectedGroup?.corso, form.story, form.day]);
 
-  function getEntry(name) { return entries[name] || emptyEntry(); }
-  function setEntryPatch(name, patch) { setEntries((prev) => ({ ...prev, [name]: { ...getEntry(name), ...patch } })); }
+  function getEntry(name) { return entries[name] || emptyEntry(selectedGroup?.corso); }
+  function setEntryPatch(name, patch) { setEntries((prev) => ({ ...prev, [name]: { ...(prev[name] || emptyEntry(selectedGroup?.corso)), ...patch } })); }
   function togglePresent(name) { setPresentStudents((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name])); }
 
   async function upsertGroupStudents(group, students) {
@@ -241,9 +235,11 @@ export default function FollowUp() {
     const lines = [selectedStudent, ''];
     studentHistory.forEach((session) => {
       const entry = (session.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase());
-      if (!entry || !entry.note) return;
+      if (!entry) return;
       lines.push(`${fmtDate(session.session_date)} — ${session.corso || ''} ${session.giorno || ''}`.trim());
-      lines.push(entry.note, '');
+      lines.push(ratingSummary(entry, session.corso));
+      if (entry.note) lines.push(entry.note);
+      lines.push('');
     });
     navigator.clipboard.writeText(lines.join('\n').trim() || 'No individual note found for this student.');
     setCopied(true);
@@ -312,7 +308,7 @@ export default function FollowUp() {
 
     const studentEvidence = presentStudents.map((name) => {
       const e = getEntry(name);
-      const ratings = RATING_FIELDS.map((field) => {
+      const ratings = ratingFields.map((field) => {
         const selected = EMOJI_SCALE.find((x) => x.value === e[field]);
         return `${RATING_LABELS[field]}: ${selected ? `${selected.label} (${selected.value}/5)` : 'not selected'}`;
       }).join('; ');
@@ -342,7 +338,8 @@ STRICT RULES
 - Prefer concrete references to the day's real activities, games, materials, props or sensory experiences (for example flowers, sand, bubbles, cards, story, songs, building blocks, etc.) when those elements are actually present in the lesson context above.
 - When natural, include at least one concrete lesson element in each judgment so the note says what the child worked or played with that day rather than only describing broad skills.
 - Do NOT use bonus/optional activities as if they happened unless the teacher observation explicitly says they were done. Planner context above contains core activities only.
-- The selected Motivation/Learning/Behaviour ratings are teacher evidence. Respect them; do not change or reinterpret them into different ratings.
+- The selected Motivation & Participation/Learning/Behaviour ratings are teacher evidence. Respect them; do not change or reinterpret them into different ratings.
+${showMyWay ? '- My Way is a separate teacher-selected assessment of home platform use, based on audio listening and Mission progress. It is NOT classroom participation, learning performance or behaviour. Mention it only if selected or explicitly supported by an individual teacher observation. Never infer listening counts, completed games or missed Missions from an emoji. Missions are optional; do not penalize their absence or invent a numeric grading threshold.' : ''}
 - Use each student's individual teacher observation when present.
 - The group observation is context only: do NOT automatically attribute a group event or behaviour to every student.
 - Do not invent incidents, answers, vocabulary produced, behaviours, achievements or difficulties that the teacher did not report or that are not supported by the selected ratings.
@@ -365,7 +362,7 @@ Return ONLY valid JSON exactly in this form:
 
     const withoutEvidence = presentStudents.filter((name) => {
       const e = getEntry(name);
-      return !e.teacher_note?.trim() && !RATING_FIELDS.some((field) => e[field]);
+      return !e.teacher_note?.trim() && !ratingFields.some((field) => e[field]);
     });
     if (withoutEvidence.length) {
       setGenerateError(`Per generare un giudizio serve almeno un'emoji o una nota individuale per: ${withoutEvidence.join(', ')}.`);
@@ -483,6 +480,7 @@ Return ONLY valid JSON exactly in this form:
           {presentStudents.length > 0 && (
             <div className="field">
               <label>Individual assessments</label>
+              {showMyWay && <p style={{ fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 12px' }}>My Way: assess audio listening and Mission progress in the Teacher’s Dashboard. Aim for daily audio (7/week); 4 Mission activities/week are recommended and optional. Choose the emoji manually.</p>}
               {presentStudents.map((name) => {
                 const entry = getEntry(name);
                 return <div key={name} style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 10, background: '#fff' }}>
@@ -490,7 +488,7 @@ Return ONLY valid JSON exactly in this form:
                     <strong>{name}</strong>
                     <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
-                  {RATING_FIELDS.map((field) => <div key={field} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 12, color: 'var(--ink-soft)', width: 80 }}>{RATING_LABELS[field]}</span>{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div>)}
+                  {ratingFields.map((field) => <div key={field} role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div style={{ display: 'flex', gap: 6 }}>{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
                   <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
                   {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
@@ -522,7 +520,7 @@ Return ONLY valid JSON exactly in this form:
           <input placeholder="Start typing a name…" value={studentQuery} onChange={(e) => { setStudentQuery(e.target.value); setShowSearchSuggestions(true); const exact = studentList.find((n) => n.toLowerCase() === e.target.value.toLowerCase()); setSelectedStudent(exact || ''); }} onFocus={() => setShowSearchSuggestions(true)} onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 150)} />
           {showSearchSuggestions && searchSuggestions.length > 0 && <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10 }}>{searchSuggestions.map((n) => <div key={n} onMouseDown={() => { setStudentQuery(n); setSelectedStudent(n); setShowSearchSuggestions(false); }} style={{ padding: '10px 12px', cursor: 'pointer' }}>{n}</div>)}</div>}
         </div>
-        {selectedStudent && <><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <table className="simple-table"><thead><tr><th>Date</th><th>Group</th><th>Assessments</th><th>Note</th></tr></thead><tbody>{studentHistory.map((s) => { const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase()); const ratings = entry ? RATING_FIELDS.map((f) => entry[f] && EMOJI_SCALE.find((x) => x.value === entry[f])?.emoji).filter(Boolean).join(' ') : ''; return <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.corso} · {s.giorno}</td><td>{ratings || '—'}</td><td>{entry?.note || '—'}</td></tr>; })}</tbody></table>}</>}
+        {selectedStudent && <><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><strong>{selectedStudent}</strong><button className="btn secondary" onClick={copyHistory} type="button">{copied ? 'Copied ✓' : 'Copy all for Term Reports'}</button></div>{studentHistory.length === 0 ? <p>No follow-up found.</p> : <table className="simple-table"><thead><tr><th>Date</th><th>Group</th><th>Assessments</th><th>Note</th></tr></thead><tbody>{studentHistory.map((s) => { const entry = (s.entries || []).find((en) => en.name && en.name.toLowerCase() === selectedStudent.toLowerCase()); return <tr key={s.id}><td>{fmtDate(s.session_date)}</td><td>{s.corso} · {s.giorno}</td><td>{ratingSummary(entry, s.corso, true)}</td><td>{entry?.note || '—'}</td></tr>; })}</tbody></table>}</>}
       </div>
 
       <div className="section-block">
