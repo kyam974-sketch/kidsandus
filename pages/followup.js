@@ -326,7 +326,7 @@ export default function FollowUp() {
         const selected = EMOJI_SCALE.find((x) => x.value === e[field]);
         return `${RATING_LABELS[field]}: ${selected ? `${selected.label} (${selected.value}/5)` : 'not selected'}`;
       }).join('; ');
-      return `${name}\n${ratings}\nTeacher individual observation: ${e.teacher_note?.trim() || '(none)'}`;
+      return `${name}\nPronouns: ${e.pronouns || 'use the gender indicated by teacher language or an unambiguous familiar given name; if unclear avoid pronouns, not singular they'}\n${ratings}\nTeacher individual observation: ${e.teacher_note?.trim() || '(none)'}`;
     }).join('\n\n');
 
     return `You are assisting a Kids&Us teacher in Italy with INTERNAL follow-up judgments that will later support term reports.
@@ -361,24 +361,24 @@ ${showMyWay ? '- My Way is a separate teacher-selected assessment of home platfo
 - Use observations in the group note that explicitly name this student as individual evidence, including a change during the lesson (for example initial tears followed by settling). General group observations remain context only: do NOT attribute an event involving another child to this student.
 - Do not invent incidents, answers, vocabulary produced, behaviours, achievements or difficulties that the teacher did not report or that are not supported by the selected ratings.
 - A concrete activity may be named because it was part of the lesson, but do not claim that the child mastered specific vocabulary or structures merely because the activity was present.
-- If a rating is not selected and no individual observation supports that dimension, return an empty string for its field. Do not invent a missing assessment. Put other relevant individual observations in the observation field without repeating the dimension sentences.
+- If a rating is not selected and no individual observation supports that dimension, return an empty string for its field. Do not invent a missing assessment. Integrate every relevant individual observation into the appropriate assessment field, translated and naturally rewritten in English. Never append the raw teacher annotation or repeat its content as a separate final sentence.
 - Keep developmental expectations appropriate to the course profile, especially for Mousy and Linda.
 - Do not mention numeric ratings, emojis, the AI, the prompt, or lack of evidence in the final judgment.
 - Write the separate fields as consecutive sentences of ONE fluent paragraph, not as standalone mini-reports. Use the child’s name ONCE ONLY, at the beginning of the motivation sentence (or the first non-empty field). Never repeat the name in any later field, including observation.
-- In later sentences use natural pronouns only when the teacher evidence establishes them; otherwise use singular they or subject-free connected clauses. Never guess gender from a name. Avoid a checklist of labels followed by good/excellent.
+- Preserve the student’s gender: use he/him/his or she/her as indicated by the selected pronouns, teacher wording or an unambiguous familiar given name (for example Liam/Lorenzo: he; Alice: she). Use singular they/them ONLY if the teacher explicitly selects or requests neutral pronouns. If gender is genuinely unclear, use grammatical constructions without personal pronouns rather than defaulting to they. Avoid a checklist of labels followed by good/excellent.
 - Use simple, idiomatic classroom English. Avoid literal translations, inflated praise, bureaucratic phrases, repetitive sentence openings and repeating the same idea across criteria. Vary the phrasing naturally while preserving the selected rating levels.
 - This English note is internal evidence only. Term Reports are generated separately in Italian.
 - Tone: professional, natural, concise, factual, not inflated.
 
 STYLE EXAMPLES — invented examples illustrating tone and detail, NEVER evidence about the current students:
-1. Lesson context: room/action Memory and charades. Ratings: high participation, very good learning, satisfactory behaviour. Teacher observation: interrupts and chats during group activities.
-"Alex joined the room-and-action Memory and charades with enthusiasm, bringing plenty of energy to the lesson. Their overall response to the language practised through these games was secure. Interrupting and chatting during group activities sometimes got in the way of listening, so that enthusiasm needs to be channelled more constructively."
-2. Lesson context: calendar routine, Number cards and pair work with afternoon-activity stickers. All classroom ratings high; My Way very good; no individual incidents reported.
-"Robin approached the calendar routine, Number-card activities and paired work with the afternoon-activity stickers with enthusiasm. They engaged confidently with the language work practised across these activities. A positive, cooperative approach helped keep participation constructive, while engagement with My Way outside class was also very positive."
+1. Alex is a boy. Lesson context: room/action Memory and charades. Ratings: high participation, very good learning, satisfactory behaviour. Teacher observation: interrupts and chats during group activities.
+"Alex joined the room-and-action Memory and charades with enthusiasm, bringing plenty of energy to the lesson. His overall response to the language practised through these games was secure. Interrupting and chatting during group activities sometimes got in the way of listening, so that enthusiasm needs to be channelled more constructively."
+2. Robin is a girl. Lesson context: calendar routine, Number cards and pair work with afternoon-activity stickers. All classroom ratings high; My Way very good; no individual incidents reported.
+"Robin approached the calendar routine, Number-card activities and paired work with the afternoon-activity stickers with enthusiasm. She engaged confidently with the language work practised across these activities. A positive, cooperative approach helped keep participation constructive, while engagement with My Way outside class was also very positive."
 Use this degree of detail, not these exact sentences or facts. Do not add a recommendation to every note; include one only when a reported difficulty makes it useful.
 
 Return ONLY valid JSON exactly in this form:
-{"Student Name":{"motivation":"descriptive English text","learning":"descriptive English text","behaviour":"descriptive English text"${showMyWay ? ',"my_way":"descriptive English text"' : ''},"observation":"optional short sentence, otherwise empty string"}}`;
+{"Student Name":{"motivation":"descriptive English text","learning":"descriptive English text","behaviour":"descriptive English text"${showMyWay ? ',"my_way":"descriptive English text"' : ''}}}`;
   }
 
   async function handleGenerate() {
@@ -419,7 +419,6 @@ Return ONLY valid JSON exactly in this form:
           if (entry[field] && !text) throw new Error(`Manca ${RATING_LABELS[field]} per ${name}. Riprova la generazione.`);
           return text;
         }).filter(Boolean);
-        if (typeof judgment.observation === 'string' && judgment.observation.trim()) parts.push(judgment.observation.trim());
         if (!parts.length) throw new Error(`Giudizio vuoto per ${name}. Riprova la generazione.`);
         return { name, note: parts.join(' ') };
       });
@@ -529,6 +528,7 @@ Return ONLY valid JSON exactly in this form:
                     <button type="button" className="btn secondary" style={{ padding: '6px 10px', fontSize: 12.5 }} onClick={() => copyStudentForClassroom(name)}>{copiedStudent === name ? 'Copied ✓' : '📋 Copy judgment'}</button>
                   </div>
                   {ratingFields.map((field) => <div key={field} className="rating-row" role="group" aria-label={`${name} — ${RATING_LABELS[field]}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}><span style={{ fontSize: 14, color: 'var(--ink-soft)', width: 140, flexShrink: 0 }}>{RATING_LABELS[field]}</span><div className="rating-options">{EMOJI_SCALE.map((es) => <button key={es.value} type="button" title={es.label} aria-label={`${RATING_LABELS[field]}: ${es.label}`} aria-pressed={entry[field] === es.value} onClick={() => setEntryPatch(name, { [field]: entry[field] === es.value ? null : es.value })} style={{ border: entry[field] === es.value ? '2px solid var(--coral)' : '1px solid var(--line)', borderRadius: 8, background: '#fff', padding: '2px 6px', fontSize: 18 }}>{es.emoji}</button>)}</div></div>)}
+                  <div className="field" style={{ marginTop: 10 }}><label htmlFor={`pronouns-${name}`}>Pronouns</label><select id={`pronouns-${name}`} value={entry.pronouns || ''} onChange={(e) => setEntryPatch(name, { pronouns: e.target.value })}><option value="">Automatic (gender from name / notes)</option><option value="he/him">He / him</option><option value="she/her">She / her</option><option value="they/them">They / them (neutral requested)</option></select></div>
                   <textarea placeholder="Teacher observation (optional)…" value={entry.teacher_note || ''} onChange={(e) => setEntryPatch(name, { teacher_note: e.target.value })} style={{ width: '100%', marginTop: 10, minHeight: 60 }} />
                   {entry.note && <div style={{ marginTop: 10 }}><label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI judgment</label><textarea value={entry.note} onChange={(e) => setEntryPatch(name, { note: e.target.value })} style={{ width: '100%', minHeight: 72, background: '#f8faf8' }} /></div>}
                 </div>;
