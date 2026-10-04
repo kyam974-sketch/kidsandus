@@ -332,5 +332,8 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
 .guide-prose { white-space: pre-wrap; font-family: inherit; font-size: 16px; line-height: 1.75; margin: 10px 0; tab-size: 2; }
 .guide-activity-title { font-size: 18px; line-height: 1.45; margin: 24px 0 12px; padding: 12px 14px; border-left: 4px solid var(--blue, #4975c4); background: #f5f7fa; border-radius: 6px; }
 .guide-part-title { font-size: 16px; line-height: 1.5; margin: 18px 0 8px; }
-.guide-diagram-labels { margin: 12px 0; border: 1px solid var(--line); padding: 10px 12px; border-radius: 8px; }
-.guide-diagram-labels summary { cursor: pointer; font-size: 14px; color: var(--ink-soft); }
+
+/* Unaltered PDF columns, in the original left-to-right reading order. */
+.original-guide-day { max-width: 720px; margin: 0 auto; }
+.original-guide-column { margin: 0 0 24px; }
+.original-guide-column img { display: block; width: 100%; height: auto; }
