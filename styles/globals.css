@@ -327,3 +327,10 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
 }
 
 .history-copy { margin-left: auto; padding: 8px 12px; font-size: 13px; }
+
+.guide-text { margin-top: 12px; min-width: 0; overflow-wrap: break-word; }
+.guide-prose { white-space: pre-wrap; font-family: inherit; font-size: 16px; line-height: 1.75; margin: 10px 0; tab-size: 2; }
+.guide-activity-title { font-size: 18px; line-height: 1.45; margin: 24px 0 12px; padding: 12px 14px; border-left: 4px solid var(--blue, #4975c4); background: #f5f7fa; border-radius: 6px; }
+.guide-part-title { font-size: 16px; line-height: 1.5; margin: 18px 0 8px; }
+.guide-diagram-labels { margin: 12px 0; border: 1px solid var(--line); padding: 10px 12px; border-radius: 8px; }
+.guide-diagram-labels summary { cursor: pointer; font-size: 14px; color: var(--ink-soft); }
