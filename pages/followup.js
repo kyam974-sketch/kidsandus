@@ -460,6 +460,18 @@ Return ONLY valid JSON exactly in this form:
           return text;
         }).filter(Boolean);
         if (!parts.length) throw new Error(`Giudizio vuoto per ${name}. Riprova la generazione.`);
+        // AI output can vary between runs: always display only the student's first name
+        // at the beginning of the judgment, even if the model returns a full name.
+        const fullName = name.trim();
+        const firstName = fullName.split(/\s+/)[0];
+        if (firstName && firstName !== fullName) {
+          const firstPart = parts[0];
+          const startsWithFullName = firstPart.toLocaleLowerCase('it-IT').startsWith(fullName.toLocaleLowerCase('it-IT'));
+          const followingCharacter = firstPart.charAt(fullName.length);
+          if (startsWithFullName && (!followingCharacter || /[^\p{L}\p{N}]/u.test(followingCharacter))) {
+            parts[0] = firstName + firstPart.slice(fullName.length);
+          }
+        }
         return { name, note: parts.join(' ') };
       });
       judgments.forEach(({ name, note }) => setEntryPatch(name, { note }));
