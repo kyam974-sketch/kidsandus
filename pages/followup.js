@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
+import { isoDate, scheduledLessonForDate } from '../lib/schoolCalendar';
 import Layout from '../components/Layout';
 import ResponsiveTable from '../components/ResponsiveTable';
 import { findStudentProfile, continuityContext } from '../lib/studentContinuity';
@@ -7,6 +9,39 @@ import { EMOJI_SCALE, RATING_LABELS, hasMyWay, ratingFieldsForCourse, ratingSumm
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 function fmtDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
+
+// Follow-up groups predate the Calendar's classes table: match on course, weekday,
+// location and start time rather than assuming the two tables share an ID.
+function suggestedLessonForGroup(group, calendarClasses, dateValue = new Date()) {
+  if (!group || group.anno_scolastico !== CURRENT_YEAR) return null;
+  const weekday = GIORNI.indexOf(group.giorno) + 1;
+  if (!weekday) return null;
+  const startTime = String(group.orario || '').match(/\d{1,2}:\d{2}/)?.[0] || '';
+  const normalize = (value) => String(value || '').trim().toLocaleLowerCase('it-IT');
+  const candidates = calendarClasses.filter((item) =>
+    normalize(item.course) === normalize(group.corso) &&
+    Number(item.weekday) === weekday &&
+    normalize(item.location) === normalize(group.sede)
+  );
+  const exact = startTime ? candidates.filter((item) => String(item.start_time || '').slice(0, 5) === startTime) : [];
+  const matchedClass = exact.length === 1 ? exact[0] : (!startTime && candidates.length === 1 ? candidates[0] : null);
+  // Grosseto follows the official timetable even for legacy follow-up groups
+  // that have not yet been linked to a class. External groups need a real class.
+  const schedule = matchedClass || (normalize(group.sede) === 'grosseto'
+    ? { school_year: CURRENT_YEAR, weekday, course: group.corso, schedule_mode: 'official' }
+    : null);
+  if (!schedule) return null;
+  const today = new Date(dateValue);
+  const weekdayToday = (today.getDay() + 6) % 7;
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - weekdayToday, 12);
+  for (let weeksBack = 0; weeksBack < 8; weeksBack += 1) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + weekday - 1 - weeksBack * 7);
+    const occurrence = scheduledLessonForDate(schedule, date);
+    if (occurrence) return occurrence;
+  }
+  return null;
+}
 
 const SEDI = ['Grosseto', 'Esterna'];
 const CORSI = ['Mousy', 'Linda', 'Sam', 'Emma', 'Oliver', 'Marcia', 'Pam & Paul', 'Ben & Brenda'];
@@ -71,6 +106,15 @@ function activityContext(activities) {
 }
 
 export default function FollowUp() {
+  const router = useRouter();
+  const [calendarClasses, setCalendarClasses] = useState([]);
+  const [autoLesson, setAutoLesson] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const dirtyRef = useRef(false);
+  const markDirty = () => { dirtyRef.current = true; setIsDirty(true); setSaveOk(false); };
+  const clearDirty = () => { dirtyRef.current = false; setIsDirty(false); };
+  const confirmDiscard = () => !dirtyRef.current || window.confirm('Hai modifiche al follow-up non salvate. Vuoi davvero uscire senza salvarle?');
+
   const [groups, setGroups] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [allSessions, setAllSessions] = useState([]);
@@ -140,11 +184,12 @@ export default function FollowUp() {
   async function loadData() {
     setLoading(true);
     setContinuityError('');
-    const [{ data: g }, { data: s }, historyResult, profileResult] = await Promise.all([
+    const [{ data: g }, { data: s }, historyResult, profileResult, classesResult] = await Promise.all([
       supabase.from('group_students').select('*').order('sede'),
       supabase.from('followup_sessions').select('*').order('created_at', { ascending: false }).limit(15),
       supabase.from('followup_sessions').select('*').order('session_date', { ascending: false }).order('id').range(0, 999),
       supabase.from('students').select('*'),
+      supabase.from('classes').select('*').eq('school_year', CURRENT_YEAR).eq('active', true),
     ]);
     const all = historyResult.data || [];
     let historyError = historyResult.error;
@@ -158,12 +203,62 @@ export default function FollowUp() {
     if (historyError || profileResult.error) setContinuityError('Non riesco a caricare lo storico o le schede studenti. Ricarica prima di generare il giudizio.');
     setStudentProfiles(profileResult.data || []);
     setGroups(g || []);
+    setCalendarClasses(classesResult.data || []);
     setSessions(s || []);
     setAllSessions(all || []);
     setLoading(false);
   }
 
   useEffect(() => { loadData(); }, []);
+
+  // Browser tab close/reload, plus client-side Next.js navigation (including
+  // sidebar links and browser Back). iOS may not display a native close prompt.
+  useEffect(() => {
+    const beforeUnload = (event) => {
+      if (!dirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    const routeChangeStart = () => {
+      if (confirmDiscard()) { clearDirty(); return; }
+      router.events.emit('routeChangeError');
+      throw new Error('Follow-up navigation cancelled: unsaved changes');
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    router.events.on('routeChangeStart', routeChangeStart);
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload);
+      router.events.off('routeChangeStart', routeChangeStart);
+    };
+  }, [router.events]);
+
+  function selectGroup(groupId, groupOverride = null) {
+    if (groupId === form.group_id) return;
+    if (!confirmDiscard()) return;
+    clearDirty();
+    const group = groupOverride || groups.find((item) => item.id === groupId);
+    const suggestion = suggestedLessonForGroup(group, calendarClasses);
+    setAutoLesson(suggestion);
+    setForm({
+      group_id: groupId,
+      session_date: suggestion?.date || todayISO(),
+      story: suggestion?.story || 1,
+      day: suggestion?.day || 1,
+      group_note: '',
+    });
+    setSaveError('');
+    setSaveOk(false);
+  }
+
+  function changeDate(value) {
+    const group = groups.find((item) => item.id === form.group_id);
+    const weekday = GIORNI.indexOf(group?.giorno) + 1;
+    // A date manually entered is preserved. The user can also override Story/Day.
+    const suggestion = value && weekday && isoDate(value) === autoLesson?.date ? autoLesson : null;
+    markDirty();
+    setForm((previous) => ({ ...previous, session_date: value,
+      ...(suggestion ? { story: suggestion.story, day: suggestion.day } : {}) }));
+  }
   useEffect(() => { setPresentStudents(groupStudents); setEntries({}); }, [form.group_id]);
 
   useEffect(() => {
@@ -217,8 +312,8 @@ export default function FollowUp() {
       pronouns: pronouns || (profile ? '' : rememberedPronouns(name)),
     };
   }
-  function setEntryPatch(name, patch) { setEntries((prev) => ({ ...prev, [name]: { ...(prev[name] || emptyEntry(selectedGroup?.corso)), ...patch } })); }
-  function togglePresent(name) { setPresentStudents((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name])); }
+  function setEntryPatch(name, patch) { markDirty(); setEntries((prev) => ({ ...prev, [name]: { ...(prev[name] || emptyEntry(selectedGroup?.corso)), ...patch } })); }
+  function togglePresent(name) { markDirty(); setPresentStudents((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name])); }
 
   async function upsertGroupStudents(group, students) {
     const { error } = await supabase.from('group_students').update({ students }).eq('id', group.id);
@@ -261,7 +356,7 @@ export default function FollowUp() {
     }
     await loadData();
     setYearFilter(data.anno_scolastico);
-    setForm((f) => ({ ...f, group_id: data.id }));
+    selectGroup(data.id, data);
     setShowNewGroup(false);
     setNewGroup({ sede: 'Grosseto', corso: '', giorno: '', orario: '', anno_scolastico: CURRENT_YEAR });
   }
@@ -326,6 +421,8 @@ export default function FollowUp() {
     setSaving(false);
     if (error) { setSaveError('Error saving: ' + error.message); return; }
     setSaveOk(true);
+    clearDirty();
+    setAutoLesson(null);
     setForm({ group_id: '', session_date: todayISO(), story: 1, day: 1, group_note: '' });
     setPresentStudents([]); setEntries({});
     loadData();
@@ -490,10 +587,16 @@ Return ONLY valid JSON exactly in this form:
       <div className="section-block">
         <h2>New follow-up</h2>
         <form onSubmit={handleSubmit}>
-          <div className="field"><label>School year</label><select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>{availableYears.map((y) => <option key={y} value={y}>{y}</option>)}</select></div>
+          <div className="field"><label>School year</label><select value={yearFilter} onChange={(e) => {
+              if (!confirmDiscard()) return;
+              clearDirty();
+              setYearFilter(e.target.value);
+              setAutoLesson(null);
+              setForm({ group_id: '', session_date: todayISO(), story: 1, day: 1, group_note: '' });
+            }}>{availableYears.map((y) => <option key={y} value={y}>{y}</option>)}</select></div>
           <div className="field">
             <label>Group</label>
-            <select value={form.group_id} onChange={(e) => setForm({ ...form, group_id: e.target.value })}>
+            <select value={form.group_id} onChange={(e) => selectGroup(e.target.value)}>
               <option value="">Select…</option>
               {groupsForYear.map((g) => <option key={g.id} value={g.id}>{g.sede} · {g.corso} · {g.giorno}{g.orario ? ` · ${g.orario}` : ''}</option>)}
             </select>
@@ -510,10 +613,17 @@ Return ONLY valid JSON exactly in this form:
             )}
           </div>
 
+          {selectedGroup && (
+            <p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: '4px 0 12px' }}>
+              {autoLesson
+                ? `📅 Lezione proposta dal calendario: ${fmtDate(autoLesson.date)} · Story ${autoLesson.story} · Day ${autoLesson.day}. Puoi modificare i campi per recuperare un'altra lezione.`
+                : '📅 Non trovo una lezione programmata per questo gruppo. Seleziona manualmente data, Story e Day.'}
+            </p>
+          )}
           <div className="followup-lesson-fields">
-            <div className="field"><label>Date</label><input type="date" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} /></div>
-            <div className="field"><label>Story</label><select value={form.story} onChange={(e) => setForm({ ...form, story: Number(e.target.value) })}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
-            <div className="field"><label>Day</label><input type="number" min="1" value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) || 1 })} /></div>
+            <div className="field"><label>Date</label><input type="date" value={form.session_date} onChange={(e) => changeDate(e.target.value)} /></div>
+            <div className="field"><label>Story</label><select value={form.story} onChange={(e) => { markDirty(); setForm({ ...form, story: Number(e.target.value) }); }}>{[1,2,3,4,5,6].map((n) => <option key={n} value={n}>Story {n}</option>)}</select></div>
+            <div className="field"><label>Day</label><input type="number" min="1" value={form.day} onChange={(e) => { markDirty(); setForm({ ...form, day: Number(e.target.value) || 1 }); }} /></div>
           </div>
 
           {selectedGroup && (
@@ -566,7 +676,7 @@ Return ONLY valid JSON exactly in this form:
             </div>
           )}
 
-          <div className="field"><label>Group note (optional)</label><textarea value={form.group_note} onChange={(e) => setForm({ ...form, group_note: e.target.value })} placeholder="Dynamics, particular episodes, classroom mood…" /></div>
+          <div className="field"><label>Group note (optional)</label><textarea value={form.group_note} onChange={(e) => { markDirty(); setForm({ ...form, group_note: e.target.value }); }} placeholder="Dynamics, particular episodes, classroom mood…" /></div>
 
           {presentStudents.length > 0 && (
             <div className="field">
@@ -598,6 +708,7 @@ Return ONLY valid JSON exactly in this form:
             </div>
           )}
 
+          {isDirty && <div role="status" style={{ color: '#9b4d15', fontWeight: 700, marginBottom: 12 }}>⚠️ Modifiche non salvate: premi “Save follow-up” prima di uscire o cambiare gruppo.</div>}
           {saveError && <div className="error-text">{saveError}</div>}
           {saveOk && <div style={{ color: 'var(--sage)', fontSize: 13, marginBottom: 14 }}>Saved.</div>}
           <button className="btn" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save follow-up'}</button>
