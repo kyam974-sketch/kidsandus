@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import GuideText from '../components/GuideText';
 import OriginalGuideDay from '../components/OriginalGuideDay';
@@ -12,6 +13,7 @@ function emptyDayForm() {
 }
 
 export default function Guides() {
+  const router = useRouter();
   const [corso, setCorso] = useState('Mousy');
   const [view, setView] = useState('course');
   const [sections, setSections] = useState([]);
@@ -48,6 +50,19 @@ export default function Guides() {
     setDays(d || []);
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const requestedCourse = typeof router.query.course === 'string' ? router.query.course : '';
+    const requestedStory = Number(router.query.story);
+    if (CORSI.includes(requestedCourse)) setCorso(requestedCourse);
+    if (Number.isInteger(requestedStory) && requestedStory >= 1 && requestedStory <= 6) {
+      setStoryNumber(requestedStory);
+      setView('story');
+      setStoryTab('days');
+      setOpenDay(1);
+    }
+  }, [router.isReady, router.query.course, router.query.story]);
 
   useEffect(() => { if (view === 'course') loadCourseSections(); }, [corso, view]);
   useEffect(() => { if (view === 'story') loadStory(); }, [corso, storyNumber, view]);
