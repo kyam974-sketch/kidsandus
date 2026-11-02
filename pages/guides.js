@@ -126,6 +126,7 @@ export default function Guides() {
     { key: 'songs', label: 'Story Specific Songs', content: story.songs },
     { key: 'warmup_routines', label: 'Warm-up Routines', content: story.warmup_routines },
     { key: 'choosing_rhyme', label: 'Choosing Rhyme', content: story.choosing_rhyme },
+    ...(story.materials_detail ? [{ key: 'materials_detail', label: 'Detailed List of Materials', content: story.materials_detail }] : []),
   ] : [];
 
   return (
